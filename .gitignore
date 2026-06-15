@@ -1,0 +1,39 @@
+# Arquivos compilados e otimizados
+__pycache__/
+*.py[cod]
+*$py.class
+# Extensões C
+*.so
+# Distribuição e empacotamento
+Python
+build/
+dist/
+*.egg-info/
+eggs/
+# Logs de instalação
+pip-log.txt
+pip-delete-this-directory.txt
+# Relatórios de teste e cobertura
+htmlcov/
+tox/
+nox/
+coverage
+pytest_cache/
+# Notebooks Jupyter
+ipynb_checkpoints
+# Ambientes virtuais
+env
+venv/
+env/
+venv/
+# Cache do mypy e Pyre
+mypy_cache/
+pyre/
+# Configurações específicas de IDEs (opcional)
+vscode/
+idea/
+# Arquivos específicos de frameworks (opcional)
+*.log
+local_settings.py
+db.sqlite3 # Django
+instance/ # Flask
