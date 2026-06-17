@@ -13,7 +13,7 @@ def tela_dashboard():
     root.minsize(800, 500)
     root.resizable(True, True)
 
-    img_path = "Dashboard.jpg"  
+    img_path = "assets/Dashboard.png"  
 
     if not os.path.exists(img_path):
         print(f"Erro: Arquivo '{img_path}' não encontrado.")

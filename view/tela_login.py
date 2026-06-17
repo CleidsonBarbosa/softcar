@@ -9,7 +9,7 @@ def tela_login():
     root.geometry("800x600")
     root.resizable(True, True)
 
-    img_path = "login.png"
+    img_path = "assets/Login.png"
 
     if not os.path.exists(img_path):
         print(f"Erro: Arquivo '{img_path}' não encontrado.")
