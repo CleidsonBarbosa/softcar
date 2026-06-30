@@ -12,7 +12,7 @@ def conectar():
         database="softcar"
     )
 
-'''def carregar_funcionarios(tree):
+def carregar_funcionarios(tree):
     for row in tree.get_children():
         tree.delete(row)
     try:
@@ -222,7 +222,7 @@ def tela_lista_funcionarios():
         _redimensionar(w, h)
 
     janela.bind("<Configure>", redimensionar)
-    janela.after(50, lambda: [janela.update_idletasks(), _redimensionar(janela.winfo_width(), janela.winfo_height())])'''
+    janela.after(50, lambda: [janela.update_idletasks(), _redimensionar(janela.winfo_width(), janela.winfo_height())])
 
 if __name__ == "__main__":
     root = tk.Tk()
