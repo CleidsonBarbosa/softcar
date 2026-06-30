@@ -12,7 +12,7 @@ def conectar():
         database="softcar"
     )
 
-def carregar_funcionarios(tree):
+'''def carregar_funcionarios(tree):
     for row in tree.get_children():
         tree.delete(row)
     try:
@@ -155,12 +155,9 @@ def tela_lista_funcionarios():
     tk.Button(frame_btns, text="Editar", font=("Arial", 9), command=lambda: editar_selecionado(tree)).pack(side="left", padx=5)
     tk.Button(frame_btns, text="Excluir", font=("Arial", 9), command=lambda: excluir_funcionario(tree)).pack(side="left", padx=5)
 
-    # ---- TABELA ----
-    frame_table = tk.Frame(canvas, bg="#f0f0f0", padx=10, pady=10)
-    frame_table_window = canvas.create_window(0, 0, window=frame_table, anchor="nw")
-
+    # ---- TABELA (direto no canvas, sem frame opaco) ----
     colunas = ("id_func", "nome_func", "email_func", "telefone_func", "cpf_func", "cargo")
-    tree = ttk.Treeview(frame_table, columns=colunas, show="headings", selectmode="browse")
+    tree = ttk.Treeview(canvas, columns=colunas, show="headings", selectmode="browse")
     tree.heading("id_func", text="ID")
     tree.heading("nome_func", text="Nome")
     tree.heading("email_func", text="E-mail")
@@ -174,10 +171,11 @@ def tela_lista_funcionarios():
     tree.column("telefone_func", width=150, anchor="center")
     tree.column("cargo", width=120, anchor="center")
 
-    scrollbar = ttk.Scrollbar(frame_table, orient="vertical", command=tree.yview)
+    scrollbar = ttk.Scrollbar(canvas, orient="vertical", command=tree.yview)
     tree.configure(yscrollcommand=scrollbar.set)
-    tree.pack(side="left", fill="both", expand=True)
-    scrollbar.pack(side="right", fill="y")
+
+    tree_window = canvas.create_window(0, 0, window=tree, anchor="nw")
+    scrollbar_window = canvas.create_window(0, 0, window=scrollbar, anchor="ne")
 
     def editar_selecionado(tree):
         selecionado = tree.selection()
@@ -210,8 +208,10 @@ def tela_lista_funcionarios():
             canvas.tag_lower("bg")
         canvas.coords(frame_top_window, 10, 10)
         canvas.coords(frame_btns_window, 10, 55)
-        canvas.coords(frame_table_window, 10, 100)
-        canvas.itemconfig(frame_table_window, width=w - 20, height=max(100, h - 120))
+        canvas.coords(tree_window, 10, 100)
+        canvas.itemconfig(tree_window, width=w - 40, height=max(100, h - 120))
+        canvas.coords(scrollbar_window, w - 20, 100)
+        canvas.itemconfig(scrollbar_window, height=max(100, h - 120))
 
     def redimensionar(event):
         if event.widget != janela:
@@ -222,7 +222,7 @@ def tela_lista_funcionarios():
         _redimensionar(w, h)
 
     janela.bind("<Configure>", redimensionar)
-    janela.after(50, lambda: [janela.update_idletasks(), _redimensionar(janela.winfo_width(), janela.winfo_height())])
+    janela.after(50, lambda: [janela.update_idletasks(), _redimensionar(janela.winfo_width(), janela.winfo_height())])'''
 
 if __name__ == "__main__":
     root = tk.Tk()

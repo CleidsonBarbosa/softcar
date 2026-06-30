@@ -44,7 +44,7 @@ def tela_dashboard():
     cor_dourado = "#b88b4a"
 
     icones_info = [
-        ("Cliente",     "assets/Account Male.svg",      "#4CAF50", "circle"),
+        ("Cliente",     "assets/cliente.svg",      "#4CAF50", "circle"),
         ("Serviços",    "assets/Car Sale.svg",           "#2196F3", "square"),
         ("Funcionários","assets/Supplier.svg",           "#FF9800", "triangle"),
         ("Materiais",   "assets/Shopping Cart.svg",      "#9C27B0", "diamond"),
