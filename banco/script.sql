@@ -1,3 +1,5 @@
+<--inserir dados na tabela funcionarios-->
+
 INSERT INTO funcionarios(
 id_func,
 nome_func,
@@ -18,7 +20,13 @@ nome_func,
  'cidade',
  27/05/1985,
  981613531)
- SELECT * FROM funcionarios;funcionariosfuncionarios
+
+ <--selecionar a tabela para exibir-->
+ 
+ SELECT * FROM clientes;
+
+ <--inserir dados na tabela funcionarios-->
+ 
  INSERT INTO funcionarios(
 id_func,
 nome_func,
@@ -39,5 +47,31 @@ nome_func,
  'nova',
  2009-07-09,
  981613531)
+
+ <---inserir dados na tabela cliente-->
+
+ INSERT INTO clientes(
+ id_cliente,
+ nome_cliente,
+ email_cliente,
+ telefone_cliente
+ cpf,
+ endereco,
+ data_nascimento)
+ VALUES (
+ 1,
+ 'Marcos',
+ 'marcos@hotmail.com',
+ 915151515151,
+ 515151515151,
+ 'cidade da lagoa azul',
+ 1985-05-27)
+
+<--atualizar dados de acordo com o id da tabela funcionarios-->
+
+UPDATE funcionarios
+SET nome_func = 'Cleidson Barbosa', email_func = 'cleidson-barbosa@hotmail.com'
+WHERE id_func = 1;
+
  
  
