@@ -5,9 +5,16 @@ import os
 
 def _carregar_icone(caminho, tamanho):
     try:
-        img = Image.open(caminho)
-        img = img.resize((tamanho, tamanho), Image.Resampling.LANCZOS)
-        return ImageTk.PhotoImage(img)
+        if caminho.lower().endswith(".svg"):
+            import cairosvg
+            import io
+            png_bytes = cairosvg.svg2png(url=caminho, output_width=tamanho, output_height=tamanho)
+            img = Image.open(io.BytesIO(png_bytes))
+            return ImageTk.PhotoImage(img)
+        else:
+            img = Image.open(caminho)
+            img = img.resize((tamanho, tamanho), Image.Resampling.LANCZOS)
+            return ImageTk.PhotoImage(img)
     except Exception:
         return None
 
@@ -44,11 +51,11 @@ def tela_dashboard():
     cor_dourado = "#b88b4a"
 
     icones_info = [
-        ("Cliente",     "assets/cliente.svg",      "#4CAF50", "circle"),
-        ("Serviços",    "assets/Car Sale.svg",           "#2196F3", "square"),
-        ("Funcionários","assets/Supplier.svg",           "#FF9800", "triangle"),
-        ("Materiais",   "assets/Shopping Cart.svg",      "#9C27B0", "diamond"),
-        ("Relatórios",  "assets/Business Report.svg",    "#F44336", "hexagon"),
+        ("Cliente",     "assets/cliente.svg"),
+        ("Serviços",    "assets/Car Sale.svg"),
+        ("Funcionários","assets/Supplier.svg"),
+        ("Materiais",   "assets/Shopping Cart.svg"),
+        ("Relatórios",  "assets/Business Report.svg"),
     ]
 
     def acao_menu(opcao):
@@ -56,7 +63,7 @@ def tela_dashboard():
             from view.lista_clientes import tela_lista_clientes
             tela_lista_clientes()
         elif opcao == "Funcionários":
-            from view.lista_funcionarios2 import tela_lista_funcionarios
+            from view.lista_funcionarios import tela_lista_funcionarios
             tela_lista_funcionarios()
         else:
             messagebox.showinfo("Soft Car", f"Você clicou na opção: {opcao}")
@@ -66,20 +73,10 @@ def tela_dashboard():
     menu_frame.pack(side="left", fill="y")
     menu_frame.pack_propagate(False)
 
-    # Logo no topo do menu
-    logo_path = "assets/sofcar.png"
-    if os.path.exists(logo_path):
-        logo_img = Image.open(logo_path)
-        logo_img = logo_img.resize((140, 140), Image.Resampling.LANCZOS)
-        logo_tk = ImageTk.PhotoImage(logo_img)
-        logo_label = tk.Label(menu_frame, image=logo_tk, bg=cor_menu)
-        logo_label.image = logo_tk
-        logo_label.pack(pady=(15, 20))
-
-    for nome, arquivo, cor, forma in icones_info:
+    for nome, arquivo in icones_info:
         icone = _carregar_icone(arquivo, 24)
         if icone is None:
-            icone = _criar_icone_fallback(24, cor, forma)
+            icone = _criar_icone_fallback(24, "#ffffff", "circle")
         btn = tk.Button(
             menu_frame,
             image=icone,

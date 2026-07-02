@@ -1,4 +1,4 @@
-import tkinter as tk
+'''import tkinter as tk
 from tkinter import messagebox
 from PIL import Image, ImageTk
 import os
@@ -59,4 +59,4 @@ def tela_login():
     root.mainloop()
 
 if __name__ == "__main__":
-    tela_login()
+    tela_login()'''
