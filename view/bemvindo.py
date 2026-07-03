@@ -68,37 +68,6 @@ def tela_dashboard():
         else:
             messagebox.showinfo("Soft Car", f"Você clicou na opção: {opcao}")
 
-    # ---- MENU LATERAL (FRAME) ----
-    menu_frame = tk.Frame(root, bg=cor_menu, width=200)
-    menu_frame.pack(side="left", fill="y")
-    menu_frame.pack_propagate(False)
-
-    for nome, arquivo in icones_info:
-        icone = _carregar_icone(arquivo, 24)
-        if icone is None:
-            icone = _criar_icone_fallback(24, "#ffffff", "circle")
-        btn = tk.Button(
-            menu_frame,
-            image=icone,
-            text=f"  {nome}",
-            compound=tk.LEFT,
-            font=("Arial", 11, "bold"),
-            fg="white",
-            bg=cor_menu,
-            activebackground=cor_menu_hover,
-            activeforeground="white",
-            bd=0,
-            anchor="w",
-            padx=15,
-            pady=12,
-            cursor="hand2",
-            command=lambda o=nome: acao_menu(o)
-        )
-        btn.image = icone
-        btn.pack(fill="x")
-        btn.bind("<Enter>", lambda e, b=btn: b.configure(bg=cor_menu_hover))
-        btn.bind("<Leave>", lambda e, b=btn: b.configure(bg=cor_menu))
-
     # ---- CONTEÚDO PRINCIPAL (CANVAS COM FUNDO) ----
     canvas = tk.Canvas(root, highlightthickness=0)
     canvas.pack(side="right", fill="both", expand=True)
@@ -111,6 +80,39 @@ def tela_dashboard():
     img_original = Image.open(img_path)
     bg_image_tk = None
 
+    # ---- BOTÕES DO MENU (CRIADOS NO CANVAS) ----
+    botoes_menu = []
+    y_pos = 120
+
+    for nome, arquivo in icones_info:
+        icone = _carregar_icone(arquivo, 24)
+        if icone is None:
+            icone = _criar_icone_fallback(24, "#b88b4a", "circle")
+        btn = tk.Button(
+            canvas,
+            image=icone,
+            text=f"  {nome}",
+            compound=tk.LEFT,
+            font=("Arial", 11, "bold"),
+            fg="white",
+            bg=cor_menu,
+            activebackground=cor_menu_hover,
+            activeforeground="white",
+            bd=0,
+            anchor="w",
+            padx=20,
+            pady=12,
+            cursor="hand2",
+            command=lambda o=nome: acao_menu(o)
+        )
+        btn.image = icone
+        btn.bind("<Enter>", lambda e, b=btn: b.configure(bg=cor_menu_hover))
+        btn.bind("<Leave>", lambda e, b=btn: b.configure(bg=cor_menu))
+        # Coloca no canvas
+        win = canvas.create_window(20, y_pos, window=btn, anchor="nw")
+        botoes_menu.append((btn, win))
+        y_pos += 50
+
     # ---- CARDS (TEXTOS) ----
     valor_agendados = canvas.create_text(0, 0, text="20", font=("Arial", 54, "bold"), fill=cor_dourado)
     valor_realizados = canvas.create_text(0, 0, text="31", font=("Arial", 54, "bold"), fill=cor_dourado)
@@ -118,7 +120,8 @@ def tela_dashboard():
     valor_veiculos = canvas.create_text(0, 0, text="426", font=("Arial", 36, "bold"), fill=cor_dourado)
     valor_total = canvas.create_text(0, 0, text="R$ 863,00", font=("Arial", 64, "bold"), fill=cor_dourado, anchor="w")
 
-    # ---- REDIMENSIONAMENTO ----
+    bg_image_tk = None
+
     def redimensionar_dashboard(event):
         nonlocal bg_image_tk
 
@@ -134,12 +137,19 @@ def tela_dashboard():
         canvas.create_image(0, 0, image=bg_image_tk, anchor="nw", tags="bg")
         canvas.tag_lower("bg")
 
+        # Reposiciona botões do menu
+        y = 120
+        for btn, win in botoes_menu:
+            canvas.coords(win, 20, y)
+            y += 50
+
         canvas.coords(valor_agendados, event.width * 0.315, event.height * 0.28)
         canvas.coords(valor_realizados, event.width * 0.562, event.height * 0.28)
         canvas.coords(valor_clientes, event.width * 0.812, event.height * 0.17)
         canvas.coords(valor_veiculos, event.width * 0.812, event.height * 0.36)
         canvas.coords(valor_total, event.width * 0.23, event.height * 0.68)
 
+    canvas.pack(side="right", fill="both", expand=True)
     root.bind("<Configure>", redimensionar_dashboard)
     root.mainloop()
 
