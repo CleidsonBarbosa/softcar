@@ -5,39 +5,22 @@ import os
 
 def _carregar_icone(caminho, tamanho):
     try:
-        if caminho.lower().endswith(".svg"):
-            import cairosvg
-            import io
-            png_bytes = cairosvg.svg2png(url=caminho, output_width=tamanho, output_height=tamanho)
-            img = Image.open(io.BytesIO(png_bytes))
-            return ImageTk.PhotoImage(img)
-        else:
-            img = Image.open(caminho)
-            img = img.resize((tamanho, tamanho), Image.Resampling.LANCZOS)
-            return ImageTk.PhotoImage(img)
+        img = Image.open(caminho)
+        img = img.resize((tamanho, tamanho), Image.Resampling.LANCZOS)
+        return ImageTk.PhotoImage(img)
     except Exception:
         return None
 
-def _criar_icone_fallback(tamanho, cor, formato):
-    from PIL import ImageDraw
-    import math
-    img = Image.new("RGBA", (tamanho, tamanho), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(img)
-    margem = tamanho // 5
-    if formato == "circle":
-        draw.ellipse([margem, margem, tamanho - margem, tamanho - margem], fill=cor)
-    elif formato == "square":
-        draw.rectangle([margem, margem, tamanho - margem, tamanho - margem], fill=cor)
-    elif formato == "triangle":
-        draw.polygon([(tamanho//2, margem), (margem, tamanho - margem), (tamanho - margem, tamanho - margem)], fill=cor)
-    elif formato == "diamond":
-        draw.polygon([(tamanho//2, margem), (tamanho - margem, tamanho//2), (tamanho//2, tamanho - margem), (margem, tamanho//2)], fill=cor)
-    elif formato == "hexagon":
-        cx, cy = tamanho//2, tamanho//2
-        r = tamanho//2 - margem
-        pts = [(cx + r * math.cos(a), cy + r * math.sin(a)) for a in [math.radians(60*i+30) for i in range(6)]]
-        draw.polygon(pts, fill=cor)
-    return ImageTk.PhotoImage(img)
+def _criar_icone_dourado(icone):
+    try:
+        pil_img = ImageTk.getimage(icone)
+        if pil_img.mode != 'RGBA':
+            pil_img = pil_img.convert('RGBA')
+        dourado = Image.new('RGBA', pil_img.size, (184, 139, 74, 255))
+        result = Image.alpha_composite(pil_img, dourado)
+        return ImageTk.PhotoImage(dourado)
+    except Exception:
+        return None
 
 def tela_dashboard():
     root = tk.Tk()
@@ -49,13 +32,14 @@ def tela_dashboard():
     cor_menu = "#2b3e50"
     cor_menu_hover = "#3a536b"
     cor_dourado = "#b88b4a"
+    cor_branco = "#ffffff"
 
     icones_info = [
-        ("Cliente",     "assets/cliente.svg"),
-        ("Serviços",    "assets/Car Sale.svg"),
-        ("Funcionários","assets/Supplier.svg"),
-        ("Materiais",   "assets/Shopping Cart.svg"),
-        ("Relatórios",  "assets/Business Report.svg"),
+        ("Cliente",     "assets/cliente.png"),
+        ("Serviços",    "assets/servicos.png"),
+        ("Funcionários","assets/funcionarios.png"),
+        ("Materiais",   "assets/materiais.png"),
+        ("Relatórios",  "assets/relatorios.png"),
     ]
 
     def acao_menu(opcao):
@@ -80,37 +64,43 @@ def tela_dashboard():
     img_original = Image.open(img_path)
     bg_image_tk = None
 
-    # ---- BOTÕES DO MENU (CRIADOS NO CANVAS) ----
+    # ---- MENU DO LADO (ITENS NO CANVAS, SEM FUNDO) ----
     botoes_menu = []
-    y_pos = 120
+    y_pos = 220
 
     for nome, arquivo in icones_info:
         icone = _carregar_icone(arquivo, 24)
         if icone is None:
             icone = _criar_icone_fallback(24, "#b88b4a", "circle")
-        btn = tk.Button(
-            canvas,
-            image=icone,
-            text=f"  {nome}",
-            compound=tk.LEFT,
-            font=("Arial", 11, "bold"),
-            fg="white",
-            bg=cor_menu,
-            activebackground=cor_menu_hover,
-            activeforeground="white",
-            bd=0,
-            anchor="w",
-            padx=20,
-            pady=12,
-            cursor="hand2",
-            command=lambda o=nome: acao_menu(o)
-        )
-        btn.image = icone
-        btn.bind("<Enter>", lambda e, b=btn: b.configure(bg=cor_menu_hover))
-        btn.bind("<Leave>", lambda e, b=btn: b.configure(bg=cor_menu))
-        # Coloca no canvas
-        win = canvas.create_window(20, y_pos, window=btn, anchor="nw")
-        botoes_menu.append((btn, win))
+        
+        # Cria imagem e texto como itens do canvas (sem widget Button, sem fundo)
+        img_item = canvas.create_image(20, y_pos, image=icone, anchor="nw")
+        txt_item = canvas.create_text(50, y_pos + 12, text=nome, font=("Arial", 11, "bold"), fill="white", anchor="nw")
+        
+        # Bind de clique no texto e na imagem
+        def make_handler(opcao):
+            return lambda e: acao_menu(opcao)
+        
+        canvas.tag_bind(img_item, "<Button-1>", make_handler(nome))
+        canvas.tag_bind(txt_item, "<Button-1>", make_handler(nome))
+        
+        # Hover visual
+        def on_enter(e, txt=txt_item):
+            canvas.itemconfig(txt, fill="#b88b4a")
+        def on_leave(e, txt=txt_item):
+            canvas.itemconfig(txt, fill="white")
+        
+        canvas.tag_bind(img_item, "<Enter>", on_enter)
+        canvas.tag_bind(img_item, "<Leave>", on_leave)
+        canvas.tag_bind(txt_item, "<Enter>", on_enter)
+        canvas.tag_bind(txt_item, "<Leave>", on_leave)
+        
+        # Guarda referência da imagem para não ser coletada
+        canvas.image_refs = getattr(canvas, "image_refs", [])
+        canvas.image_refs.append(icone)
+        
+        # Guarda IDs para reposicionar no resize
+        botoes_menu.append((img_item, txt_item, icone))
         y_pos += 50
 
     # ---- CARDS (TEXTOS) ----
@@ -119,6 +109,9 @@ def tela_dashboard():
     valor_clientes = canvas.create_text(0, 0, text="352", font=("Arial", 36, "bold"), fill=cor_dourado)
     valor_veiculos = canvas.create_text(0, 0, text="426", font=("Arial", 36, "bold"), fill=cor_dourado)
     valor_total = canvas.create_text(0, 0, text="R$ 863,00", font=("Arial", 64, "bold"), fill=cor_dourado, anchor="w")
+    total_servicos_agendados_label = canvas.create_text(0, 0, text="Serviços agendados", font=("Arial", 14, "bold"), fill=cor_branco, anchor="w")
+    total_recebido_label = canvas.create_text(0, 0, text="Total recebido", font=("Arial", 14, "bold"), fill=cor_branco, anchor="w")
+    bem_vindo_label = canvas.create_text(0, 0, text="SEJA BEM VINDO AO SOFTCAR", font=("Bungee", 16, "bold"), fill=cor_branco, anchor="se")
 
     bg_image_tk = None
 
@@ -137,10 +130,11 @@ def tela_dashboard():
         canvas.create_image(0, 0, image=bg_image_tk, anchor="nw", tags="bg")
         canvas.tag_lower("bg")
 
-        # Reposiciona botões do menu
-        y = 120
-        for btn, win in botoes_menu:
-            canvas.coords(win, 20, y)
+        # Reposiciona itens do menu
+        y = 220
+        for img_item, txt_item, _ in botoes_menu:
+            canvas.coords(img_item, 20, y)
+            canvas.coords(txt_item, 50, y + 12)
             y += 50
 
         canvas.coords(valor_agendados, event.width * 0.315, event.height * 0.28)
@@ -148,6 +142,9 @@ def tela_dashboard():
         canvas.coords(valor_clientes, event.width * 0.812, event.height * 0.17)
         canvas.coords(valor_veiculos, event.width * 0.812, event.height * 0.36)
         canvas.coords(valor_total, event.width * 0.23, event.height * 0.68)
+        canvas.coords(total_recebido_label, event.width * 0.23, event.height * 0.55)
+        canvas.coords(total_servicos_agendados_label, event.width * 0.215, event.height * 0.15)
+        canvas.coords(bem_vindo_label, event.width - 10, event.height - 20)
 
     canvas.pack(side="right", fill="both", expand=True)
     root.bind("<Configure>", redimensionar_dashboard)
