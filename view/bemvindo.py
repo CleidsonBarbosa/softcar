@@ -109,8 +109,11 @@ def tela_dashboard():
     valor_clientes = canvas.create_text(0, 0, text="352", font=("Arial", 36, "bold"), fill=cor_dourado)
     valor_veiculos = canvas.create_text(0, 0, text="426", font=("Arial", 36, "bold"), fill=cor_dourado)
     valor_total = canvas.create_text(0, 0, text="R$ 863,00", font=("Arial", 64, "bold"), fill=cor_dourado, anchor="w")
-    total_servicos_agendados_label = canvas.create_text(0, 0, text="Serviços agendados", font=("Arial", 14, "bold"), fill=cor_branco, anchor="w")
-    total_recebido_label = canvas.create_text(0, 0, text="Total recebido", font=("Arial", 14, "bold"), fill=cor_branco, anchor="w")
+    total_servicos_agendados_label = canvas.create_text(0, 0, text="Serviços agendados", font=("Arial", 13, "bold"), fill=cor_branco, anchor="w")
+    total_servicos_realizados_label = canvas.create_text(0, 0, text="Serviços Realizados", font=("Arial", 13, "bold"), fill=cor_branco)
+    total_clientes_label = canvas.create_text(0, 0, text="Clientes cadastrados", font=("Arial", 13, "bold"), fill=cor_branco)
+    total_veiculos_label = canvas.create_text(0, 0, text="Veiculos cadastrados", font=("Arial", 13, "bold"), fill=cor_branco)
+    total_recebido_label = canvas.create_text(0, 0, text="Total recebido", font=("Arial", 13, "bold"), fill=cor_branco, anchor="w")
     bem_vindo_label = canvas.create_text(0, 0, text="SEJA BEM VINDO AO SOFTCAR", font=("Bungee", 16, "bold"), fill=cor_branco, anchor="se")
 
     bg_image_tk = None
@@ -144,6 +147,9 @@ def tela_dashboard():
         canvas.coords(valor_total, event.width * 0.23, event.height * 0.68)
         canvas.coords(total_recebido_label, event.width * 0.23, event.height * 0.55)
         canvas.coords(total_servicos_agendados_label, event.width * 0.215, event.height * 0.15)
+        canvas.coords(total_servicos_realizados_label, event.width * 0.579, event.height * 0.15)
+        canvas.coords(total_clientes_label, event.width * 0.831, event.height * 0.11)
+        canvas.coords(total_veiculos_label, event.width * 0.83, event.height * 0.3)
         canvas.coords(bem_vindo_label, event.width - 10, event.height - 20)
 
     canvas.pack(side="right", fill="both", expand=True)

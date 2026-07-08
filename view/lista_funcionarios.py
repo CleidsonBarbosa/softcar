@@ -122,11 +122,42 @@ def excluir_funcionario(tree):
     except mysql.connector.Error as e:
         messagebox.showerror("Erro", f"Erro ao excluir:\n{e}")
 
+def _carregar_icone(caminho, tamanho):
+    try:
+        img = Image.open(caminho)
+        img = img.resize((tamanho, tamanho), Image.Resampling.LANCZOS)
+        return ImageTk.PhotoImage(img)
+    except Exception:
+        return None
+
 def tela_lista_funcionarios():
     janela = tk.Toplevel()
     janela.title("Soft Car - Lista de Funcionários")
-    janela.geometry("900x500")
-    janela.minsize(700, 400)
+    janela.geometry("1000x600")
+    janela.minsize(800, 500)
+
+    cor_dourado = "#b88b4a"
+    cor_branco = "#ffffff"
+    cor_fundo = "#2b3e50"
+    cor_fundo2 = "#1a2735"
+    MENU_X_START = 160
+
+    icones_info = [
+        ("Cliente",     "assets/cliente.png"),
+        ("Serviços",    "assets/servicos.png"),
+        ("Funcionários","assets/funcionarios.png"),
+        ("Materiais",   "assets/materiais.png"),
+        ("Relatórios",  "assets/relatorios.png"),
+    ]
+
+    def acao_menu(opcao):
+        if opcao == "Cliente":
+            from view.lista_clientes import tela_lista_clientes
+            tela_lista_clientes()
+        elif opcao == "Funcionários":
+            pass
+        else:
+            messagebox.showinfo("Soft Car", f"Você clicou na opção: {opcao}")
 
     canvas = tk.Canvas(janela, highlightthickness=0)
     canvas.pack(fill="both", expand=True)
@@ -137,42 +168,78 @@ def tela_lista_funcionarios():
         img_original = Image.open(img_path)
 
     bg_image_tk = None
+    menu_criado = False
+    botoes_menu = []
+    canvas.image_refs = []
+
+    # ---- ESTILO ESCURO ----
+    style = ttk.Style()
+    style.theme_use("clam")
+    style.layout("Treeview", [
+        ("Treeview.field", {"sticky": "nswe", "border": 0, "children": [
+            ("Treeview.padding", {"sticky": "nswe", "children": [
+                ("Treeview.treearea", {"sticky": "nswe"})
+            ]})
+        ]})
+    ])
+    style.configure("Treeview",
+                    background=cor_fundo,
+                    foreground=cor_branco,
+                    fieldbackground=cor_fundo,
+                    borderwidth=0)
+    style.configure("Treeview.Heading",
+                    background=cor_fundo2,
+                    foreground=cor_branco,
+                    relief="flat",
+                    borderwidth=0)
+    style.map("Treeview",
+              background=[("selected", cor_dourado)])
 
     # ---- BARRA DE BUSCA ----
-    frame_top = tk.Frame(canvas, bg="#f0f0f0", padx=10, pady=10)
+    frame_top = tk.Frame(canvas, bg=cor_fundo, padx=10, pady=10)
     frame_top_window = canvas.create_window(0, 0, window=frame_top, anchor="nw")
 
-    tk.Label(frame_top, text="Buscar:", font=("Arial", 10), bg="#f0f0f0").pack(side="left", padx=5)
+    tk.Label(frame_top, text="Buscar:", font=("Arial", 10), bg=cor_fundo, fg=cor_branco).pack(side="left", padx=5)
     entry_busca = tk.Entry(frame_top, width=30, font=("Arial", 10))
     entry_busca.pack(side="left", padx=5)
-    tk.Button(frame_top, text="Buscar", font=("Arial", 9), command=lambda: buscar_funcionarios(tree, entry_busca)).pack(side="left", padx=5)
-    tk.Button(frame_top, text="Limpar", font=("Arial", 9), command=lambda: [entry_busca.delete(0, "end"), carregar_funcionarios(tree)]).pack(side="left", padx=5)
+    tk.Button(frame_top, text="Buscar", font=("Arial", 9, "bold"), bg=cor_fundo2, fg=cor_branco, bd=0, command=lambda: buscar_funcionarios(tree, entry_busca)).pack(side="left", padx=5)
+    tk.Button(frame_top, text="Limpar", font=("Arial", 9, "bold"), bg=cor_fundo2, fg=cor_branco, bd=0, command=lambda: [entry_busca.delete(0, "end"), carregar_funcionarios(tree)]).pack(side="left", padx=5)
 
     # ---- BOTÕES DE AÇÃO ----
-    frame_btns = tk.Frame(canvas, bg="#f0f0f0", padx=10, pady=5)
+    frame_btns = tk.Frame(canvas, bg=cor_fundo, padx=10, pady=5)
     frame_btns_window = canvas.create_window(0, 0, window=frame_btns, anchor="nw")
-    tk.Button(frame_btns, text="Novo", font=("Arial", 9), command=lambda: abrir_formulario(tree)).pack(side="left", padx=5)
-    tk.Button(frame_btns, text="Editar", font=("Arial", 9), command=lambda: editar_selecionado(tree)).pack(side="left", padx=5)
-    tk.Button(frame_btns, text="Excluir", font=("Arial", 9), command=lambda: excluir_funcionario(tree)).pack(side="left", padx=5)
+    tk.Button(frame_btns, text="Novo", font=("Arial", 9, "bold"), bg=cor_fundo2, fg=cor_branco, bd=0, command=lambda: abrir_formulario(tree)).pack(side="left", padx=5)
+    tk.Button(frame_btns, text="Editar", font=("Arial", 9, "bold"), bg=cor_fundo2, fg=cor_branco, bd=0, command=lambda: editar_selecionado(tree)).pack(side="left", padx=5)
+    tk.Button(frame_btns, text="Excluir", font=("Arial", 9, "bold"), bg=cor_fundo2, fg=cor_branco, bd=0, command=lambda: excluir_funcionario(tree)).pack(side="left", padx=5)
 
-    # ---- TABELA (direto no canvas, sem frame opaco) ----
+   # ---- TABELA ----
     colunas = ("id_func", "nome_func", "email_func", "telefone_func", "cpf_func", "cargo")
-    tree = ttk.Treeview(canvas, columns=colunas, show="headings", selectmode="browse")
+    tree = ttk.Treeview(canvas, columns=colunas, show="headings", selectmode="browse", height=15)
     tree.heading("id_func", text="ID")
     tree.heading("nome_func", text="Nome")
     tree.heading("email_func", text="E-mail")
     tree.heading("telefone_func", text="Telefone")
     tree.heading("cpf_func", text="CPF")
     tree.heading("cargo", text="Cargo")
-    tree.column("id_func", width=0, stretch=False)  # coluna oculta
-    tree.column("cpf_func", width=0, stretch=False)  # coluna oculta
+    tree.column("id_func", width=0, stretch=False)
+    tree.column("cpf_func", width=0, stretch=False)
     tree.column("nome_func", width=250)
     tree.column("email_func", width=250)
     tree.column("telefone_func", width=150, anchor="center")
     tree.column("cargo", width=120, anchor="center")
 
     scrollbar = ttk.Scrollbar(canvas, orient="vertical", command=tree.yview)
-    tree.configure(yscrollcommand=scrollbar.set)
+
+    def _atualizar_scrollbar(*args):
+        scrollbar.set(*args)
+        try:
+            low, high = (float(args[0]), float(args[1]))
+            state = "hidden" if low <= 0.0 and high >= 1.0 else "normal"
+            canvas.itemconfig(scrollbar_window, state=state)
+        except (ValueError, IndexError):
+            pass
+
+    tree.configure(yscrollcommand=_atualizar_scrollbar)
 
     tree_window = canvas.create_window(0, 0, window=tree, anchor="nw")
     scrollbar_window = canvas.create_window(0, 0, window=scrollbar, anchor="ne")
@@ -197,21 +264,64 @@ def tela_lista_funcionarios():
 
     carregar_funcionarios(tree)
 
-    # ---- REDIMENSIONAMENTO ----
+   # ---- REDIMENSIONAMENTO ----
     def _redimensionar(w, h):
-        nonlocal bg_image_tk
+        nonlocal bg_image_tk, menu_criado
+
         if img_original:
             img_resized = img_original.resize((w, h), Image.Resampling.LANCZOS)
             bg_image_tk = ImageTk.PhotoImage(img_resized)
             canvas.delete("bg")
             canvas.create_image(0, 0, image=bg_image_tk, anchor="nw", tags="bg")
             canvas.tag_lower("bg")
-        canvas.coords(frame_top_window, 10, 10)
-        canvas.coords(frame_btns_window, 10, 55)
-        canvas.coords(tree_window, 10, 100)
-        canvas.itemconfig(tree_window, width=w - 40, height=max(100, h - 120))
-        canvas.coords(scrollbar_window, w - 20, 100)
-        canvas.itemconfig(scrollbar_window, height=max(100, h - 120))
+
+        if not menu_criado:
+            y_pos = 220
+            for nome, arquivo in icones_info:
+                icone = _carregar_icone(arquivo, 24)
+
+                img_item = canvas.create_image(20, y_pos, image=icone, anchor="nw")
+                txt_item = canvas.create_text(50, y_pos + 12, text=nome, font=("Arial", 11, "bold"), fill=cor_branco, anchor="nw")
+
+                def make_handler(opcao):
+                    return lambda e: acao_menu(opcao)
+
+                canvas.tag_bind(img_item, "<Button-1>", make_handler(nome))
+                canvas.tag_bind(txt_item, "<Button-1>", make_handler(nome))
+
+                def on_enter(e, txt=txt_item):
+                    canvas.itemconfig(txt, fill=cor_dourado)
+                def on_leave(e, txt=txt_item):
+                    canvas.itemconfig(txt, fill=cor_branco)
+
+                canvas.tag_bind(img_item, "<Enter>", on_enter)
+                canvas.tag_bind(img_item, "<Leave>", on_leave)
+                canvas.tag_bind(txt_item, "<Enter>", on_enter)
+                canvas.tag_bind(txt_item, "<Leave>", on_leave)
+
+                canvas.image_refs.append(icone)
+                botoes_menu.append((img_item, txt_item))
+                y_pos += 50
+            menu_criado = True
+
+        y = 220
+        for img_item, txt_item in botoes_menu:
+            canvas.coords(img_item, 20, y)
+            canvas.coords(txt_item, 50, y + 12)
+            y += 50
+
+        cx = w * 0.191
+        cy = h * 0.178
+        cw = w * 0.753
+        ch = h * 0.750
+
+        canvas.coords(frame_top_window, cx + 2, cy + 2)
+        canvas.coords(frame_btns_window, cx + 2, cy + 40)
+        canvas.coords(tree_window, cx + 2, cy + 78)
+        canvas.itemconfig(tree_window, width=max(100, cw - 8), height=max(100, ch - 85))
+        canvas.coords(scrollbar_window, cx + cw - 22, cy + 78)
+        canvas.itemconfig(scrollbar_window, height=max(100, ch - 85))
+        _atualizar_scrollbar(*tree.yview())
 
     def redimensionar(event):
         if event.widget != janela:
@@ -222,7 +332,7 @@ def tela_lista_funcionarios():
         _redimensionar(w, h)
 
     janela.bind("<Configure>", redimensionar)
-    janela.after(50, lambda: [janela.update_idletasks(), _redimensionar(janela.winfo_width(), janela.winfo_height())])
+    janela.after(100, lambda: [janela.update_idletasks(), _redimensionar(janela.winfo_width(), janela.winfo_height())])
 
 if __name__ == "__main__":
     root = tk.Tk()
