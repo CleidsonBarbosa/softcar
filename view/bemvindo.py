@@ -1,8 +1,11 @@
-
 import tkinter as tk
 from tkinter import messagebox
 from PIL import Image, ImageTk
 import os
+
+# CORREÇÃO: Linha completada e importada corretamente sem cortes
+from view.cadastra_servicos import tela_cadastro_servicos
+from view.lista_funcionarios import App
 
 def tela_dashboard():
     root = tk.Tk()
@@ -34,14 +37,15 @@ def tela_dashboard():
                             command=lambda: acao_menu("Cliente"))
     window_cliente = canvas.create_window(0, 0, window=btn_cliente, anchor="w")
 
+    # O botão de serviços agora chama a função importada corretamente
     btn_servicos = tk.Button(root, text="Serviços", font=("Arial", 11, "bold"), fg="white", bg=cor_menu, 
                              activebackground="#3a536b", activeforeground="white", bd=0, anchor="w", padx=10,
-                             command=lambda: acao_menu("Serviços"))
+                             command=tela_cadastro_servicos)
     window_servicos = canvas.create_window(0, 0, window=btn_servicos, anchor="w")
 
     btn_funcionarios = tk.Button(root, text="Funcionários", font=("Arial", 11, "bold"), fg="white", bg=cor_menu, 
                                  activebackground="#3a536b", activeforeground="white", bd=0, anchor="w", padx=10,
-                                 command=lambda: acao_menu("Funcionários"))
+                                 command=App)
     window_funcionarios = canvas.create_window(0, 0, window=btn_funcionarios, anchor="w")
 
     btn_materiais = tk.Button(root, text="Materiais", font=("Arial", 11, "bold"), fg="white", bg=cor_menu, 
@@ -66,7 +70,6 @@ def tela_dashboard():
         nonlocal bg_image_tk
         
         # CORREÇÃO CRÍTICA: Garante que o redimensionamento só trate a mudança da janela principal (root).
-        # Sem isso, os sub-widgets disparam o evento de forma recursiva e quebram a interface.
         if event.widget != root:
             return
 
@@ -87,7 +90,7 @@ def tela_dashboard():
             (btn_cliente, window_cliente, 0.33),
             (btn_servicos, window_servicos, 0.425),
             (btn_funcionarios, window_funcionarios, 0.52),
-            (btn_materiais, window_materiais, 0.615),
+            (btn_materiais, window_materials, 0.615), # Atenção aqui caso mude a variável
             (btn_relatorios, window_relatorios, 0.71)
         ]:
             btn.configure(width=max(8, int(largura_botao / 8))) 
