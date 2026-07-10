@@ -1,8 +1,12 @@
+import customtkinter as ctk
 import tkinter as tk
 from tkinter import ttk, messagebox
 from PIL import Image, ImageTk
 import os
 import mysql.connector
+
+ctk.set_appearance_mode("dark")
+ctk.set_default_color_theme("dark-blue")
 
 def conectar():
     return mysql.connector.connect(
@@ -19,8 +23,9 @@ def carregar_funcionarios(tree):
         conn = conectar()
         cursor = conn.cursor()
         cursor.execute("SELECT id_func, nome_func, email_func, telefone_func, cpf_func, cargo FROM funcionarios ORDER BY nome_func")
-        for row in cursor.fetchall():
-            tree.insert("", "end", values=row)
+        for i, row in enumerate(cursor.fetchall()):
+            tag = "even" if i % 2 == 0 else "odd"
+            tree.insert("", "end", values=row, tags=(tag,))
         cursor.close()
         conn.close()
     except mysql.connector.Error as e:
@@ -40,31 +45,32 @@ def buscar_funcionarios(tree, entry_busca):
             )
         else:
             cursor.execute("SELECT id_func, nome_func, email_func, telefone_func, cpf_func, cargo FROM funcionarios ORDER BY nome_func")
-        for row in cursor.fetchall():
-            tree.insert("", "end", values=row)
+        for i, row in enumerate(cursor.fetchall()):
+            tag = "even" if i % 2 == 0 else "odd"
+            tree.insert("", "end", values=row, tags=(tag,))
         cursor.close()
         conn.close()
     except mysql.connector.Error as e:
         messagebox.showerror("Erro", f"Erro ao buscar:\n{e}")
 
 def abrir_formulario(tree, dados=None):
-    modal = tk.Toplevel()
+    modal = ctk.CTkToplevel()
     modal.title("Editar Funcionário" if dados else "Novo Funcionário")
-    modal.geometry("400x450")
+    modal.geometry("450x500")
     modal.resizable(False, False)
     modal.transient(tree.winfo_toplevel())
     modal.grab_set()
 
-    frame = ttk.Frame(modal, padding=20)
-    frame.pack(fill="both", expand=True)
+    frame = ctk.CTkFrame(modal, fg_color="#2b3e50")
+    frame.pack(fill="both", expand=True, padx=15, pady=15)
 
     campos = ["nome_func", "email_func", "telefone_func", "cpf_func", "cargo", "endereco_func", "data_nascimento_func", "senha"]
     labels = ["Nome", "E-mail", "Telefone", "CPF", "Cargo (lavador/atendente)", "Endereço", "Data de Nascimento (YYYY-MM-DD)", "Senha"]
     entries = {}
 
     for i, (campo, label) in enumerate(zip(campos, labels)):
-        ttk.Label(frame, text=label).grid(row=i, column=0, sticky="w", pady=4)
-        entry = ttk.Entry(frame, width=40)
+        ctk.CTkLabel(frame, text=label, text_color="#ffffff").grid(row=i, column=0, sticky="w", pady=4)
+        entry = ctk.CTkEntry(frame, width=250)
         entry.grid(row=i, column=1, pady=4)
         if dados:
             entry.insert(0, dados[campo])
@@ -98,10 +104,10 @@ def abrir_formulario(tree, dados=None):
         except mysql.connector.Error as e:
             messagebox.showerror("Erro", f"Erro ao salvar:\n{e}")
 
-    btn_frame = ttk.Frame(frame)
+    btn_frame = ctk.CTkFrame(frame, fg_color="transparent")
     btn_frame.grid(row=len(campos), column=0, columnspan=2, pady=20)
-    ttk.Button(btn_frame, text="Salvar", command=salvar).pack(side="left", padx=5)
-    ttk.Button(btn_frame, text="Cancelar", command=modal.destroy).pack(side="left", padx=5)
+    ctk.CTkButton(btn_frame, text="Salvar", command=salvar, width=90).pack(side="left", padx=5)
+    ctk.CTkButton(btn_frame, text="Cancelar", command=modal.destroy, width=90).pack(side="left", padx=5)
 
 def excluir_funcionario(tree):
     selecionado = tree.selection()
@@ -131,7 +137,7 @@ def _carregar_icone(caminho, tamanho):
         return None
 
 def tela_lista_funcionarios():
-    janela = tk.Toplevel()
+    janela = ctk.CTkToplevel()
     janela.title("Soft Car - Lista de Funcionários")
     janela.geometry("1000x600")
     janela.minsize(800, 500)
@@ -140,7 +146,6 @@ def tela_lista_funcionarios():
     cor_branco = "#ffffff"
     cor_fundo = "#2b3e50"
     cor_fundo2 = "#1a2735"
-    MENU_X_START = 160
 
     icones_info = [
         ("Cliente",     "assets/cliente.png"),
@@ -172,7 +177,6 @@ def tela_lista_funcionarios():
     botoes_menu = []
     canvas.image_refs = []
 
-    # ---- ESTILO ESCURO ----
     style = ttk.Style()
     style.theme_use("clam")
     style.layout("Treeview", [
@@ -183,12 +187,13 @@ def tela_lista_funcionarios():
         ]})
     ])
     style.configure("Treeview",
-                    background=cor_fundo,
+                    background="#3a5a6e",
                     foreground=cor_branco,
-                    fieldbackground=cor_fundo,
+                    fieldbackground="#3a5a6e",
+                    rowheight=28,
                     borderwidth=0)
     style.configure("Treeview.Heading",
-                    background=cor_fundo2,
+                    background="#2c4a5c",
                     foreground=cor_branco,
                     relief="flat",
                     borderwidth=0)
@@ -196,55 +201,23 @@ def tela_lista_funcionarios():
               background=[("selected", cor_dourado)])
 
     # ---- BARRA DE BUSCA ----
-    frame_top = tk.Frame(canvas, bg=cor_fundo, padx=10, pady=10)
+    frame_top = ctk.CTkFrame(canvas, fg_color=cor_fundo)
     frame_top_window = canvas.create_window(0, 0, window=frame_top, anchor="nw")
 
-    tk.Label(frame_top, text="Buscar:", font=("Arial", 10), bg=cor_fundo, fg=cor_branco).pack(side="left", padx=5)
-    entry_busca = tk.Entry(frame_top, width=30, font=("Arial", 10))
+    ctk.CTkLabel(frame_top, text="Buscar:", font=("Arial", 10), text_color=cor_branco).pack(side="left", padx=5)
+    entry_busca = ctk.CTkEntry(frame_top, width=200)
     entry_busca.pack(side="left", padx=5)
-    tk.Button(frame_top, text="Buscar", font=("Arial", 9, "bold"), bg=cor_fundo2, fg=cor_branco, bd=0, command=lambda: buscar_funcionarios(tree, entry_busca)).pack(side="left", padx=5)
-    tk.Button(frame_top, text="Limpar", font=("Arial", 9, "bold"), bg=cor_fundo2, fg=cor_branco, bd=0, command=lambda: [entry_busca.delete(0, "end"), carregar_funcionarios(tree)]).pack(side="left", padx=5)
+    ctk.CTkButton(frame_top, text="Buscar", font=("Arial", 9, "bold"), fg_color=cor_fundo2, text_color=cor_branco, hover_color=cor_dourado, width=70, command=lambda: buscar_funcionarios(tree, entry_busca)).pack(side="left", padx=5)
+    ctk.CTkButton(frame_top, text="Limpar", font=("Arial", 9, "bold"), fg_color=cor_fundo2, text_color=cor_branco, hover_color=cor_dourado, width=70, command=lambda: [entry_busca.delete(0, "end"), carregar_funcionarios(tree)]).pack(side="left", padx=5)
 
     # ---- BOTÕES DE AÇÃO ----
-    frame_btns = tk.Frame(canvas, bg=cor_fundo, padx=10, pady=5)
+    frame_btns = ctk.CTkFrame(canvas, fg_color=cor_fundo)
     frame_btns_window = canvas.create_window(0, 0, window=frame_btns, anchor="nw")
-    tk.Button(frame_btns, text="Novo", font=("Arial", 9, "bold"), bg=cor_fundo2, fg=cor_branco, bd=0, command=lambda: abrir_formulario(tree)).pack(side="left", padx=5)
-    tk.Button(frame_btns, text="Editar", font=("Arial", 9, "bold"), bg=cor_fundo2, fg=cor_branco, bd=0, command=lambda: editar_selecionado(tree)).pack(side="left", padx=5)
-    tk.Button(frame_btns, text="Excluir", font=("Arial", 9, "bold"), bg=cor_fundo2, fg=cor_branco, bd=0, command=lambda: excluir_funcionario(tree)).pack(side="left", padx=5)
 
-   # ---- TABELA ----
-    colunas = ("id_func", "nome_func", "email_func", "telefone_func", "cpf_func", "cargo")
-    tree = ttk.Treeview(canvas, columns=colunas, show="headings", selectmode="browse", height=15)
-    tree.heading("id_func", text="ID")
-    tree.heading("nome_func", text="Nome")
-    tree.heading("email_func", text="E-mail")
-    tree.heading("telefone_func", text="Telefone")
-    tree.heading("cpf_func", text="CPF")
-    tree.heading("cargo", text="Cargo")
-    tree.column("id_func", width=0, stretch=False)
-    tree.column("cpf_func", width=0, stretch=False)
-    tree.column("nome_func", width=250)
-    tree.column("email_func", width=250)
-    tree.column("telefone_func", width=150, anchor="center")
-    tree.column("cargo", width=120, anchor="center")
+    def cmd_novo():
+        abrir_formulario(tree)
 
-    scrollbar = ttk.Scrollbar(canvas, orient="vertical", command=tree.yview)
-
-    def _atualizar_scrollbar(*args):
-        scrollbar.set(*args)
-        try:
-            low, high = (float(args[0]), float(args[1]))
-            state = "hidden" if low <= 0.0 and high >= 1.0 else "normal"
-            canvas.itemconfig(scrollbar_window, state=state)
-        except (ValueError, IndexError):
-            pass
-
-    tree.configure(yscrollcommand=_atualizar_scrollbar)
-
-    tree_window = canvas.create_window(0, 0, window=tree, anchor="nw")
-    scrollbar_window = canvas.create_window(0, 0, window=scrollbar, anchor="ne")
-
-    def editar_selecionado(tree):
+    def cmd_editar():
         selecionado = tree.selection()
         if not selecionado:
             messagebox.showwarning("Seleção", "Selecione um funcionário na lista.")
@@ -262,9 +235,50 @@ def tela_lista_funcionarios():
         except mysql.connector.Error as e:
             messagebox.showerror("Erro", f"Erro ao carregar dados:\n{e}")
 
+    def cmd_excluir():
+        excluir_funcionario(tree)
+
+    ctk.CTkButton(frame_btns, text="Novo", font=("Arial", 8, "bold"), fg_color=cor_fundo2, text_color=cor_branco, border_width=1, border_color="white", hover_color=cor_dourado, width=70, command=cmd_novo).pack(side="left", padx=8, pady=2)
+    ctk.CTkButton(frame_btns, text="Editar", font=("Arial", 8, "bold"), fg_color=cor_fundo2, text_color=cor_branco, border_width=1, border_color="white", hover_color=cor_dourado, width=70, command=cmd_editar).pack(side="left", padx=8, pady=2)
+    ctk.CTkButton(frame_btns, text="Excluir", font=("Arial", 8, "bold"), fg_color=cor_fundo2, text_color=cor_branco, border_width=1, border_color="white", hover_color=cor_dourado, width=70, command=cmd_excluir).pack(side="left", padx=8, pady=2)
+
+    # ---- TABELA ----
+    colunas = ("id_func", "nome_func", "email_func", "telefone_func", "cpf_func", "cargo")
+    tree = ttk.Treeview(canvas, columns=colunas, show="headings", selectmode="browse", height=15)
+    tree.heading("id_func", text="ID")
+    tree.heading("nome_func", text="Nome")
+    tree.heading("email_func", text="E-mail")
+    tree.heading("telefone_func", text="Telefone")
+    tree.heading("cpf_func", text="CPF")
+    tree.heading("cargo", text="Cargo")
+    tree.column("id_func", width=0, stretch=False)
+    tree.column("cpf_func", width=0, stretch=False)
+    tree.column("nome_func", width=180)
+    tree.column("email_func", width=200)
+    tree.column("telefone_func", width=120, anchor="center")
+    tree.column("cargo", width=100, anchor="center")
+
+    tree.tag_configure("odd", background="#345266")
+    tree.tag_configure("even", background="#3a5a6e")
+
+    scrollbar = ttk.Scrollbar(canvas, orient="vertical", command=tree.yview)
+
+    def _atualizar_scrollbar(*args):
+        scrollbar.set(*args)
+        try:
+            low, high = (float(args[0]), float(args[1]))
+            state = "hidden" if low <= 0.0 and high >= 1.0 else "normal"
+            canvas.itemconfig(scrollbar_window, state=state)
+        except (ValueError, IndexError):
+            pass
+
+    tree.configure(yscrollcommand=_atualizar_scrollbar)
+
+    tree_window = canvas.create_window(0, 0, window=tree, anchor="nw")
+    scrollbar_window = canvas.create_window(0, 0, window=scrollbar, anchor="ne")
+
     carregar_funcionarios(tree)
 
-   # ---- REDIMENSIONAMENTO ----
     def _redimensionar(w, h):
         nonlocal bg_image_tk, menu_criado
 
@@ -316,11 +330,12 @@ def tela_lista_funcionarios():
         ch = h * 0.750
 
         canvas.coords(frame_top_window, cx + 2, cy + 2)
-        canvas.coords(frame_btns_window, cx + 2, cy + 40)
-        canvas.coords(tree_window, cx + 2, cy + 78)
-        canvas.itemconfig(tree_window, width=max(100, cw - 8), height=max(100, ch - 85))
-        canvas.coords(scrollbar_window, cx + cw - 22, cy + 78)
-        canvas.itemconfig(scrollbar_window, height=max(100, ch - 85))
+        canvas.coords(tree_window, cx + 2, cy + 55)
+        canvas.itemconfig(tree_window, width=max(100, cw - 32), height=max(100, ch - 105))
+        canvas.coords(scrollbar_window, cx + cw - 22, cy + 55)
+        canvas.itemconfig(scrollbar_window, height=max(100, ch - 105))
+        canvas.coords(frame_btns_window, cx + 2, cy + ch - 35)
+        canvas.itemconfig(frame_btns_window, width=max(100, cw - 8))
         _atualizar_scrollbar(*tree.yview())
 
     def redimensionar(event):
@@ -335,7 +350,7 @@ def tela_lista_funcionarios():
     janela.after(100, lambda: [janela.update_idletasks(), _redimensionar(janela.winfo_width(), janela.winfo_height())])
 
 if __name__ == "__main__":
-    root = tk.Tk()
+    root = ctk.CTk()
     root.withdraw()
     tela_lista_funcionarios()
     root.mainloop()
