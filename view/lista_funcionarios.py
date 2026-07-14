@@ -191,12 +191,18 @@ def tela_lista_funcionarios():
                     foreground=cor_branco,
                     fieldbackground="#375269",
                     rowheight=28,
-                    borderwidth=0)
+                    borderwidth=0,
+                    lightcolor="#375269",
+                    darkcolor="#375269",
+                    troughcolor="#375269")
     style.configure("Treeview.Heading",
                     background="#2c4a5c",
                     foreground=cor_branco,
                     relief="flat",
-                    borderwidth=0)
+                    borderwidth=0,
+                    lightcolor="#2c4a5c",
+                    darkcolor="#2c4a5c",
+                    troughcolor="#2c4a5c")
     style.layout("Treeview.Heading", [
         ("Treeview.Heading.cell", {"sticky": "nswe", "children": [
             ("Treeview.Heading.padding", {"sticky": "nswe", "children": [
@@ -210,6 +216,15 @@ def tela_lista_funcionarios():
               background=[("active", "#2c4a5c")],
               relief=[("active", "flat")])
 
+    style.configure("Vertical.TScrollbar",
+                    background="#375269",
+                    troughcolor="#375269",
+                    borderwidth=0,
+                    relief="flat",
+                    lightcolor="#375269",
+                    darkcolor="#375269",
+                    arrowcolor="#375269")
+
     # ---- BARRA DE BUSCA ----
     frame_top = ctk.CTkFrame(canvas, fg_color="#375269", corner_radius=0)
     frame_top_window = canvas.create_window(0, 0, window=frame_top, anchor="nw")
@@ -222,10 +237,6 @@ def tela_lista_funcionarios():
 
     btn_cadastrar = ctk.CTkButton(canvas, text="Cadastrar Funcionário +", font=("Arial", 11, "bold"), fg_color="#375269", text_color=cor_branco, border_width=0, hover_color=cor_dourado, width=150, corner_radius=0, command=lambda: abrir_formulario(tree))
     btn_cadastrar_window = canvas.create_window(0, 0, window=btn_cadastrar, anchor="nw")
-
-    # ---- BOTÕES DE AÇÃO ----
-    frame_btns = ctk.CTkFrame(canvas, fg_color=cor_fundo)
-    frame_btns_window = canvas.create_window(0, 0, window=frame_btns, anchor="nw")
 
     def cmd_editar():
         selecionado = tree.selection()
@@ -248,12 +259,12 @@ def tela_lista_funcionarios():
     def cmd_excluir():
         excluir_funcionario(tree)
 
-    ctk.CTkButton(frame_btns, text="Editar", font=("Arial", 8, "bold"), fg_color=cor_fundo2, text_color=cor_branco, border_width=1, border_color="white", hover_color=cor_dourado, width=70, command=cmd_editar).pack(side="left", padx=8, pady=2)
-    ctk.CTkButton(frame_btns, text="Excluir", font=("Arial", 8, "bold"), fg_color=cor_fundo2, text_color=cor_branco, border_width=1, border_color="white", hover_color=cor_dourado, width=70, command=cmd_excluir).pack(side="left", padx=8, pady=2)
-
     # ---- TABELA ----
+    frame_tabela = ctk.CTkFrame(canvas, fg_color="#375269", corner_radius=10, border_width=0)
+    frame_tabela_window = canvas.create_window(0, 0, window=frame_tabela, anchor="nw")
+
     colunas = ("id_func", "nome_func", "email_func", "telefone_func", "cpf_func", "cargo")
-    tree = ttk.Treeview(canvas, columns=colunas, show="headings", selectmode="browse", height=15)
+    tree = ttk.Treeview(frame_tabela, columns=colunas, show="headings", selectmode="browse", height=15)
     tree.heading("id_func", text="ID")
     tree.heading("nome_func", text="Nome")
     tree.heading("email_func", text="E-mail")
@@ -277,21 +288,28 @@ def tela_lista_funcionarios():
 
     tree.bind("<ButtonRelease-1>", lambda e: _clicar_editar(e, tree))
 
-    scrollbar = ttk.Scrollbar(canvas, orient="vertical", command=tree.yview)
+    scrollbar = ttk.Scrollbar(frame_tabela, orient="vertical", command=tree.yview, style="Vertical.TScrollbar")
 
     def _atualizar_scrollbar(*args):
         scrollbar.set(*args)
-        try:
-            low, high = (float(args[0]), float(args[1]))
-            state = "hidden" if low <= 0.0 and high >= 1.0 else "normal"
-            canvas.itemconfig(scrollbar_window, state=state)
-        except (ValueError, IndexError):
-            pass
 
     tree.configure(yscrollcommand=_atualizar_scrollbar)
 
-    tree_window = canvas.create_window(0, 0, window=tree, anchor="nw")
-    scrollbar_window = canvas.create_window(0, 0, window=scrollbar, anchor="ne")
+    scrollbar.pack(side="right", fill="y")
+    tree.pack(side="left", fill="both", expand=True)
+    scrollbar.pack_forget()
+
+    def _mostrar_scrollbar(e):
+        if tree.yview() != (0.0, 1.0):
+            scrollbar.pack(side="right", fill="y")
+
+    def _esconder_scrollbar(e):
+        scrollbar.pack_forget()
+
+    frame_tabela.bind("<Enter>", _mostrar_scrollbar)
+    frame_tabela.bind("<Leave>", _esconder_scrollbar)
+    tree.bind("<Enter>", _mostrar_scrollbar)
+    tree.bind("<Leave>", _esconder_scrollbar)
 
     carregar_funcionarios(tree)
 
@@ -347,13 +365,8 @@ def tela_lista_funcionarios():
 
         canvas.coords(frame_top_window, cx + 30, cy - 55)
         canvas.coords(btn_cadastrar_window, cx + cw - 190, cy - 55)
-        canvas.coords(tree_window, cx + 2, cy + 55)
-        canvas.itemconfig(tree_window, width=max(100, cw - 32), height=max(100, ch - 105))
-        canvas.coords(scrollbar_window, cx + cw - 22, cy + 55)
-        canvas.itemconfig(scrollbar_window, height=max(100, ch - 105))
-        canvas.coords(frame_btns_window, cx + 2, cy + ch - 35)
-        canvas.itemconfig(frame_btns_window, width=max(100, cw - 8))
-        _atualizar_scrollbar(*tree.yview())
+        canvas.coords(frame_tabela_window, cx + 4, cy + 20)
+        canvas.itemconfig(frame_tabela_window, width=max(100, cw - 4), height=max(100, ch - 42))
 
     def redimensionar(event):
         if event.widget != janela:
