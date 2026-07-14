@@ -281,12 +281,9 @@ def tela_lista_funcionarios():
     tree.tag_configure("odd", background="#375269")
     tree.tag_configure("even", background="#375269")
 
-    def _clicar_editar(event, tree):
-        col = tree.identify_column(event.x)
-        if col == "#7":
-            cmd_editar()
+    tree.bind("<Double-1>", lambda e: cmd_editar())
 
-    tree.bind("<ButtonRelease-1>", lambda e: _clicar_editar(e, tree))
+    style.configure("Vertical.TScrollbar", gripcount=0, background="white", troughcolor="#2c4a5c", bordercolor="#2c4a5c", arrowcolor="#000000")
 
     scrollbar = ttk.Scrollbar(frame_tabela, orient="vertical", command=tree.yview, style="Vertical.TScrollbar")
 
@@ -297,19 +294,6 @@ def tela_lista_funcionarios():
 
     scrollbar.pack(side="right", fill="y")
     tree.pack(side="left", fill="both", expand=True)
-    scrollbar.pack_forget()
-
-    def _mostrar_scrollbar(e):
-        if tree.yview() != (0.0, 1.0):
-            scrollbar.pack(side="right", fill="y")
-
-    def _esconder_scrollbar(e):
-        scrollbar.pack_forget()
-
-    frame_tabela.bind("<Enter>", _mostrar_scrollbar)
-    frame_tabela.bind("<Leave>", _esconder_scrollbar)
-    tree.bind("<Enter>", _mostrar_scrollbar)
-    tree.bind("<Leave>", _esconder_scrollbar)
 
     carregar_funcionarios(tree)
 
