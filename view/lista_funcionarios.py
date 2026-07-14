@@ -180,16 +180,16 @@ def tela_lista_funcionarios():
     style = ttk.Style()
     style.theme_use("clam")
     style.layout("Treeview", [
-        ("Treeview.field", {"sticky": "nswe", "border": 0, "children": [
+        ("Treeview.field", {"sticky": "nswe", "children": [
             ("Treeview.padding", {"sticky": "nswe", "children": [
                 ("Treeview.treearea", {"sticky": "nswe"})
             ]})
         ]})
     ])
     style.configure("Treeview",
-                    background="#3a5a6e",
+                    background="#375269",
                     foreground=cor_branco,
-                    fieldbackground="#3a5a6e",
+                    fieldbackground="#375269",
                     rowheight=28,
                     borderwidth=0)
     style.configure("Treeview.Heading",
@@ -197,25 +197,35 @@ def tela_lista_funcionarios():
                     foreground=cor_branco,
                     relief="flat",
                     borderwidth=0)
+    style.layout("Treeview.Heading", [
+        ("Treeview.Heading.cell", {"sticky": "nswe", "children": [
+            ("Treeview.Heading.padding", {"sticky": "nswe", "children": [
+                ("Treeview.Heading.label", {"sticky": "nswe"})
+            ]})
+        ]})
+    ])
     style.map("Treeview",
               background=[("selected", cor_dourado)])
+    style.map("Treeview.Heading",
+              background=[("active", "#2c4a5c")],
+              relief=[("active", "flat")])
 
     # ---- BARRA DE BUSCA ----
-    frame_top = ctk.CTkFrame(canvas, fg_color=cor_fundo)
+    frame_top = ctk.CTkFrame(canvas, fg_color="#375269", corner_radius=0)
     frame_top_window = canvas.create_window(0, 0, window=frame_top, anchor="nw")
 
-    ctk.CTkLabel(frame_top, text="Buscar:", font=("Arial", 10), text_color=cor_branco).pack(side="left", padx=5)
-    entry_busca = ctk.CTkEntry(frame_top, width=200)
+    ctk.CTkLabel(frame_top, text="Pesquisar", font=("Arial", 11, "bold"), text_color=cor_branco).pack(side="left", padx=5)
+    search_var = tk.StringVar()
+    entry_busca = ctk.CTkEntry(frame_top, width=200, fg_color="#375269", border_color="#2c4a5c", corner_radius=0, textvariable=search_var)
     entry_busca.pack(side="left", padx=5)
-    ctk.CTkButton(frame_top, text="Buscar", font=("Arial", 9, "bold"), fg_color=cor_fundo2, text_color=cor_branco, hover_color=cor_dourado, width=70, command=lambda: buscar_funcionarios(tree, entry_busca)).pack(side="left", padx=5)
-    ctk.CTkButton(frame_top, text="Limpar", font=("Arial", 9, "bold"), fg_color=cor_fundo2, text_color=cor_branco, hover_color=cor_dourado, width=70, command=lambda: [entry_busca.delete(0, "end"), carregar_funcionarios(tree)]).pack(side="left", padx=5)
+    search_var.trace_add("write", lambda *args: buscar_funcionarios(tree, entry_busca))
+
+    btn_cadastrar = ctk.CTkButton(canvas, text="Cadastrar Funcionário +", font=("Arial", 11, "bold"), fg_color="#375269", text_color=cor_branco, border_width=0, hover_color=cor_dourado, width=150, corner_radius=0, command=lambda: abrir_formulario(tree))
+    btn_cadastrar_window = canvas.create_window(0, 0, window=btn_cadastrar, anchor="nw")
 
     # ---- BOTÕES DE AÇÃO ----
     frame_btns = ctk.CTkFrame(canvas, fg_color=cor_fundo)
     frame_btns_window = canvas.create_window(0, 0, window=frame_btns, anchor="nw")
-
-    def cmd_novo():
-        abrir_formulario(tree)
 
     def cmd_editar():
         selecionado = tree.selection()
@@ -238,7 +248,6 @@ def tela_lista_funcionarios():
     def cmd_excluir():
         excluir_funcionario(tree)
 
-    ctk.CTkButton(frame_btns, text="Novo", font=("Arial", 8, "bold"), fg_color=cor_fundo2, text_color=cor_branco, border_width=1, border_color="white", hover_color=cor_dourado, width=70, command=cmd_novo).pack(side="left", padx=8, pady=2)
     ctk.CTkButton(frame_btns, text="Editar", font=("Arial", 8, "bold"), fg_color=cor_fundo2, text_color=cor_branco, border_width=1, border_color="white", hover_color=cor_dourado, width=70, command=cmd_editar).pack(side="left", padx=8, pady=2)
     ctk.CTkButton(frame_btns, text="Excluir", font=("Arial", 8, "bold"), fg_color=cor_fundo2, text_color=cor_branco, border_width=1, border_color="white", hover_color=cor_dourado, width=70, command=cmd_excluir).pack(side="left", padx=8, pady=2)
 
@@ -258,8 +267,15 @@ def tela_lista_funcionarios():
     tree.column("telefone_func", width=120, anchor="center")
     tree.column("cargo", width=100, anchor="center")
 
-    tree.tag_configure("odd", background="#345266")
-    tree.tag_configure("even", background="#3a5a6e")
+    tree.tag_configure("odd", background="#375269")
+    tree.tag_configure("even", background="#375269")
+
+    def _clicar_editar(event, tree):
+        col = tree.identify_column(event.x)
+        if col == "#7":
+            cmd_editar()
+
+    tree.bind("<ButtonRelease-1>", lambda e: _clicar_editar(e, tree))
 
     scrollbar = ttk.Scrollbar(canvas, orient="vertical", command=tree.yview)
 
@@ -329,7 +345,8 @@ def tela_lista_funcionarios():
         cw = w * 0.753
         ch = h * 0.750
 
-        canvas.coords(frame_top_window, cx + 2, cy + 2)
+        canvas.coords(frame_top_window, cx + 30, cy - 55)
+        canvas.coords(btn_cadastrar_window, cx + cw - 190, cy - 55)
         canvas.coords(tree_window, cx + 2, cy + 55)
         canvas.itemconfig(tree_window, width=max(100, cw - 32), height=max(100, ch - 105))
         canvas.coords(scrollbar_window, cx + cw - 22, cy + 55)
