@@ -56,22 +56,78 @@ def buscar_funcionarios(tree, entry_busca):
 def abrir_formulario(tree, dados=None):
     modal = ctk.CTkToplevel()
     modal.title("Editar Funcionário" if dados else "Novo Funcionário")
-    modal.geometry("450x500")
+    modal.geometry("1000x600")
+    modal.minsize(800, 500)
     modal.resizable(False, False)
     modal.transient(tree.winfo_toplevel())
     modal.grab_set()
 
-    frame = ctk.CTkFrame(modal, fg_color="#2b3e50")
-    frame.pack(fill="both", expand=True, padx=15, pady=15)
+    canvas = tk.Canvas(modal, highlightthickness=0)
+    canvas.pack(fill="both", expand=True)
+
+    # Carregar imagem de fundo
+    try:
+        img = Image.open("assets/editar_funcionarios.png")
+        img = img.resize((1000, 600), Image.Resampling.LANCZOS)
+        bg_img = ImageTk.PhotoImage(img)
+        canvas.create_image(0, 0, image=bg_img, anchor="nw")
+        canvas.image = bg_img
+    except Exception:
+        pass
+
+    # ---- MENU VERTICAL (igual tela lista) ----
+    icones_info = [
+        ("Cliente",     "assets/cliente.png"),
+        ("Serviços",    "assets/servicos.png"),
+        ("Funcionários","assets/funcionarios.png"),
+        ("Materiais",   "assets/materiais.png"),
+        ("Relatórios",  "assets/relatorios.png"),
+    ]
+
+    def acao_menu(opcao):
+        modal.destroy()
+        from view.bemvindo import tela_dashboard
+        tela_dashboard(opcao_inicial=opcao)
+
+    def make_handler(opcao):
+        return lambda e: acao_menu(opcao)
+
+y_pos = 120
+    for nome, arquivo in icones_info:
+        icone = _carregar_icone(arquivo, 24)
+        ativo = (nome == "Funcionários")
+        cor_texto = "#ffffff" if ativo else "#777777"
+        if ativo:
+            canvas.create_rectangle(10, y_pos, 200, y_pos + 38, fill="#b88b4a", outline="")
+        img_item = canvas.create_image(20, y_pos, image=icone, anchor="nw")
+        txt_item = canvas.create_text(50, y_pos + 12, text=nome, font=("Arial", 11, "bold"), fill=cor_texto, anchor="nw")
+        if ativo:
+            canvas.tag_bind(img_item, "<Button-1>", make_handler(nome))
+            canvas.tag_bind(txt_item, "<Button-1>", make_handler(nome))
+        canvas.image_refs = getattr(canvas, "image_refs", [])
+        canvas.image_refs.append(icone)
+        y_pos += 50
+
+    # ---- FORMULÁRIO ----
+    frame = ctk.CTkFrame(canvas, fg_color="#2b3e50")
+    frame_window = canvas.create_window(580, 300, window=frame, anchor="center")
+
+    def _atualizar_frame(e):
+        if e.widget != modal:
+            return
+        w = e.width
+        canvas.coords(frame_window, int(w * 0.56), e.height // 2)
+
+    modal.bind("<Configure>", _atualizar_frame)
 
     campos = ["nome_func", "email_func", "telefone_func", "cpf_func", "cargo", "endereco_func", "data_nascimento_func", "senha"]
     labels = ["Nome", "E-mail", "Telefone", "CPF", "Cargo (lavador/atendente)", "Endereço", "Data de Nascimento (YYYY-MM-DD)", "Senha"]
     entries = {}
 
     for i, (campo, label) in enumerate(zip(campos, labels)):
-        ctk.CTkLabel(frame, text=label, text_color="#ffffff").grid(row=i, column=0, sticky="w", pady=4)
+        ctk.CTkLabel(frame, text=label, text_color="#ffffff").grid(row=i, column=0, sticky="w", pady=4, padx=10)
         entry = ctk.CTkEntry(frame, width=250)
-        entry.grid(row=i, column=1, pady=4)
+        entry.grid(row=i, column=1, pady=4, padx=10)
         if dados:
             entry.insert(0, dados[campo])
         entries[campo] = entry
