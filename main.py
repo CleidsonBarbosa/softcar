@@ -65,6 +65,15 @@ def tela_login():
     canvas.pack(fill="both", expand=True)
     canvas.create_image(0, 0, image=bg_image, anchor="nw")
 
+    # --- LOGO SOFCAR ---
+    '''logo_path = "assets/sofcar.png"
+    if os.path.exists(logo_path):
+        logo_img = Image.open(logo_path)
+        logo_img = logo_img.resize((180, 180), Image.Resampling.LANCZOS)
+        logo_tk = ImageTk.PhotoImage(logo_img)
+        canvas.create_image(400, 130, image=logo_tk)
+        canvas.logo = logo_tk  # manter referência'''
+
     # --- TEXTOS DE IDENTIFICAÇÃO ---
     canvas.create_text(645, 255, text="Usuário / E-mail", font=("Arial", 11, "bold"), fill="white")
     canvas.create_text(645, 345, text="Senha", font=("Arial", 11, "bold"), fill="white")
