@@ -92,18 +92,16 @@ def abrir_formulario(tree, dados=None):
     def make_handler(opcao):
         return lambda e: acao_menu(opcao)
 
-y_pos = 120
+    y_pos = 120
     for nome, arquivo in icones_info:
         icone = _carregar_icone(arquivo, 24)
         ativo = (nome == "Funcionários")
-        cor_texto = "#ffffff" if ativo else "#777777"
         if ativo:
-            canvas.create_rectangle(10, y_pos, 200, y_pos + 38, fill="#b88b4a", outline="")
+            cor_texto = "#b88b4a"
+        else:
+            cor_texto = "#777777"
         img_item = canvas.create_image(20, y_pos, image=icone, anchor="nw")
         txt_item = canvas.create_text(50, y_pos + 12, text=nome, font=("Arial", 11, "bold"), fill=cor_texto, anchor="nw")
-        if ativo:
-            canvas.tag_bind(img_item, "<Button-1>", make_handler(nome))
-            canvas.tag_bind(txt_item, "<Button-1>", make_handler(nome))
         canvas.image_refs = getattr(canvas, "image_refs", [])
         canvas.image_refs.append(icone)
         y_pos += 50
@@ -367,33 +365,36 @@ def tela_lista_funcionarios():
             y_pos = 220
             for nome, arquivo in icones_info:
                 icone = _carregar_icone(arquivo, 24)
+                ativo = (nome == "Funcionários")
+                cor_texto = "#b88b4a" if ativo else "#777777"
 
                 img_item = canvas.create_image(20, y_pos, image=icone, anchor="nw")
-                txt_item = canvas.create_text(50, y_pos + 12, text=nome, font=("Arial", 11, "bold"), fill=cor_branco, anchor="nw")
+                txt_item = canvas.create_text(50, y_pos + 12, text=nome, font=("Arial", 11, "bold"), fill=cor_texto, anchor="nw")
 
                 def make_handler(opcao):
                     return lambda e: acao_menu(opcao)
 
-                canvas.tag_bind(img_item, "<Button-1>", make_handler(nome))
-                canvas.tag_bind(txt_item, "<Button-1>", make_handler(nome))
+                if ativo:
+                    canvas.tag_bind(img_item, "<Button-1>", make_handler(nome))
+                    canvas.tag_bind(txt_item, "<Button-1>", make_handler(nome))
 
-                def on_enter(e, txt=txt_item):
-                    canvas.itemconfig(txt, fill=cor_dourado)
-                def on_leave(e, txt=txt_item):
-                    canvas.itemconfig(txt, fill=cor_branco)
+                    def on_enter(e, txt=txt_item):
+                        canvas.itemconfig(txt, fill=cor_dourado)
+                    def on_leave(e, txt=txt_item):
+                        canvas.itemconfig(txt, fill="#b88b4a")
 
-                canvas.tag_bind(img_item, "<Enter>", on_enter)
-                canvas.tag_bind(img_item, "<Leave>", on_leave)
-                canvas.tag_bind(txt_item, "<Enter>", on_enter)
-                canvas.tag_bind(txt_item, "<Leave>", on_leave)
+                    canvas.tag_bind(img_item, "<Enter>", on_enter)
+                    canvas.tag_bind(img_item, "<Leave>", on_leave)
+                    canvas.tag_bind(txt_item, "<Enter>", on_enter)
+                    canvas.tag_bind(txt_item, "<Leave>", on_leave)
 
                 canvas.image_refs.append(icone)
-                botoes_menu.append((img_item, txt_item))
+                botoes_menu.append((img_item, txt_item, ativo))
                 y_pos += 50
             menu_criado = True
 
         y = 220
-        for img_item, txt_item in botoes_menu:
+        for img_item, txt_item, ativo in botoes_menu:
             canvas.coords(img_item, 20, y)
             canvas.coords(txt_item, 50, y + 12)
             y += 50
