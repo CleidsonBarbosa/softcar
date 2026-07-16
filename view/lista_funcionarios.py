@@ -45,9 +45,13 @@ def buscar_funcionarios(tree, entry_busca):
             )
         else:
             cursor.execute("SELECT id_func, nome_func, email_func, telefone_func, cpf_func, cargo FROM funcionarios ORDER BY nome_func")
-        for i, row in enumerate(cursor.fetchall()):
+        resultados = cursor.fetchall()
+        for i, row in enumerate(resultados):
             tag = "even" if i % 2 == 0 else "odd"
-            tree.insert("", "end", values=row, tags=(tag,))
+            item_id = tree.insert("", "end", values=row, tags=(tag,))
+            if i == 0 and termo:
+                tree.selection_set(item_id)
+                tree.see(item_id)
         cursor.close()
         conn.close()
     except mysql.connector.Error as e:
@@ -62,7 +66,7 @@ def abrir_formulario(tree, dados=None):
     modal.transient(tree.winfo_toplevel())
     modal.grab_set()
 
-    canvas = tk.Canvas(modal, highlightthickness=0)
+    canvas = tk.Canvas(modal, highlightthickness=0, bg="#1a2735")
     canvas.pack(fill="both", expand=True)
 
     # Carregar imagem de fundo
@@ -107,14 +111,16 @@ def abrir_formulario(tree, dados=None):
         y_pos += 50
 
     # ---- FORMULÁRIO ----
-    frame = ctk.CTkFrame(canvas, fg_color="#2b3e50")
-    frame_window = canvas.create_window(580, 300, window=frame, anchor="center")
+    frame = ctk.CTkFrame(canvas, fg_color="#375269", corner_radius=0, border_width=0)
 
     def _atualizar_frame(e):
         if e.widget != modal:
             return
-        w = e.width
-        canvas.coords(frame_window, int(w * 0.56), e.height // 2)
+        w, h = e.width, e.height
+        canvas.coords(frame_window, 192, 60)
+        canvas.itemconfig(frame_window, width=w - 250, height=h - 250)
+
+    frame_window = canvas.create_window(0, 0, window=frame, anchor="nw", width=1000, height=800)
 
     modal.bind("<Configure>", _atualizar_frame)
 
@@ -123,9 +129,11 @@ def abrir_formulario(tree, dados=None):
     entries = {}
 
     for i, (campo, label) in enumerate(zip(campos, labels)):
-        ctk.CTkLabel(frame, text=label, text_color="#ffffff").grid(row=i, column=0, sticky="w", pady=4, padx=10)
-        entry = ctk.CTkEntry(frame, width=250)
-        entry.grid(row=i, column=1, pady=4, padx=10)
+        row_frame = ctk.CTkFrame(frame, fg_color="transparent")
+        row_frame.pack(fill="x", padx=20, pady=2)
+        ctk.CTkLabel(row_frame, text=label, font=("Arial", 11, "bold"), text_color="#ffffff", width=180, anchor="w").pack(side="left")
+        entry = ctk.CTkEntry(row_frame, font=("Arial", 13), fg_color="#c2c7cc", border_width=2, border_color="#b0b5b9", text_color="#333333", corner_radius=0, justify="center")
+        entry.pack(side="left", fill="x", expand=True, padx=(0, 20))
         if dados:
             entry.insert(0, dados[campo])
         entries[campo] = entry
@@ -158,9 +166,21 @@ def abrir_formulario(tree, dados=None):
         except mysql.connector.Error as e:
             messagebox.showerror("Erro", f"Erro ao salvar:\n{e}")
 
+    def _carregar_img_botao(caminho, largura=100, altura=30):
+        try:
+            img = Image.open(caminho)
+            img = img.resize((largura, altura), Image.Resampling.LANCZOS)
+            return ImageTk.PhotoImage(img)
+        except Exception:
+            return None
+
+    img_salvar = _carregar_img_botao("assets/btn_salvar.png")
+    img_excluir = _carregar_img_botao("assets/btn_excuir.png")
+    img_cancelar = _carregar_img_botao("assets/btn_cancelar.png")
+
     btn_frame = ctk.CTkFrame(frame, fg_color="transparent")
-    btn_frame.grid(row=len(campos), column=0, columnspan=2, pady=20)
-    ctk.CTkButton(btn_frame, text="Salvar", command=salvar, width=90).pack(side="left", padx=5)
+    btn_frame.pack(pady=15)
+    ctk.CTkButton(btn_frame, text="", image=img_salvar, command=salvar, width=30, height=30, fg_color="transparent", hover_color="#c2c7cc", corner_radius=0, border_width=0).pack(side="left", padx=15)
     if dados:
         def excluir_do_modal():
             if messagebox.askyesno("Confirmar", "Tem certeza que deseja excluir este funcionário?"):
@@ -175,8 +195,12 @@ def abrir_formulario(tree, dados=None):
                     carregar_funcionarios(tree)
                 except mysql.connector.Error as e:
                     messagebox.showerror("Erro", f"Erro ao excluir:\n{e}")
-        ctk.CTkButton(btn_frame, text="Excluir", command=excluir_do_modal, width=90, fg_color="#c0392b", hover_color="#a93226").pack(side="left", padx=5)
-    ctk.CTkButton(btn_frame, text="Cancelar", command=modal.destroy, width=90).pack(side="left", padx=5)
+        btn_excluir = ctk.CTkButton(btn_frame, text="", image=img_excluir, command=excluir_do_modal, width=30, height=30, fg_color="transparent", hover_color="#c2c7cc", corner_radius=0, border_width=0)
+        btn_excluir.image = img_excluir
+        btn_excluir.pack(side="left", padx=15)
+    btn_cancelar = ctk.CTkButton(btn_frame, text="", image=img_cancelar, command=modal.destroy, width=30, height=30, fg_color="transparent", hover_color="#c2c7cc", corner_radius=0, border_width=0)
+    btn_cancelar.image = img_cancelar
+    btn_cancelar.pack(side="left", padx=15)
 
 def excluir_funcionario(tree):
     selecionado = tree.selection()
@@ -305,6 +329,7 @@ def tela_lista_funcionarios(parent=None):
     entry_busca = ctk.CTkEntry(frame_top, width=200, fg_color="#375269", border_color="#2c4a5c", corner_radius=0, textvariable=search_var)
     entry_busca.pack(side="left", padx=5)
     search_var.trace_add("write", lambda *args: buscar_funcionarios(tree, entry_busca))
+    entry_busca.bind("<Return>", lambda e: cmd_editar())
 
     btn_cadastrar = ctk.CTkButton(canvas, text="Cadastrar Funcionário +", font=("Arial", 11, "bold"), fg_color="#375269", text_color=cor_branco, border_width=0, hover_color=cor_dourado, width=150, corner_radius=0, command=lambda: abrir_formulario(tree))
     btn_cadastrar_window = canvas.create_window(0, 0, window=btn_cadastrar, anchor="nw")
