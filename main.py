@@ -99,7 +99,14 @@ def tela_login():
         height=1,
         command=lambda: verificar_login(root, entry_login, entry_senha)
     )
-    canvas.create_window(645, 432, window=btn_entrar)
+    canvas.create_window(645, 432, window=btn_entrar)                   
+
+    def _enter_login(event):
+        verificar_login(root, entry_login, entry_senha)
+
+    root.bind("<Return>", _enter_login)
+    entry_login.bind("<Return>", _enter_login)
+    entry_senha.bind("<Return>", _enter_login)
 
     canvas.image = bg_image
     root.mainloop()
