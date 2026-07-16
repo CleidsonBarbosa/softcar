@@ -161,6 +161,21 @@ def abrir_formulario(tree, dados=None):
     btn_frame = ctk.CTkFrame(frame, fg_color="transparent")
     btn_frame.grid(row=len(campos), column=0, columnspan=2, pady=20)
     ctk.CTkButton(btn_frame, text="Salvar", command=salvar, width=90).pack(side="left", padx=5)
+    if dados:
+        def excluir_do_modal():
+            if messagebox.askyesno("Confirmar", "Tem certeza que deseja excluir este funcionário?"):
+                try:
+                    conn = conectar()
+                    cursor = conn.cursor()
+                    cursor.execute("DELETE FROM funcionarios WHERE id_func = %s", (dados["id_func"],))
+                    conn.commit()
+                    cursor.close()
+                    conn.close()
+                    modal.destroy()
+                    carregar_funcionarios(tree)
+                except mysql.connector.Error as e:
+                    messagebox.showerror("Erro", f"Erro ao excluir:\n{e}")
+        ctk.CTkButton(btn_frame, text="Excluir", command=excluir_do_modal, width=90, fg_color="#c0392b", hover_color="#a93226").pack(side="left", padx=5)
     ctk.CTkButton(btn_frame, text="Cancelar", command=modal.destroy, width=90).pack(side="left", padx=5)
 
 def excluir_funcionario(tree):
@@ -190,11 +205,13 @@ def _carregar_icone(caminho, tamanho):
     except Exception:
         return None
 
-def tela_lista_funcionarios():
-    janela = ctk.CTkToplevel()
+def tela_lista_funcionarios(parent=None):
+    janela = ctk.CTkToplevel(parent) if parent else ctk.CTkToplevel()
     janela.title("Soft Car - Lista de Funcionários")
     janela.geometry("1000x600")
     janela.minsize(800, 500)
+    janela.transient(parent)
+    janela.grab_set()
 
     cor_dourado = "#b88b4a"
     cor_branco = "#ffffff"

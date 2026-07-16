@@ -48,7 +48,7 @@ def tela_dashboard():
             tela_lista_clientes()
         elif opcao == "Funcionários":
             from view.lista_funcionarios import tela_lista_funcionarios
-            tela_lista_funcionarios()
+            tela_lista_funcionarios(root)
         else:
             messagebox.showinfo("Soft Car", f"Você clicou na opção: {opcao}")
 
