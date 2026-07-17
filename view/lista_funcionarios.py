@@ -111,29 +111,30 @@ def abrir_formulario(tree, dados=None):
         y_pos += 50
 
     # ---- FORMULÁRIO ----
-    frame = ctk.CTkFrame(canvas, fg_color="#375269", corner_radius=0, border_width=0)
+    frame = ctk.CTkFrame(canvas, fg_color="#375269", corner_radius=15, border_width=0)
 
     def _atualizar_frame(e):
         if e.widget != modal:
             return
         w, h = e.width, e.height
-        canvas.coords(frame_window, 192, 60)
-        canvas.itemconfig(frame_window, width=w - 250, height=h - 250)
+        canvas.coords(frame_window, 250, 65)
+        canvas.itemconfig(frame_window, width=w - 350, height=h - 135)
 
     frame_window = canvas.create_window(0, 0, window=frame, anchor="nw", width=1000, height=800)
 
     modal.bind("<Configure>", _atualizar_frame)
 
     campos = ["nome_func", "email_func", "telefone_func", "cpf_func", "cargo", "endereco_func", "data_nascimento_func", "senha"]
-    labels = ["Nome", "E-mail", "Telefone", "CPF", "Cargo (lavador/atendente)", "Endereço", "Data de Nascimento (YYYY-MM-DD)", "Senha"]
+    labels = ["Nome", "E-mail", "Telefone", "CPF", "Cargo (lavador/atendente)", "Endereço", "Data de Nascimento", "Senha"]
     entries = {}
 
     for i, (campo, label) in enumerate(zip(campos, labels)):
         row_frame = ctk.CTkFrame(frame, fg_color="transparent")
-        row_frame.pack(fill="x", padx=20, pady=2)
-        ctk.CTkLabel(row_frame, text=label, font=("Arial", 11, "bold"), text_color="#ffffff", width=180, anchor="w").pack(side="left")
-        entry = ctk.CTkEntry(row_frame, font=("Arial", 13), fg_color="#c2c7cc", border_width=2, border_color="#b0b5b9", text_color="#333333", corner_radius=0, justify="center")
-        entry.pack(side="left", fill="x", expand=True, padx=(0, 20))
+        top_pad = 30 if i == 0 else 10
+        row_frame.pack(fill="x", padx=20, pady=(top_pad, 10))
+        ctk.CTkLabel(row_frame, text=label, font=("Arial", 11, "bold"), text_color="#ffffff", width=160, anchor="w").pack(side="left")
+        entry = ctk.CTkEntry(row_frame, font=("Arial", 13), fg_color="#c2c7cc", border_width=2, border_color="#b0b5b9", text_color="#333333", corner_radius=8, justify="center")
+        entry.pack(side="left", fill="x", expand=True, padx=(10, 0))
         if dados:
             entry.insert(0, dados[campo])
         entries[campo] = entry
