@@ -135,6 +135,8 @@ def abrir_formulario(tree, dados=None):
         ctk.CTkLabel(row_frame, text=label, font=("Arial", 11, "bold"), text_color="#ffffff", width=160, anchor="w").pack(side="left")
         entry = ctk.CTkEntry(row_frame, font=("Arial", 13), fg_color="#c2c7cc", border_width=2, border_color="#b0b5b9", text_color="#333333", corner_radius=8, justify="center")
         entry.pack(side="left", fill="x", expand=True, padx=(10, 0))
+        if label == "Senha":
+            entry.configure(show="*")
         if dados:
             entry.insert(0, dados[campo])
         entries[campo] = entry
