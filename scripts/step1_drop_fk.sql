@@ -1,0 +1,7 @@
+USE softcar;
+
+SET FOREIGN_KEY_CHECKS = 0;
+
+ALTER TABLE `softcar`.`clientes` DROP FOREIGN KEY `id_func`;
+
+SET FOREIGN_KEY_CHECKS = 1;

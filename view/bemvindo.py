@@ -25,7 +25,7 @@ def _criar_icone_dourado(icone):
 def tela_dashboard():
     root = tk.Tk()
     root.title("Soft Car - Dashboard")
-    root.geometry("1000x630")
+    root.state("zoomed")
     root.minsize(800, 500)
     root.resizable(True, True)
 
@@ -43,13 +43,15 @@ def tela_dashboard():
     ]
 
     def acao_menu(opcao):
+        root.withdraw()
         if opcao == "Cliente":
-            from view.lista_clientes import tela_lista_clientes
-            tela_lista_clientes()
+            from view.tela_clientes import tela_clientes
+            tela_clientes()
         elif opcao == "Funcionários":
             from view.lista_funcionarios import tela_lista_funcionarios
-            tela_lista_funcionarios(root)
+            tela_lista_funcionarios()
         else:
+            root.deiconify()
             messagebox.showinfo("Soft Car", f"Você clicou na opção: {opcao}")
 
     # ---- CONTEÚDO PRINCIPAL (CANVAS COM FUNDO) ----
