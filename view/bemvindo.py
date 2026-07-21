@@ -25,7 +25,7 @@ def _criar_icone_dourado(icone):
 def tela_dashboard():
     root = tk.Tk()
     root.title("Soft Car - Dashboard")
-    root.geometry("1000x630")
+    root.state("zoomed")
     root.minsize(800, 500)
     root.resizable(True, True)
 
