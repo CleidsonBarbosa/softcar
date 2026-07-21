@@ -58,13 +58,20 @@ def buscar_funcionarios(tree, entry_busca):
         messagebox.showerror("Erro", f"Erro ao buscar:\n{e}")
 
 def abrir_formulario(tree, dados=None):
+    parent = tree.winfo_toplevel()
     modal = ctk.CTkToplevel()
     modal.title("Editar Funcionário" if dados else "Novo Funcionário")
     modal.geometry("1000x600")
     modal.minsize(800, 500)
     modal.resizable(False, False)
-    modal.transient(tree.winfo_toplevel())
     modal.grab_set()
+    parent.destroy()
+
+    def voltar_lista():
+        modal.destroy()
+        tela_lista_funcionarios()
+
+    modal.protocol("WM_DELETE_WINDOW", voltar_lista)
 
     canvas = tk.Canvas(modal, highlightthickness=0, bg="#1a2735")
     canvas.pack(fill="both", expand=True)
@@ -89,25 +96,39 @@ def abrir_formulario(tree, dados=None):
     ]
 
     def acao_menu(opcao):
-        modal.destroy()
+        modal.withdraw()
         from view.bemvindo import tela_dashboard
-        tela_dashboard(opcao_inicial=opcao)
+        tela_dashboard()
 
     def make_handler(opcao):
         return lambda e: acao_menu(opcao)
 
     y_pos = 120
+    botoes_menu = []
+    canvas.image_refs = getattr(canvas, "image_refs", [])
     for nome, arquivo in icones_info:
         icone = _carregar_icone(arquivo, 24)
         ativo = (nome == "Funcionários")
-        if ativo:
-            cor_texto = "#b88b4a"
-        else:
-            cor_texto = "#777777"
+        cor_texto = "#777777" if ativo else "#ffffff"
+
         img_item = canvas.create_image(20, y_pos, image=icone, anchor="nw")
         txt_item = canvas.create_text(50, y_pos + 12, text=nome, font=("Arial", 11, "bold"), fill=cor_texto, anchor="nw")
-        canvas.image_refs = getattr(canvas, "image_refs", [])
+
+        canvas.tag_bind(img_item, "<Button-1>", make_handler(nome))
+        canvas.tag_bind(txt_item, "<Button-1>", make_handler(nome))
+
+        def on_enter(e, txt=txt_item):
+            canvas.itemconfig(txt, fill=cor_dourado)
+        def on_leave(e, txt=txt_item, cor=cor_texto):
+            canvas.itemconfig(txt, fill=cor)
+
+        canvas.tag_bind(img_item, "<Enter>", on_enter)
+        canvas.tag_bind(img_item, "<Leave>", on_leave)
+        canvas.tag_bind(txt_item, "<Enter>", on_enter)
+        canvas.tag_bind(txt_item, "<Leave>", on_leave)
+
         canvas.image_refs.append(icone)
+        botoes_menu.append((img_item, txt_item))
         y_pos += 50
 
     # ---- FORMULÁRIO ----
@@ -165,7 +186,7 @@ def abrir_formulario(tree, dados=None):
             cursor.close()
             conn.close()
             modal.destroy()
-            carregar_funcionarios(tree)
+            tela_lista_funcionarios()
         except mysql.connector.Error as e:
             messagebox.showerror("Erro", f"Erro ao salvar:\n{e}")
 
@@ -195,13 +216,13 @@ def abrir_formulario(tree, dados=None):
                     cursor.close()
                     conn.close()
                     modal.destroy()
-                    carregar_funcionarios(tree)
+                    tela_lista_funcionarios()
                 except mysql.connector.Error as e:
                     messagebox.showerror("Erro", f"Erro ao excluir:\n{e}")
         btn_excluir = ctk.CTkButton(btn_frame, text="", image=img_excluir, command=excluir_do_modal, width=30, height=30, fg_color="transparent", hover_color="#c2c7cc", corner_radius=0, border_width=0)
         btn_excluir.image = img_excluir
         btn_excluir.pack(side="left", padx=15)
-    btn_cancelar = ctk.CTkButton(btn_frame, text="", image=img_cancelar, command=modal.destroy, width=30, height=30, fg_color="transparent", hover_color="#c2c7cc", corner_radius=0, border_width=0)
+    btn_cancelar = ctk.CTkButton(btn_frame, text="", image=img_cancelar, command=voltar_lista, width=30, height=30, fg_color="transparent", hover_color="#c2c7cc", corner_radius=0, border_width=0)
     btn_cancelar.image = img_cancelar
     btn_cancelar.pack(side="left", padx=15)
 
@@ -237,8 +258,13 @@ def tela_lista_funcionarios(parent=None):
     janela.title("Soft Car - Lista de Funcionários")
     janela.geometry("1000x600")
     janela.minsize(800, 500)
-    janela.transient(parent)
-    janela.grab_set()
+
+    def voltar_dashboard():
+        janela.destroy()
+        from view.bemvindo import tela_dashboard
+        tela_dashboard()
+
+    janela.protocol("WM_DELETE_WINDOW", voltar_dashboard)
 
     cor_dourado = "#b88b4a"
     cor_branco = "#ffffff"
@@ -254,12 +280,14 @@ def tela_lista_funcionarios(parent=None):
     ]
 
     def acao_menu(opcao):
+        janela.withdraw()
         if opcao == "Cliente":
             from view.lista_clientes import tela_lista_clientes
             tela_lista_clientes()
         elif opcao == "Funcionários":
-            pass
+            tela_lista_funcionarios()
         else:
+            janela.deiconify()
             messagebox.showinfo("Soft Car", f"Você clicou na opção: {opcao}")
 
     canvas = tk.Canvas(janela, highlightthickness=0)
@@ -411,7 +439,7 @@ def tela_lista_funcionarios(parent=None):
             for nome, arquivo in icones_info:
                 icone = _carregar_icone(arquivo, 24)
                 ativo = (nome == "Funcionários")
-                cor_texto = "#b88b4a" if ativo else "#777777"
+                cor_texto = "#777777" if ativo else "#ffffff"
 
                 img_item = canvas.create_image(20, y_pos, image=icone, anchor="nw")
                 txt_item = canvas.create_text(50, y_pos + 12, text=nome, font=("Arial", 11, "bold"), fill=cor_texto, anchor="nw")
@@ -419,19 +447,18 @@ def tela_lista_funcionarios(parent=None):
                 def make_handler(opcao):
                     return lambda e: acao_menu(opcao)
 
-                if ativo:
-                    canvas.tag_bind(img_item, "<Button-1>", make_handler(nome))
-                    canvas.tag_bind(txt_item, "<Button-1>", make_handler(nome))
+                canvas.tag_bind(img_item, "<Button-1>", make_handler(nome))
+                canvas.tag_bind(txt_item, "<Button-1>", make_handler(nome))
 
-                    def on_enter(e, txt=txt_item):
-                        canvas.itemconfig(txt, fill=cor_dourado)
-                    def on_leave(e, txt=txt_item):
-                        canvas.itemconfig(txt, fill="#b88b4a")
+                def on_enter(e, txt=txt_item):
+                    canvas.itemconfig(txt, fill=cor_dourado)
+                def on_leave(e, txt=txt_item, cor=cor_texto):
+                    canvas.itemconfig(txt, fill=cor)
 
-                    canvas.tag_bind(img_item, "<Enter>", on_enter)
-                    canvas.tag_bind(img_item, "<Leave>", on_leave)
-                    canvas.tag_bind(txt_item, "<Enter>", on_enter)
-                    canvas.tag_bind(txt_item, "<Leave>", on_leave)
+                canvas.tag_bind(img_item, "<Enter>", on_enter)
+                canvas.tag_bind(img_item, "<Leave>", on_leave)
+                canvas.tag_bind(txt_item, "<Enter>", on_enter)
+                canvas.tag_bind(txt_item, "<Leave>", on_leave)
 
                 canvas.image_refs.append(icone)
                 botoes_menu.append((img_item, txt_item, ativo))

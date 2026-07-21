@@ -43,13 +43,15 @@ def tela_dashboard():
     ]
 
     def acao_menu(opcao):
+        root.withdraw()
         if opcao == "Cliente":
             from view.lista_clientes import tela_lista_clientes
             tela_lista_clientes()
         elif opcao == "Funcionários":
             from view.lista_funcionarios import tela_lista_funcionarios
-            tela_lista_funcionarios(root)
+            tela_lista_funcionarios()
         else:
+            root.deiconify()
             messagebox.showinfo("Soft Car", f"Você clicou na opção: {opcao}")
 
     # ---- CONTEÚDO PRINCIPAL (CANVAS COM FUNDO) ----
