@@ -3,6 +3,10 @@ from tkinter import ttk, messagebox
 from PIL import Image, ImageTk
 import os
 import mysql.connector
+import customtkinter as ctk
+
+ctk.set_appearance_mode("dark")
+ctk.set_default_color_theme("dark-blue")
 
 
 def conectar():
@@ -54,37 +58,96 @@ def buscar_clientes(tree, entry_busca):
 
 
 def abrir_formulario(tree, dados=None):
-    modal = tk.Toplevel()
+    modal = ctk.CTkToplevel()
     modal.title("Editar Cliente" if dados else "Novo Cliente")
-    modal.geometry("600x550")
+    modal.geometry("1000x600")
+    modal.minsize(800, 500)
     modal.resizable(False, False)
-    modal.transient(tree.winfo_toplevel())
     modal.grab_set()
-    modal.configure(bg="#000000")
 
-    canvas = tk.Canvas(modal, highlightthickness=0, bg="#000000")
+    cor_dourado = "#b88b4a"
+    cor_branco = "#ffffff"
+    cor_cinza = "#777777"
+
+    # Imagem de fundo: editar_clientes.png para edição, cadastrar_clientes.png para cadastro
+    img_fundo = "assets/editar_clientes.png" if dados else "assets/cadastrar_clientes.png"
+
+    canvas = tk.Canvas(modal, highlightthickness=0)
     canvas.pack(fill="both", expand=True)
 
-    img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "cadastrar_clientes.png")
-    bg_tk = None
-    if os.path.exists(img_path):
-        img = Image.open(img_path).convert("RGBA")
-        img_resized = img.resize((600, 550), Image.Resampling.LANCZOS)
-        bg_tk = ImageTk.PhotoImage(img_resized)
-        canvas.create_image(0, 0, image=bg_tk, anchor="nw", tags="bg")
-        canvas.image_ref = bg_tk
+    bg_img = None
+    if os.path.exists(img_fundo):
+        img = Image.open(img_fundo)
+        img = img.resize((1000, 600), Image.Resampling.LANCZOS)
+        bg_img = ImageTk.PhotoImage(img)
+        canvas.create_image(0, 0, image=bg_img, anchor="nw")
+        canvas.image = bg_img
+
+    # ---- MENU VERTICAL ----
+    icones_info = [
+        ("Cliente",     "assets/cliente.png"),
+        ("Serviços",    "assets/servicos.png"),
+        ("Funcionários","assets/funcionarios.png"),
+        ("Materiais",   "assets/materiais.png"),
+        ("Relatórios",  "assets/relatorios.png"),
+    ]
+
+    def acao_menu(opcao):
+        modal.destroy()
+        if opcao == "Cliente":
+            from view.tela_clientes import tela_clientes
+            tela_clientes()
+        elif opcao == "Serviços":
+            messagebox.showinfo("Soft Car", "Em desenvolvimento")
+        elif opcao == "Funcionários":
+            from view.lista_funcionarios import tela_lista_funcionarios
+            tela_lista_funcionarios()
+        elif opcao == "Materiais":
+            messagebox.showinfo("Soft Car", "Em desenvolvimento")
+        elif opcao == "Relatórios":
+            messagebox.showinfo("Soft Car", "Em desenvolvimento")
+
+    def make_handler(opcao):
+        return lambda e: acao_menu(opcao)
+
+    y_pos = 120
+    for nome, arquivo in icones_info:
+        icone = _carregar_icone(arquivo, 24)
+        ativo = (nome == "Cliente")
+        cor_texto = cor_cinza if ativo else cor_branco
+
+        img_item = canvas.create_image(20, y_pos, image=icone, anchor="nw")
+        txt_item = canvas.create_text(50, y_pos + 12, text=nome, font=("Arial", 11, "bold"), fill=cor_texto, anchor="nw")
+
+        def make_handler(opcao):
+            return lambda e: acao_menu(opcao)
+
+        def on_enter(e, txt=txt_item):
+            canvas.itemconfig(txt, fill=cor_dourado)
+        def on_leave(e, txt=txt_item, cor=cor_texto):
+            canvas.itemconfig(txt, fill=cor)
+
+        canvas.tag_bind(img_item, "<Enter>", on_enter)
+        canvas.tag_bind(img_item, "<Leave>", on_leave)
+        canvas.tag_bind(txt_item, "<Enter>", on_enter)
+        canvas.tag_bind(txt_item, "<Leave>", on_leave)
+
+        canvas.image_refs = getattr(canvas, "image_refs", [])
+        canvas.image_refs.append(icone)
+        y_pos += 50
+
+    # ---- FORMULÁRIO ----
+    frame = ctk.CTkFrame(canvas, fg_color="#2b3e50", corner_radius=15)
+    frame_window = canvas.create_window(500, 300, window=frame, anchor="center")
 
     campos = ["nome_cliente", "email_cliente", "telefone_cliente", "cpf", "endereco", "data_nascimento"]
-    labels = ["Nome", "E-mail", "Telefone", "CPF", "Endereço", "Data de Nascimento (YYYY-MM-DD)"]
+    labels = ["Nome", "E-mail", "Telefone", "CPF", "Endereço", "Data de Nascimento"]
     entries = {}
 
-    y_inicio = 120
     for i, (campo, label) in enumerate(zip(campos, labels)):
-        canvas.create_text(50, y_inicio + i * 55, text=label, font=("Arial", 10, "bold"),
-                           fill="#ffffff", anchor="w")
-        entry = tk.Entry(modal, width=32, bg="#375269", fg="#ffffff", insertbackground="#ffffff",
-                         relief="flat", font=("Arial", 10), bd=0, highlightthickness=0)
-        entry_win = canvas.create_window(320, y_inicio + i * 55, window=entry, anchor="w")
+        ctk.CTkLabel(frame, text=label, font=("Arial", 11, "bold"), text_color="#ffffff").grid(row=i, column=0, sticky="w", pady=4, padx=10)
+        entry = ctk.CTkEntry(frame, width=250, corner_radius=8)
+        entry.grid(row=i, column=1, pady=4, padx=10)
         if dados:
             entry.insert(0, dados[campo] if dados[campo] is not None else "")
         entries[campo] = entry
@@ -117,13 +180,10 @@ def abrir_formulario(tree, dados=None):
         except mysql.connector.Error as e:
             messagebox.showerror("Erro", f"Erro ao salvar:\n{e}")
 
-    btn_salvar = tk.Button(modal, text="Salvar", command=salvar, width=12, bg="#375269", fg="#ffffff",
-                           activebackground="#b88b4a", relief="flat", font=("Arial", 10, "bold"), bd=0)
-    canvas.create_window(220, y_inicio + len(campos) * 55 + 20, window=btn_salvar)
-
-    btn_cancelar = tk.Button(modal, text="Cancelar", command=modal.destroy, width=12, bg="#375269", fg="#ffffff",
-                             activebackground="#b88b4a", relief="flat", font=("Arial", 10, "bold"), bd=0)
-    canvas.create_window(380, y_inicio + len(campos) * 55 + 20, window=btn_cancelar)
+    btn_frame = ctk.CTkFrame(frame, fg_color="transparent")
+    btn_frame.grid(row=len(campos), column=0, columnspan=2, pady=20)
+    ctk.CTkButton(btn_frame, text="Salvar", command=salvar, width=90).pack(side="left", padx=5)
+    ctk.CTkButton(btn_frame, text="Cancelar", command=modal.destroy, width=90).pack(side="left", padx=5)
 
 
 def excluir_cliente(tree):

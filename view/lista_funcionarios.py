@@ -66,17 +66,88 @@ def abrir_formulario(tree, dados=None):
     modal.resizable(False, False)
     modal.grab_set()
 
-    frame = ctk.CTkFrame(modal, fg_color="#2b3e50")
-    frame.pack(fill="both", expand=True, padx=15, pady=15)
+    cor_dourado = "#b88b4a"
+    cor_branco = "#ffffff"
+    cor_cinza = "#777777"
+
+    # Imagem de fundo: editar_funcionarios.png para edição, cadastrar_funcionarios.png para cadastro
+    img_fundo = "assets/editar_funcionarios.png" if dados else "assets/cadastrar_funcionarios.png"
+
+    canvas = tk.Canvas(modal, highlightthickness=0)
+    canvas.pack(fill="both", expand=True)
+
+    bg_img = None
+    if os.path.exists(img_fundo):
+        img = Image.open(img_fundo)
+        img = img.resize((1000, 600), Image.Resampling.LANCZOS)
+        bg_img = ImageTk.PhotoImage(img)
+        canvas.create_image(0, 0, image=bg_img, anchor="nw")
+        canvas.image = bg_img
+
+# ---- MENU VERTICAL (igual lista de funcionários) ----
+    icones_info = [
+        ("Cliente",     "assets/cliente.png"),
+        ("Serviços",    "assets/servicos.png"),
+        ("Funcionários","assets/funcionarios.png"),
+        ("Materiais",   "assets/materiais.png"),
+        ("Relatórios",  "assets/relatorios.png"),
+    ]
+
+    def acao_menu(opcao):
+        modal.destroy()
+        if opcao == "Cliente":
+            from view.tela_clientes import tela_clientes
+            tela_clientes()
+        elif opcao == "Serviços":
+            messagebox.showinfo("Soft Car", "Em desenvolvimento")
+        elif opcao == "Funcionários":
+            tela_lista_funcionarios()
+        elif opcao == "Materiais":
+            messagebox.showinfo("Soft Car", "Em desenvolvimento")
+        elif opcao == "Relatórios":
+            messagebox.showinfo("Soft Car", "Em desenvolvimento")
+
+    def make_handler(opcao):
+        return lambda e: acao_menu(opcao)
+
+    y_pos = 120
+    for nome, arquivo in icones_info:
+        icone = _carregar_icone(arquivo, 24)
+        ativo = (nome == "Funcionários")
+        cor_texto = cor_cinza if ativo else cor_branco
+
+        img_item = canvas.create_image(20, y_pos, image=icone, anchor="nw")
+        txt_item = canvas.create_text(50, y_pos + 12, text=nome, font=("Arial", 11, "bold"), fill=cor_texto, anchor="nw")
+
+        def make_handler(opcao):
+            return lambda e: acao_menu(opcao)
+
+        def on_enter(e, txt=txt_item):
+            canvas.itemconfig(txt, fill=cor_dourado)
+        def on_leave(e, txt=txt_item, cor=cor_texto):
+            canvas.itemconfig(txt, fill=cor)
+
+        canvas.tag_bind(img_item, "<Enter>", on_enter)
+        canvas.tag_bind(img_item, "<Leave>", on_leave)
+        canvas.tag_bind(txt_item, "<Enter>", on_enter)
+        canvas.tag_bind(txt_item, "<Leave>", on_leave)
+
+        canvas.image_refs = getattr(canvas, "image_refs", [])
+        canvas.image_refs.append(icone)
+        y_pos += 50
+
+    # ---- FORMULÁRIO ----
+    frame = ctk.CTkFrame(canvas, fg_color="#2b3e50", corner_radius=15)
+    frame_window = canvas.create_window(580, 300, window=frame, anchor="center")
 
     campos = ["nome_func", "email_func", "telefone_func", "cpf_func", "cargo", "endereco_func", "data_nascimento_func", "senha"]
     labels = ["Nome", "E-mail", "Telefone", "CPF", "Cargo (lavador/atendente)", "Endereço", "Data de Nascimento", "Senha"]
     entries = {}
 
     for i, (campo, label) in enumerate(zip(campos, labels)):
-        ctk.CTkLabel(frame, text=label, text_color="#ffffff").grid(row=i, column=0, sticky="w", pady=4)
-        entry = ctk.CTkEntry(frame, width=250)
-        entry.grid(row=i, column=1, pady=4)
+        ctk.CTkLabel(frame, text=label, font=("Arial", 11, "bold"), text_color="#ffffff").grid(row=i, column=0, sticky="w", pady=4, padx=10)
+        entry = ctk.CTkEntry(frame, width=250, corner_radius=8)
+        entry.grid(row=i, column=1, pady=4, padx=10)
         if dados:
             entry.insert(0, dados[campo] if dados[campo] is not None else "")
         entries[campo] = entry
