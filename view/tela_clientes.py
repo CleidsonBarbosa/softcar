@@ -3,6 +3,10 @@ from tkinter import ttk, messagebox
 from PIL import Image, ImageTk
 import os
 import mysql.connector
+import customtkinter as ctk
+
+ctk.set_appearance_mode("dark")
+ctk.set_default_color_theme("dark-blue")
 
 
 def conectar():
@@ -54,42 +58,101 @@ def buscar_clientes(tree, entry_busca):
 
 
 def abrir_formulario(tree, dados=None):
-    modal = tk.Toplevel()
+    modal = ctk.CTkToplevel()
     modal.title("Editar Cliente" if dados else "Novo Cliente")
-    modal.geometry("600x550")
+    modal.geometry("1000x600")
+    modal.minsize(800, 500)
     modal.resizable(False, False)
-    modal.transient(tree.winfo_toplevel())
     modal.grab_set()
-    modal.configure(bg="#000000")
 
-    canvas = tk.Canvas(modal, highlightthickness=0, bg="#000000")
+    cor_dourado = "#b88b4a"
+    cor_branco = "#ffffff"
+    cor_cinza = "#777777"
+
+    # Imagem de fundo: formulario.png para edição, formulario.png para cadastro
+    img_fundo = "assets/formulario.png" if dados else "assets/formulario.png"
+
+    canvas = tk.Canvas(modal, highlightthickness=0)
     canvas.pack(fill="both", expand=True)
 
-    img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "cadastrar_clientes.png")
-    bg_tk = None
-    if os.path.exists(img_path):
-        img = Image.open(img_path).convert("RGBA")
-        img_resized = img.resize((600, 550), Image.Resampling.LANCZOS)
-        bg_tk = ImageTk.PhotoImage(img_resized)
-        canvas.create_image(0, 0, image=bg_tk, anchor="nw", tags="bg")
-        canvas.image_ref = bg_tk
+    bg_img = None
+    if os.path.exists(img_fundo):
+        img = Image.open(img_fundo)
+        img = img.resize((1000, 600), Image.Resampling.LANCZOS)
+        bg_img = ImageTk.PhotoImage(img)
+        canvas.create_image(0, 0, image=bg_img, anchor="nw")
+        canvas.image = bg_img
+
+    # ---- MENU VERTICAL ----
+    icones_info = [
+        ("Cliente",     "assets/cliente.png"),
+        ("Serviços",    "assets/servicos.png"),
+        ("Funcionários","assets/funcionarios.png"),
+        ("Materiais",   "assets/materiais.png"),
+        ("Relatórios",  "assets/relatorios.png"),
+    ]
+
+    def acao_menu(opcao):
+        modal.destroy()
+        if opcao == "Cliente":
+            from view.tela_clientes import tela_clientes
+            tela_clientes()
+        elif opcao == "Serviços":
+            messagebox.showinfo("Soft Car", "Em desenvolvimento")
+        elif opcao == "Funcionários":
+            from view.lista_funcionarios import tela_lista_funcionarios
+            tela_lista_funcionarios()
+        elif opcao == "Materiais":
+            messagebox.showinfo("Soft Car", "Em desenvolvimento")
+        elif opcao == "Relatórios":
+            messagebox.showinfo("Soft Car", "Em desenvolvimento")
+
+    def make_handler(opcao):
+        return lambda e: acao_menu(opcao)
+
+    y_pos = 120
+    for nome, arquivo in icones_info:
+        icone = _carregar_icone(arquivo, 24)
+        ativo = (nome == "Cliente")
+        cor_texto = cor_cinza if ativo else cor_branco
+
+        img_item = canvas.create_image(20, y_pos, image=icone, anchor="nw")
+        txt_item = canvas.create_text(50, y_pos + 12, text=nome, font=("Arial", 11, "bold"), fill=cor_texto, anchor="nw")
+
+        def make_handler(opcao):
+            return lambda e: acao_menu(opcao)
+
+        def on_enter(e, txt=txt_item):
+            canvas.itemconfig(txt, fill=cor_dourado)
+        def on_leave(e, txt=txt_item, cor=cor_texto):
+            canvas.itemconfig(txt, fill=cor)
+
+        canvas.tag_bind(img_item, "<Enter>", on_enter)
+        canvas.tag_bind(img_item, "<Leave>", on_leave)
+        canvas.tag_bind(txt_item, "<Enter>", on_enter)
+        canvas.tag_bind(txt_item, "<Leave>", on_leave)
+
+        canvas.image_refs = getattr(canvas, "image_refs", [])
+        canvas.image_refs.append(icone)
+        y_pos += 50
+
+    # ---- FORMULÁRIO ----
+    frame = ctk.CTkFrame(canvas, fg_color="#2b3e50", corner_radius=15)
+    frame_window = canvas.create_window(500, 300, window=frame, anchor="center")
 
     campos = ["nome_cliente", "email_cliente", "telefone_cliente", "cpf", "endereco", "data_nascimento"]
-    labels = ["Nome", "E-mail", "Telefone", "CPF", "Endereço", "Data de Nascimento (YYYY-MM-DD)"]
+    labels = ["Nome", "E-mail", "Telefone", "CPF", "Endereço", "Data de Nascimento"]
     entries = {}
 
-    y_inicio = 120
     for i, (campo, label) in enumerate(zip(campos, labels)):
-        canvas.create_text(50, y_inicio + i * 55, text=label, font=("Arial", 10, "bold"),
-                           fill="#ffffff", anchor="w")
-        entry = tk.Entry(modal, width=32, bg="#375269", fg="#ffffff", insertbackground="#ffffff",
-                         relief="flat", font=("Arial", 10), bd=0, highlightthickness=0)
-        entry_win = canvas.create_window(320, y_inicio + i * 55, window=entry, anchor="w")
+        ctk.CTkLabel(frame, text=label, font=("Arial", 11, "bold"), text_color="#ffffff").grid(row=i, column=0, sticky="w", pady=4, padx=10)
+        entry = ctk.CTkEntry(frame, width=250, corner_radius=8)
+        entry.grid(row=i, column=1, pady=4, padx=10)
         if dados:
             entry.insert(0, dados[campo] if dados[campo] is not None else "")
         entries[campo] = entry
 
-    def salvar():
+    def salvar_e_avancar():
         valores = {}
         for campo, entry in entries.items():
             if not entry.get().strip():
@@ -104,26 +167,403 @@ def abrir_formulario(tree, dados=None):
                     "UPDATE clientes SET nome_cliente=%s, email_cliente=%s, telefone_cliente=%s, cpf=%s, endereco=%s, data_nascimento=%s WHERE id_cliente=%s",
                     (valores["nome_cliente"], valores["email_cliente"], valores["telefone_cliente"], valores["cpf"], valores["endereco"], valores["data_nascimento"] if valores["data_nascimento"] else None, dados["id_cliente"])
                 )
+                id_cliente = dados["id_cliente"]
             else:
                 cursor.execute(
                     "INSERT INTO clientes (nome_cliente, email_cliente, telefone_cliente, cpf, endereco, data_nascimento) VALUES (%s, %s, %s, %s, %s, %s)",
                     (valores["nome_cliente"], valores["email_cliente"], valores["telefone_cliente"], valores["cpf"], valores["endereco"], valores["data_nascimento"] if valores["data_nascimento"] else None)
                 )
+                id_cliente = cursor.lastrowid
             conn.commit()
             cursor.close()
             conn.close()
             modal.destroy()
             carregar_clientes(tree)
+            if dados:
+                listar_carros_cliente(tree, id_cliente, valores["nome_cliente"])
+            else:
+                abrir_formulario_carro(tree, id_cliente, valores["nome_cliente"])
         except mysql.connector.Error as e:
             messagebox.showerror("Erro", f"Erro ao salvar:\n{e}")
 
-    btn_salvar = tk.Button(modal, text="Salvar", command=salvar, width=12, bg="#375269", fg="#ffffff",
-                           activebackground="#b88b4a", relief="flat", font=("Arial", 10, "bold"), bd=0)
-    canvas.create_window(220, y_inicio + len(campos) * 55 + 20, window=btn_salvar)
+    btn_frame = ctk.CTkFrame(frame, fg_color="transparent")
+    btn_frame.grid(row=len(campos), column=0, columnspan=2, pady=20)
+    ctk.CTkButton(btn_frame, text="Avançar", command=salvar_e_avancar, width=90).pack(side="left", padx=5)
+    ctk.CTkButton(btn_frame, text="Cancelar", command=modal.destroy, width=90).pack(side="left", padx=5)
 
-    btn_cancelar = tk.Button(modal, text="Cancelar", command=modal.destroy, width=12, bg="#375269", fg="#ffffff",
-                             activebackground="#b88b4a", relief="flat", font=("Arial", 10, "bold"), bd=0)
-    canvas.create_window(380, y_inicio + len(campos) * 55 + 20, window=btn_cancelar)
+
+def abrir_formulario_carro(tree, id_cliente, nome_cliente, dados_carro=None, voltar_para_lista=False):
+    modal = ctk.CTkToplevel()
+    modal.title("Editar Carro" if dados_carro else "Cadastrar Carro")
+    modal.geometry("1000x600")
+    modal.minsize(800, 500)
+    modal.resizable(False, False)
+    modal.grab_set()
+
+    cor_dourado = "#b88b4a"
+    cor_branco = "#ffffff"
+    cor_cinza = "#777777"
+
+    img_fundo = "assets/formulario.png"
+
+    canvas = tk.Canvas(modal, highlightthickness=0)
+    canvas.pack(fill="both", expand=True)
+
+    if os.path.exists(img_fundo):
+        img = Image.open(img_fundo)
+        img = img.resize((1000, 600), Image.Resampling.LANCZOS)
+        bg_img = ImageTk.PhotoImage(img)
+        canvas.create_image(0, 0, image=bg_img, anchor="nw")
+        canvas.image = bg_img
+
+    # ---- MENU VERTICAL ----
+    icones_info = [
+        ("Cliente",     "assets/cliente.png"),
+        ("Serviços",    "assets/servicos.png"),
+        ("Funcionários","assets/funcionarios.png"),
+        ("Materiais",   "assets/materiais.png"),
+        ("Relatórios",  "assets/relatorios.png"),
+    ]
+
+    def acao_menu_modal(opcao):
+        modal.destroy()
+        if opcao == "Cliente":
+            from view.tela_clientes import tela_clientes
+            tela_clientes()
+        elif opcao == "Serviços":
+            messagebox.showinfo("Soft Car", "Em desenvolvimento")
+        elif opcao == "Funcionários":
+            from view.lista_funcionarios import tela_lista_funcionarios
+            tela_lista_funcionarios()
+        elif opcao == "Materiais":
+            messagebox.showinfo("Soft Car", "Em desenvolvimento")
+        elif opcao == "Relatórios":
+            messagebox.showinfo("Soft Car", "Em desenvolvimento")
+
+    y_pos = 120
+    for nome, arquivo in icones_info:
+        icone = _carregar_icone(arquivo, 24)
+        cor_texto = cor_cinza if nome == "Serviços" else cor_branco
+
+        img_item = canvas.create_image(20, y_pos, image=icone, anchor="nw")
+        txt_item = canvas.create_text(50, y_pos + 12, text=nome, font=("Arial", 11, "bold"), fill=cor_texto, anchor="nw")
+
+        def on_enter(e, t=txt_item):
+            canvas.itemconfig(t, fill=cor_dourado)
+        def on_leave(e, t=txt_item, c=cor_texto):
+            canvas.itemconfig(t, fill=c)
+
+        canvas.tag_bind(img_item, "<Enter>", on_enter)
+        canvas.tag_bind(img_item, "<Leave>", on_leave)
+        canvas.tag_bind(txt_item, "<Enter>", on_enter)
+        canvas.tag_bind(txt_item, "<Leave>", on_leave)
+        canvas.tag_bind(img_item, "<Button-1>", lambda e, o=nome: acao_menu_modal(o))
+        canvas.tag_bind(txt_item, "<Button-1>", lambda e, o=nome: acao_menu_modal(o))
+
+        canvas.image_refs = getattr(canvas, "image_refs", [])
+        canvas.image_refs.append(icone)
+        y_pos += 50
+
+    # ---- FORMULÁRIO ----
+    frame = ctk.CTkFrame(canvas, fg_color="#2b3e50", corner_radius=15)
+    canvas.create_window(500, 300, window=frame, anchor="center")
+
+    labels_campos = ["Placa", "Modelo", "Marca", "Cor"]
+    campos = ["placa", "modelo", "marca", "cor"]
+    entries = {}
+
+    for i, (campo, label) in enumerate(zip(campos, labels_campos)):
+        ctk.CTkLabel(frame, text=label, font=("Arial", 11, "bold"), text_color="#ffffff").grid(row=i, column=0, sticky="w", pady=4, padx=10)
+        entry = ctk.CTkEntry(frame, width=250, corner_radius=8)
+        entry.grid(row=i, column=1, pady=4, padx=10)
+        if dados_carro:
+            entry.insert(0, dados_carro[campo] if dados_carro[campo] is not None else "")
+        entries[campo] = entry
+
+    def salvar_carro():
+        valores = {}
+        for campo in campos:
+            if not entries[campo].get().strip():
+                messagebox.showwarning("Validação", "Todos os campos são obrigatórios.")
+                return
+            valores[campo] = entries[campo].get().strip()
+        try:
+            conn = conectar()
+            cursor = conn.cursor()
+            if dados_carro:
+                cursor.execute(
+                    "UPDATE carros SET placa=%s, modelo=%s, marca=%s, cor=%s WHERE id_carro=%s",
+                    (valores["placa"], valores["modelo"], valores["marca"], valores["cor"], dados_carro["id_carro"])
+                )
+            else:
+                cursor.execute(
+                    "INSERT INTO carros (placa, modelo, marca, cor) VALUES (%s, %s, %s, %s)",
+                    (valores["placa"], valores["modelo"], valores["marca"], valores["cor"])
+                )
+                id_carro = cursor.lastrowid
+                cursor.execute(
+                    "INSERT INTO clientes_has_carros (clientes_id_cliente, carros_id_carro) VALUES (%s, %s)",
+                    (id_cliente, id_carro)
+                )
+            conn.commit()
+            cursor.close()
+            conn.close()
+            modal.destroy()
+            messagebox.showinfo("Sucesso", "Carro salvo com sucesso!")
+            if voltar_para_lista:
+                listar_carros_cliente(tree, id_cliente, nome_cliente)
+        except mysql.connector.IntegrityError:
+            messagebox.showerror("Erro", "Placa já cadastrada.")
+        except mysql.connector.Error as e:
+            messagebox.showerror("Erro", f"Erro ao salvar carro:\n{e}")
+
+    btn_frame = ctk.CTkFrame(frame, fg_color="transparent")
+    btn_frame.grid(row=len(campos), column=0, columnspan=2, pady=20)
+    ctk.CTkButton(btn_frame, text="Salvar", command=salvar_carro, width=90).pack(side="left", padx=5)
+    ctk.CTkButton(btn_frame, text="Avançar", command=lambda: (modal.destroy(), listar_servicos(tree, id_cliente, nome_cliente, dados_carro)), width=90).pack(side="left", padx=5)
+    ctk.CTkButton(btn_frame, text="Cancelar", command=lambda: (modal.destroy(), voltar_para_lista and listar_carros_cliente(tree, id_cliente, nome_cliente)), width=90).pack(side="left", padx=5)
+
+
+def listar_carros_cliente(tree, id_cliente, nome_cliente):
+    modal = ctk.CTkToplevel()
+    modal.title("Carros do Cliente")
+    modal.geometry("800x500")
+    modal.resizable(False, False)
+    modal.grab_set()
+
+    canvas = tk.Canvas(modal, highlightthickness=0)
+    canvas.pack(fill="both", expand=True)
+
+    if os.path.exists("assets/tabela.png"):
+        img = Image.open("assets/tabela.png")
+        img = img.resize((800, 500), Image.Resampling.LANCZOS)
+        bg_img = ImageTk.PhotoImage(img)
+        canvas.create_image(0, 0, image=bg_img, anchor="nw")
+        canvas.image = bg_img
+
+    cor_dourado = "#b88b4a"
+    cor_branco = "#ffffff"
+    cor_cinza = "#777777"
+
+    icones_info = [
+        ("Cliente",     "assets/cliente.png"),
+        ("Serviços",    "assets/servicos.png"),
+        ("Funcionários","assets/funcionarios.png"),
+        ("Materiais",   "assets/materiais.png"),
+        ("Relatórios",  "assets/relatorios.png"),
+    ]
+
+    def acao_menu_modal(opcao):
+        modal.destroy()
+        if opcao == "Cliente":
+            from view.tela_clientes import tela_clientes
+            tela_clientes()
+        elif opcao == "Funcionários":
+            from view.lista_funcionarios import tela_lista_funcionarios
+            tela_lista_funcionarios()
+        else:
+            messagebox.showinfo("Soft Car", "Em desenvolvimento")
+
+    y_pos = 120
+    for nome, arquivo in icones_info:
+        icone = _carregar_icone(arquivo, 24)
+        ativo = (nome == "Cliente")
+        cor_texto = cor_cinza if ativo else cor_branco
+        img_item = canvas.create_image(20, y_pos, image=icone, anchor="nw")
+        txt_item = canvas.create_text(50, y_pos + 12, text=nome, font=("Arial", 11, "bold"), fill=cor_texto, anchor="nw")
+        def on_enter(e, t=txt_item):
+            canvas.itemconfig(t, fill=cor_dourado)
+        def on_leave(e, t=txt_item, c=cor_texto):
+            canvas.itemconfig(t, fill=c)
+        canvas.tag_bind(img_item, "<Enter>", on_enter)
+        canvas.tag_bind(img_item, "<Leave>", on_leave)
+        canvas.tag_bind(txt_item, "<Enter>", on_enter)
+        canvas.tag_bind(txt_item, "<Leave>", on_leave)
+        canvas.tag_bind(img_item, "<Button-1>", lambda e, o=nome: acao_menu_modal(o))
+        canvas.tag_bind(txt_item, "<Button-1>", lambda e, o=nome: acao_menu_modal(o))
+        canvas.image_refs = getattr(canvas, "image_refs", [])
+        canvas.image_refs.append(icone)
+        y_pos += 50
+
+    ctk.CTkLabel(canvas, text=f"Cliente: {nome_cliente}", font=("Arial", 14, "bold"), text_color="#ffffff").place(x=180, y=20)
+
+    ctk.CTkButton(canvas, text="+ Novo Carro", command=lambda: (modal.destroy(), abrir_formulario_carro(tree, id_cliente, nome_cliente, voltar_para_lista=True))).place(x=180, y=60)
+
+    frame = tk.Frame(canvas, bg="#2b3e50")
+    frame.place(x=180, y=110, width=580, height=340)
+
+    colunas = ("id_carro", "placa", "modelo", "marca", "cor")
+    tree_carros = ttk.Treeview(frame, columns=colunas, show="headings", height=14)
+
+    tree_carros.heading("id_carro", text="Código")
+    tree_carros.heading("placa", text="Placa")
+    tree_carros.heading("modelo", text="Modelo")
+    tree_carros.heading("marca", text="Marca")
+    tree_carros.heading("cor", text="Cor")
+
+    tree_carros.column("id_carro", width=60, anchor="center")
+    tree_carros.column("placa", width=100, anchor="center")
+    tree_carros.column("modelo", width=200)
+    tree_carros.column("marca", width=150)
+    tree_carros.column("cor", width=100, anchor="center")
+
+    scrollbar = ttk.Scrollbar(frame, orient="vertical", command=tree_carros.yview)
+    tree_carros.configure(yscrollcommand=scrollbar.set)
+
+    tree_carros.pack(side="left", fill="both", expand=True)
+    scrollbar.pack(side="right", fill="y")
+
+    style = ttk.Style()
+    style.theme_use("clam")
+    style.configure("Treeview", background="#375269", foreground="#ffffff", fieldbackground="#375269", rowheight=28, borderwidth=0)
+    style.configure("Treeview.Heading", background="#2c4a5c", foreground="#ffffff", borderwidth=0)
+    style.layout("Treeview", [("Treeview.field", {"sticky": "nswe", "children": [("Treeview.padding", {"sticky": "nswe", "children": [("Treeview.treearea", {"sticky": "nswe"})]})]})])
+
+    def editar_carro_tree():
+        selecionado = tree_carros.selection()
+        if not selecionado:
+            return
+        valores = tree_carros.item(selecionado[0])["values"]
+        dados_carro = {"id_carro": valores[0], "placa": valores[1], "modelo": valores[2], "marca": valores[3], "cor": valores[4]}
+        modal.destroy()
+        abrir_formulario_carro(tree, id_cliente, nome_cliente, dados_carro, voltar_para_lista=True)
+
+    tree_carros.bind("<Double-1>", lambda e: editar_carro_tree())
+
+    try:
+        conn = conectar()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT c.id_carro, c.placa, c.modelo, c.marca, c.cor
+            FROM carros c
+            INNER JOIN clientes_has_carros chc ON chc.carros_id_carro = c.id_carro
+            WHERE chc.clientes_id_cliente = %s
+        """, (id_cliente,))
+        for row in cursor.fetchall():
+            tree_carros.insert("", "end", values=row)
+        cursor.close()
+        conn.close()
+    except mysql.connector.Error as e:
+        messagebox.showerror("Erro", f"Erro ao buscar carros:\n{e}")
+
+    ctk.CTkButton(canvas, text="Fechar", command=modal.destroy).place(x=180, y=460)
+
+
+def listar_servicos(tree, id_cliente, nome_cliente, dados_carro):
+    modal = ctk.CTkToplevel()
+    modal.title("Serviços Disponíveis")
+    modal.geometry("800x500")
+    modal.resizable(False, False)
+    modal.grab_set()
+
+    canvas = tk.Canvas(modal, highlightthickness=0)
+    canvas.pack(fill="both", expand=True)
+
+    if os.path.exists("assets/tabela.png"):
+        img = Image.open("assets/tabela.png")
+        img = img.resize((800, 500), Image.Resampling.LANCZOS)
+        bg_img = ImageTk.PhotoImage(img)
+        canvas.create_image(0, 0, image=bg_img, anchor="nw")
+        canvas.image = bg_img
+
+    cor_dourado = "#b88b4a"
+    cor_branco = "#ffffff"
+    cor_cinza = "#777777"
+
+    icones_info = [
+        ("Cliente",     "assets/cliente.png"),
+        ("Serviços",    "assets/servicos.png"),
+        ("Funcionários","assets/funcionarios.png"),
+        ("Materiais",   "assets/materiais.png"),
+        ("Relatórios",  "assets/relatorios.png"),
+    ]
+
+    def acao_menu_modal(opcao):
+        modal.destroy()
+        if opcao == "Cliente":
+            from view.tela_clientes import tela_clientes
+            tela_clientes()
+        elif opcao == "Funcionários":
+            from view.lista_funcionarios import tela_lista_funcionarios
+            tela_lista_funcionarios()
+        else:
+            messagebox.showinfo("Soft Car", "Em desenvolvimento")
+
+    y_pos = 120
+    for nome, arquivo in icones_info:
+        icone = _carregar_icone(arquivo, 24)
+        ativo = (nome == "Serviços")
+        cor_texto = cor_cinza if ativo else cor_branco
+        img_item = canvas.create_image(20, y_pos, image=icone, anchor="nw")
+        txt_item = canvas.create_text(50, y_pos + 12, text=nome, font=("Arial", 11, "bold"), fill=cor_texto, anchor="nw")
+        def on_enter(e, t=txt_item):
+            canvas.itemconfig(t, fill=cor_dourado)
+        def on_leave(e, t=txt_item, c=cor_texto):
+            canvas.itemconfig(t, fill=c)
+        canvas.tag_bind(img_item, "<Enter>", on_enter)
+        canvas.tag_bind(img_item, "<Leave>", on_leave)
+        canvas.tag_bind(txt_item, "<Enter>", on_enter)
+        canvas.tag_bind(txt_item, "<Leave>", on_leave)
+        canvas.tag_bind(img_item, "<Button-1>", lambda e, o=nome: acao_menu_modal(o))
+        canvas.tag_bind(txt_item, "<Button-1>", lambda e, o=nome: acao_menu_modal(o))
+        canvas.image_refs = getattr(canvas, "image_refs", [])
+        canvas.image_refs.append(icone)
+        y_pos += 50
+
+    placa_carro = dados_carro['placa'] if dados_carro else 'Novo carro'
+    ctk.CTkLabel(canvas, text=f"Cliente: {nome_cliente}  |  Carro: {placa_carro}", font=("Arial", 12, "bold"), text_color="#ffffff").place(x=180, y=20)
+
+    frame = tk.Frame(canvas, bg="#2b3e50")
+    frame.place(x=180, y=60, width=580, height=380)
+
+    colunas = ("check", "id_servico", "nome_servico")
+    tree_servicos = ttk.Treeview(frame, columns=colunas, show="headings", height=16)
+    tree_servicos.heading("check", text="✓")
+    tree_servicos.heading("id_servico", text="Código")
+    tree_servicos.heading("nome_servico", text="Serviço")
+    tree_servicos.column("check", width=40, anchor="center")
+    tree_servicos.column("id_servico", width=60, anchor="center")
+    tree_servicos.column("nome_servico", width=440)
+
+    scrollbar = ttk.Scrollbar(frame, orient="vertical", command=tree_servicos.yview)
+    tree_servicos.configure(yscrollcommand=scrollbar.set)
+    tree_servicos.pack(side="left", fill="both", expand=True)
+    scrollbar.pack(side="right", fill="y")
+
+    style = ttk.Style()
+    style.theme_use("clam")
+    style.configure("Treeview", background="#375269", foreground="#ffffff", fieldbackground="#375269", rowheight=28, borderwidth=0)
+    style.configure("Treeview.Heading", background="#2c4a5c", foreground="#ffffff", borderwidth=0)
+    style.layout("Treeview", [("Treeview.field", {"sticky": "nswe", "children": [("Treeview.padding", {"sticky": "nswe", "children": [("Treeview.treearea", {"sticky": "nswe"})]})]})])
+
+    servicos_checks = {}
+
+    def toggle_check(event):
+        item = tree_servicos.identify_row(event.y)
+        if item:
+            valores = tree_servicos.item(item, "values")
+            checked = valores[0] == "☑"
+            novo = "☐" if checked else "☑"
+            tree_servicos.item(item, values=(novo, valores[1], valores[2]))
+            id_serv = int(valores[1])
+            servicos_checks[id_serv] = not checked
+
+    tree_servicos.bind("<ButtonRelease-1>", toggle_check)
+
+    try:
+        conn = conectar()
+        cursor = conn.cursor()
+        cursor.execute("SELECT id_servico, nome_servico FROM servicos ORDER BY nome_servico")
+        for id_servico, nome_servico in cursor.fetchall():
+            tree_servicos.insert("", "end", values=("☐", id_servico, nome_servico))
+            servicos_checks[id_servico] = False
+        cursor.close()
+        conn.close()
+    except mysql.connector.Error as e:
+        messagebox.showerror("Erro", f"Erro ao buscar serviços:\n{e}")
+
+    ctk.CTkButton(canvas, text="Voltar", command=lambda: (modal.destroy(), abrir_formulario_carro(tree, id_cliente, nome_cliente, dados_carro, voltar_para_lista=True))).place(x=180, y=455)
+    ctk.CTkButton(canvas, text="Fechar", command=modal.destroy).place(x=300, y=455)
 
 
 def excluir_cliente(tree):
@@ -185,7 +625,7 @@ def tela_clientes():
     canvas = tk.Canvas(janela, highlightthickness=0, bg=cor_fundo)
     canvas.pack(fill="both", expand=True)
 
-    img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "listar_funcionarios.png")
+    img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "tabela.png")
     img_original = None
     if os.path.exists(img_path):
         img_original = Image.open(img_path)
