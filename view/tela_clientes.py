@@ -70,7 +70,7 @@ def abrir_formulario(tree, dados=None):
     cor_cinza = "#777777"
 
     # Imagem de fundo: editar_clientes.png para edição, cadastrar_clientes.png para cadastro
-    img_fundo = "assets/editar_clientes.png" if dados else "assets/cadastrar_clientes.png"
+    img_fundo = "assets/formulario.png" if dados else "assets/formulario.png"
 
     canvas = tk.Canvas(modal, highlightthickness=0)
     canvas.pack(fill="both", expand=True)
@@ -152,7 +152,7 @@ def abrir_formulario(tree, dados=None):
             entry.insert(0, dados[campo] if dados[campo] is not None else "")
         entries[campo] = entry
 
-    def salvar():
+    def salvar_e_avancar():
         valores = {}
         for campo, entry in entries.items():
             if not entry.get().strip():
@@ -167,22 +167,87 @@ def abrir_formulario(tree, dados=None):
                     "UPDATE clientes SET nome_cliente=%s, email_cliente=%s, telefone_cliente=%s, cpf=%s, endereco=%s, data_nascimento=%s WHERE id_cliente=%s",
                     (valores["nome_cliente"], valores["email_cliente"], valores["telefone_cliente"], valores["cpf"], valores["endereco"], valores["data_nascimento"] if valores["data_nascimento"] else None, dados["id_cliente"])
                 )
+                id_cliente = dados["id_cliente"]
             else:
                 cursor.execute(
                     "INSERT INTO clientes (nome_cliente, email_cliente, telefone_cliente, cpf, endereco, data_nascimento) VALUES (%s, %s, %s, %s, %s, %s)",
                     (valores["nome_cliente"], valores["email_cliente"], valores["telefone_cliente"], valores["cpf"], valores["endereco"], valores["data_nascimento"] if valores["data_nascimento"] else None)
                 )
+                id_cliente = cursor.lastrowid
             conn.commit()
             cursor.close()
             conn.close()
             modal.destroy()
             carregar_clientes(tree)
+            abrir_formulario_carro(tree, id_cliente, valores["nome_cliente"])
         except mysql.connector.Error as e:
             messagebox.showerror("Erro", f"Erro ao salvar:\n{e}")
 
     btn_frame = ctk.CTkFrame(frame, fg_color="transparent")
     btn_frame.grid(row=len(campos), column=0, columnspan=2, pady=20)
-    ctk.CTkButton(btn_frame, text="Salvar", command=salvar, width=90).pack(side="left", padx=5)
+    ctk.CTkButton(btn_frame, text="Avançar", command=salvar_e_avancar, width=90).pack(side="left", padx=5)
+    ctk.CTkButton(btn_frame, text="Cancelar", command=modal.destroy, width=90).pack(side="left", padx=5)
+
+
+def abrir_formulario_carro(tree, id_cliente, nome_cliente):
+    modal = ctk.CTkToplevel()
+    modal.title("Cadastrar Carro")
+    modal.geometry("600x400")
+    modal.resizable(False, False)
+    modal.grab_set()
+
+    canvas = tk.Canvas(modal, highlightthickness=0, bg="#2b3e50")
+    canvas.pack(fill="both", expand=True)
+
+    ctk.CTkLabel(canvas, text=f"Cliente: {nome_cliente}", font=("Arial", 14, "bold"), text_color="#ffffff").place(x=30, y=30)
+
+    frame = ctk.CTkFrame(canvas, fg_color="#2b3e50", corner_radius=15)
+    frame.place(relx=0.5, rely=0.5, anchor="center")
+
+    labels_campos = ["Placa", "Modelo", "Marca", "Cor"]
+    campos = ["placa", "modelo", "marca", "cor"]
+    entries = {}
+
+    ctk.CTkLabel(frame, text="Dados do Veículo", font=("Arial", 13, "bold"), text_color="#b88b4a").grid(row=0, column=0, columnspan=2, pady=(10, 15))
+
+    for i, (campo, label) in enumerate(zip(campos, labels_campos)):
+        ctk.CTkLabel(frame, text=label, font=("Arial", 11, "bold"), text_color="#ffffff").grid(row=i+1, column=0, sticky="w", pady=6, padx=10)
+        entry = ctk.CTkEntry(frame, width=250, corner_radius=8)
+        entry.grid(row=i+1, column=1, pady=6, padx=10)
+        entries[campo] = entry
+
+    def salvar_carro():
+        valores = {}
+        for campo in campos:
+            if not entries[campo].get().strip():
+                messagebox.showwarning("Validação", "Todos os campos são obrigatórios.")
+                return
+            valores[campo] = entries[campo].get().strip()
+        try:
+            conn = conectar()
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO carros (placa, modelo, marca, cor) VALUES (%s, %s, %s, %s)",
+                (valores["placa"], valores["modelo"], valores["marca"], valores["cor"])
+            )
+            id_carro = cursor.lastrowid
+            cursor.execute(
+                "INSERT INTO clientes_has_carros (clientes_id_cliente, carros_id_carro) VALUES (%s, %s)",
+                (id_cliente, id_carro)
+            )
+            conn.commit()
+            cursor.close()
+            conn.close()
+            modal.destroy()
+            messagebox.showinfo("Sucesso", "Cliente e carro cadastrados com sucesso!")
+        except mysql.connector.IntegrityError:
+            messagebox.showerror("Erro", "Placa já cadastrada.")
+        except mysql.connector.Error as e:
+            messagebox.showerror("Erro", f"Erro ao salvar carro:\n{e}")
+
+    btn_frame = ctk.CTkFrame(frame, fg_color="transparent")
+    btn_frame.grid(row=len(campos)+1, column=0, columnspan=2, pady=20)
+    ctk.CTkButton(btn_frame, text="Salvar", command=salvar_carro, width=90).pack(side="left", padx=5)
     ctk.CTkButton(btn_frame, text="Cancelar", command=modal.destroy, width=90).pack(side="left", padx=5)
 
 
@@ -245,7 +310,7 @@ def tela_clientes():
     canvas = tk.Canvas(janela, highlightthickness=0, bg=cor_fundo)
     canvas.pack(fill="both", expand=True)
 
-    img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "listar_funcionarios.png")
+    img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "tabela.png")
     img_original = None
     if os.path.exists(img_path):
         img_original = Image.open(img_path)
