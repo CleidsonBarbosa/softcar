@@ -69,7 +69,7 @@ def abrir_formulario(tree, dados=None):
     cor_branco = "#ffffff"
     cor_cinza = "#777777"
 
-    # Imagem de fundo: editar_clientes.png para edição, cadastrar_clientes.png para cadastro
+    # Imagem de fundo: formulario.png para edição, formulario.png para cadastro
     img_fundo = "assets/formulario.png" if dados else "assets/formulario.png"
 
     canvas = tk.Canvas(modal, highlightthickness=0)
