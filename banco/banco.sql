@@ -72,6 +72,7 @@ ENGINE = InnoDB;
 CREATE TABLE IF NOT EXISTS `softcar`.`servicos` (
   `id_servico` INT NOT NULL AUTO_INCREMENT,
   `nome_servico` VARCHAR(45) NOT NULL,
+  `preco_servico` DECIMAL(10,2) NULL,
   `estoque_id_produto` INT NOT NULL,
   `data_hora_servico` DATETIME(4) NULL,
   PRIMARY KEY (`id_servico`),
@@ -87,6 +88,36 @@ CREATE TABLE IF NOT EXISTS `softcar`.`servicos` (
     REFERENCES `softcar`.`estoque` (`id_produto`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `softcar`.`ordem_servico`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `softcar`.`ordem_servico` (
+  `id_ordem` INT NOT NULL AUTO_INCREMENT,
+  `id_cliente` INT NOT NULL,
+  `id_carro` INT NULL,
+  `data_hora` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `total` DECIMAL(10,2) NULL,
+  `status` VARCHAR(20) DEFAULT 'aberto',
+  PRIMARY KEY (`id_ordem`))
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `softcar`.`ordem_servico_itens`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `softcar`.`ordem_servico_itens` (
+  `id_item` INT NOT NULL AUTO_INCREMENT,
+  `id_ordem` INT NOT NULL,
+  `id_servico` INT NOT NULL,
+  `preco` DECIMAL(10,2) NULL,
+  PRIMARY KEY (`id_item`),
+  CONSTRAINT `fk_os_ordem` FOREIGN KEY (`id_ordem`)
+    REFERENCES `softcar`.`ordem_servico` (`id_ordem`),
+  CONSTRAINT `fk_os_servico` FOREIGN KEY (`id_servico`)
+    REFERENCES `softcar`.`servicos` (`id_servico`))
 ENGINE = InnoDB;
 
 
@@ -152,4 +183,16 @@ INSERT INTO clientes (id_cliente, nome_cliente, email_cliente, telefone_cliente,
 (10, 'Cliente 10', 'cliente10@email.com', '11999990010', '10000000010', 'End 10', '1990-01-01'),
 (11, 'Cassio Andrade',   'cassio@mail.com',   '9187956542',  '78257746231', 'cidade dos politicos', '1985-06-25'),
 (12, 'Adriana Pereira',  'adriana@mail.com',  '91989876574', '98659237413', 'cidade da farinha',    '1986-12-23');
+
+INSERT INTO servicos (id_servico, nome_servico, preco_servico, estoque_id_produto) VALUES
+(11, 'Lavagem simples externa',              30.00, 41),
+(12, 'Lavagem completa interna + externa',   60.00, 41),
+(13, 'Lavagem de motor',                     80.00, 44),
+(14, 'Cristalização de pintura',            150.00, 42),
+(15, 'Vitrificação de pintura',             250.00, 42),
+(16, 'Higienização interna',                120.00, 55),
+(17, 'Revitalização de bancos de couro',     90.00, 54),
+(18, 'Revitalização de pneus',               40.00, 54),
+(19, 'Lavagem de estofados',                100.00, 55),
+(20, 'Enceramento profissional',             50.00, 43);
 
