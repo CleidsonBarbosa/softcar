@@ -516,14 +516,16 @@ def listar_servicos(tree, id_cliente, nome_cliente, dados_carro):
     frame = tk.Frame(canvas, bg="#2b3e50")
     frame.place(x=180, y=60, width=580, height=380)
 
-    colunas = ("check", "id_servico", "nome_servico")
+    colunas = ("check", "id_servico", "nome_servico", "preco_servico")
     tree_servicos = ttk.Treeview(frame, columns=colunas, show="headings", height=16)
     tree_servicos.heading("check", text="✓")
     tree_servicos.heading("id_servico", text="Código")
     tree_servicos.heading("nome_servico", text="Serviço")
+    tree_servicos.heading("preco_servico", text="Preço")
     tree_servicos.column("check", width=40, anchor="center")
     tree_servicos.column("id_servico", width=60, anchor="center")
-    tree_servicos.column("nome_servico", width=440)
+    tree_servicos.column("nome_servico", width=370)
+    tree_servicos.column("preco_servico", width=90, anchor="center")
 
     scrollbar = ttk.Scrollbar(frame, orient="vertical", command=tree_servicos.yview)
     tree_servicos.configure(yscrollcommand=scrollbar.set)
@@ -537,6 +539,14 @@ def listar_servicos(tree, id_cliente, nome_cliente, dados_carro):
     style.layout("Treeview", [("Treeview.field", {"sticky": "nswe", "children": [("Treeview.padding", {"sticky": "nswe", "children": [("Treeview.treearea", {"sticky": "nswe"})]})]})])
 
     servicos_checks = {}
+    servicos_precos = {}
+
+    total_label = ctk.CTkLabel(canvas, text="Total: R$ 0.00", font=("Arial", 14, "bold"), text_color="#b88b4a")
+    total_label.place(x=600, y=20)
+
+    def atualizar_total():
+        total = sum(servicos_precos[i] for i, checked in servicos_checks.items() if checked)
+        total_label.configure(text=f"Total: R$ {total:.2f}")
 
     def toggle_check(event):
         item = tree_servicos.identify_row(event.y)
@@ -544,24 +554,56 @@ def listar_servicos(tree, id_cliente, nome_cliente, dados_carro):
             valores = tree_servicos.item(item, "values")
             checked = valores[0] == "☑"
             novo = "☐" if checked else "☑"
-            tree_servicos.item(item, values=(novo, valores[1], valores[2]))
+            tree_servicos.item(item, values=(novo, valores[1], valores[2], valores[3]))
             id_serv = int(valores[1])
             servicos_checks[id_serv] = not checked
+            atualizar_total()
 
     tree_servicos.bind("<ButtonRelease-1>", toggle_check)
 
     try:
         conn = conectar()
         cursor = conn.cursor()
-        cursor.execute("SELECT id_servico, nome_servico FROM servicos ORDER BY nome_servico")
-        for id_servico, nome_servico in cursor.fetchall():
-            tree_servicos.insert("", "end", values=("☐", id_servico, nome_servico))
+        cursor.execute("SELECT id_servico, nome_servico, preco_servico FROM servicos ORDER BY nome_servico")
+        for id_servico, nome_servico, preco in cursor.fetchall():
+            preco_str = f"R$ {preco:.2f}" if preco else "-"
+            tree_servicos.insert("", "end", values=("☐", id_servico, nome_servico, preco_str))
             servicos_checks[id_servico] = False
+            servicos_precos[id_servico] = float(preco) if preco else 0.0
         cursor.close()
         conn.close()
     except mysql.connector.Error as e:
         messagebox.showerror("Erro", f"Erro ao buscar serviços:\n{e}")
 
+    def salvar_ordem():
+        selecionados = [i for i, checked in servicos_checks.items() if checked]
+        if not selecionados:
+            messagebox.showwarning("Seleção", "Selecione pelo menos um serviço.")
+            return
+        total = sum(servicos_precos[i] for i in selecionados)
+        id_carro = dados_carro["id_carro"] if dados_carro else None
+        try:
+            conn = conectar()
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO ordem_servico (id_cliente, id_carro, total) VALUES (%s, %s, %s)",
+                (id_cliente, id_carro, total)
+            )
+            id_ordem = cursor.lastrowid
+            for id_servico in selecionados:
+                cursor.execute(
+                    "INSERT INTO ordem_servico_itens (id_ordem, id_servico, preco) VALUES (%s, %s, %s)",
+                    (id_ordem, id_servico, servicos_precos[id_servico])
+                )
+            conn.commit()
+            cursor.close()
+            conn.close()
+            modal.destroy()
+            messagebox.showinfo("Sucesso", f"Ordem de serviço #{id_ordem} criada! Total: R$ {total:.2f}")
+        except mysql.connector.Error as e:
+            messagebox.showerror("Erro", f"Erro ao salvar ordem:\n{e}")
+
+    ctk.CTkButton(canvas, text="Salvar Ordem", command=salvar_ordem, width=100).place(x=440, y=455)
     ctk.CTkButton(canvas, text="Voltar", command=lambda: (modal.destroy(), abrir_formulario_carro(tree, id_cliente, nome_cliente, dados_carro, voltar_para_lista=True))).place(x=180, y=455)
     ctk.CTkButton(canvas, text="Fechar", command=modal.destroy).place(x=300, y=455)
 
