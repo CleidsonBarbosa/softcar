@@ -2,11 +2,8 @@ import tkinter as tk
 from tkinter import messagebox
 from PIL import Image, ImageTk
 import os
-import mysql.connector
+import mysql.connector  # Importação do conector MySQL
 from view.bemvindo import tela_dashboard
-from view.execucao_servico import tela_execucao_servico
-
-
 def verificar_login(root, entry_login, entry_senha):
     email = entry_login.get()
     senha = entry_senha.get()
@@ -16,29 +13,27 @@ def verificar_login(root, entry_login, entry_senha):
         return
 
     try:
+        # Configuração da conexão com o banco de dados
         conexao = mysql.connector.connect(
             host="localhost",       
             user="root",            
-            password="",
-            database="softcar"
+            password="",    # Substitua pela sua senha do MySQL
+            database="softcar"         # Nome do banco atualizado para 'banco'
         )
         
         cursor = conexao.cursor()
         
+        # Consulta SQL atualizada para a tabela 'funcionarios'
         comando = "SELECT * FROM funcionarios WHERE email_func = %s AND senha = %s"
         cursor.execute(comando, (email, senha))
         resultado = cursor.fetchone()
         
         if resultado:
             messagebox.showinfo("Sucesso", "Login realizado com sucesso!")
-            cargo = resultado[5]  # coluna 'cargo'
-            nome = resultado[1]   # coluna 'nome_func'
-            id_func = resultado[0]
-            root.destroy()
-            if cargo == "lavador":
-                tela_execucao_servico(id_func, nome)
-            else:
-                tela_dashboard()
+            # INSIRA AQUI a chamada para abrir a sua próxima tela
+            cargo = resultado[5]        # índice do campo 'cargo'
+            root.destroy()              # fecha o login
+            tela_dashboard(cargo)       # abre o dashboard com o cargo
         else:
             messagebox.showerror("Erro", "Usuário ou senha incorretos.")
             
