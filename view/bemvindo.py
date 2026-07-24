@@ -22,7 +22,7 @@ def _criar_icone_dourado(icone):
     except Exception:
         return None
 
-def tela_dashboard():
+def tela_dashboard(cargo='atendente'):
     root = tk.Tk()
     root.title("Soft Car - Dashboard")
     root.state("zoomed")
@@ -50,6 +50,9 @@ def tela_dashboard():
         elif opcao == "Funcionários":
             from view.lista_funcionarios import tela_lista_funcionarios
             tela_lista_funcionarios()
+        elif opcao == "Relatórios":
+            from view.tela_servico import tela_execucao_servico
+            tela_execucao_servico()
         else:
             root.deiconify()
             messagebox.showinfo("Soft Car", f"Você clicou na opção: {opcao}")

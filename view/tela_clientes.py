@@ -105,7 +105,8 @@ def abrir_formulario(tree, dados=None):
         elif opcao == "Materiais":
             messagebox.showinfo("Soft Car", "Em desenvolvimento")
         elif opcao == "Relatórios":
-            messagebox.showinfo("Soft Car", "Em desenvolvimento")
+            from view.tela_servico import tela_execucao_servico
+            tela_execucao_servico()
 
     def make_handler(opcao):
         return lambda e: acao_menu(opcao)
@@ -238,7 +239,8 @@ def abrir_formulario_carro(tree, id_cliente, nome_cliente, dados_carro=None, vol
         elif opcao == "Materiais":
             messagebox.showinfo("Soft Car", "Em desenvolvimento")
         elif opcao == "Relatórios":
-            messagebox.showinfo("Soft Car", "Em desenvolvimento")
+            from view.tela_servico import tela_execucao_servico
+            tela_execucao_servico()
 
     y_pos = 120
     for nome, arquivo in icones_info:
