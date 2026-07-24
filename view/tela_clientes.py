@@ -98,7 +98,8 @@ def abrir_formulario(tree, dados=None):
             from view.tela_clientes import tela_clientes
             tela_clientes()
         elif opcao == "Serviços":
-            messagebox.showinfo("Soft Car", "Em desenvolvimento")
+            from view.tela_servicos import tela_servicos
+            tela_servicos()
         elif opcao == "Funcionários":
             from view.lista_funcionarios import tela_lista_funcionarios
             tela_lista_funcionarios()
@@ -231,7 +232,8 @@ def abrir_formulario_carro(tree, id_cliente, nome_cliente, dados_carro=None, vol
             from view.tela_clientes import tela_clientes
             tela_clientes()
         elif opcao == "Serviços":
-            messagebox.showinfo("Soft Car", "Em desenvolvimento")
+            from view.tela_servicos import tela_servicos
+            tela_servicos()
         elif opcao == "Funcionários":
             from view.lista_funcionarios import tela_lista_funcionarios
             tela_lista_funcionarios()
@@ -358,6 +360,9 @@ def listar_carros_cliente(tree, id_cliente, nome_cliente):
         if opcao == "Cliente":
             from view.tela_clientes import tela_clientes
             tela_clientes()
+        elif opcao == "Serviços":
+            from view.tela_servicos import tela_servicos
+            tela_servicos()
         elif opcao == "Funcionários":
             from view.lista_funcionarios import tela_lista_funcionarios
             tela_lista_funcionarios()
@@ -483,6 +488,9 @@ def listar_servicos(tree, id_cliente, nome_cliente, dados_carro):
         if opcao == "Cliente":
             from view.tela_clientes import tela_clientes
             tela_clientes()
+        elif opcao == "Serviços":
+            from view.tela_servicos import tela_servicos
+            tela_servicos()
         elif opcao == "Funcionários":
             from view.lista_funcionarios import tela_lista_funcionarios
             tela_lista_funcionarios()
@@ -614,7 +622,10 @@ def tela_clientes():
     ]
 
     def acao_menu(opcao):
-        if opcao == "Funcionários":
+        if opcao == "Serviços":
+            from view.tela_servicos import tela_servicos
+            tela_servicos()
+        elif opcao == "Funcionários":
             from view.lista_funcionarios import tela_lista_funcionarios
             tela_lista_funcionarios()
         elif opcao == "Cliente":

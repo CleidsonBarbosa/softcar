@@ -1,4 +1,3 @@
-import customtkinter as ctk
 import tkinter as tk
 from tkinter import ttk, messagebox
 from PIL import Image, ImageTk
@@ -15,23 +14,23 @@ def conectar():
     )
 
 
-def carregar_funcionarios(tree):
+def carregar_servicos(tree):
     for row in tree.get_children():
         tree.delete(row)
     try:
         conn = conectar()
         cursor = conn.cursor()
-        cursor.execute("SELECT id_func, nome_func, email_func, telefone_func, cpf_func, cargo FROM funcionarios ORDER BY nome_func")
+        cursor.execute("SELECT id_servico, nome_servico, estoque_id_produto, data_hora_servico FROM servicos ORDER BY nome_servico")
         for i, row in enumerate(cursor.fetchall()):
             tag = "even" if i % 2 == 0 else "odd"
             tree.insert("", "end", values=row, tags=(tag,))
         cursor.close()
         conn.close()
     except mysql.connector.Error as e:
-        messagebox.showerror("Erro", f"Erro ao carregar funcionários:\n{e}")
+        messagebox.showerror("Erro", f"Erro ao carregar serviços:\n{e}")
 
 
-def buscar_funcionarios(tree, entry_busca):
+def buscar_servicos(tree, entry_busca):
     termo = entry_busca.get().strip()
     for row in tree.get_children():
         tree.delete(row)
@@ -40,168 +39,125 @@ def buscar_funcionarios(tree, entry_busca):
         cursor = conn.cursor()
         if termo:
             cursor.execute(
-                "SELECT id_func, nome_func, email_func, telefone_func, cpf_func, cargo FROM funcionarios WHERE nome_func LIKE %s OR email_func LIKE %s OR cpf_func LIKE %s OR cargo LIKE %s ORDER BY nome_func",
-                (f"%{termo}%", f"%{termo}%", f"%{termo}%", f"%{termo}%")
+                "SELECT id_servico, nome_servico, estoque_id_produto, data_hora_servico FROM servicos WHERE nome_servico LIKE %s ORDER BY nome_servico",
+                (f"%{termo}%",)
             )
         else:
-            cursor.execute("SELECT id_func, nome_func, email_func, telefone_func, cpf_func, cargo FROM funcionarios ORDER BY nome_func")
-        resultados = cursor.fetchall()
-        for i, row in enumerate(resultados):
+            cursor.execute("SELECT id_servico, nome_servico, estoque_id_produto, data_hora_servico FROM servicos ORDER BY nome_servico")
+        for i, row in enumerate(cursor.fetchall()):
             tag = "even" if i % 2 == 0 else "odd"
-            item_id = tree.insert("", "end", values=row, tags=(tag,))
-            if i == 0 and termo:
-                tree.selection_set(item_id)
-                tree.see(item_id)
+            tree.insert("", "end", values=row, tags=(tag,))
         cursor.close()
         conn.close()
     except mysql.connector.Error as e:
         messagebox.showerror("Erro", f"Erro ao buscar:\n{e}")
 
 
-def abrir_formulario(tree, dados=None):
-    modal = ctk.CTkToplevel()
-    modal.title("Editar Funcionário" if dados else "Novo Funcionário")
-    modal.geometry("1000x600")
-    modal.minsize(800, 500)
+def abrir_formulario_servico(tree, dados=None):
+    modal = tk.Toplevel()
+    modal.title("Editar Serviço" if dados else "Novo Serviço")
+    modal.geometry("450x350")
     modal.resizable(False, False)
+    modal.transient(tree.winfo_toplevel())
     modal.grab_set()
+    modal.configure(bg="#2b3e50")
 
-    cor_dourado = "#b88b4a"
-    cor_branco = "#ffffff"
-    cor_cinza = "#777777"
+    frame = tk.Frame(modal, bg="#2b3e50")
+    frame.pack(fill="both", expand=True, padx=15, pady=15)
 
-    # Imagem de fundo: editar_funcionarios.png para edição, cadastrar_funcionarios.png para cadastro
-    img_fundo = "assets/editar_funcionarios.png" if dados else "assets/cadastrar_funcionarios.png"
-
-    canvas = tk.Canvas(modal, highlightthickness=0)
-    canvas.pack(fill="both", expand=True)
-
-    bg_img = None
-    if os.path.exists(img_fundo):
-        img = Image.open(img_fundo)
-        img = img.resize((1000, 600), Image.Resampling.LANCZOS)
-        bg_img = ImageTk.PhotoImage(img)
-        canvas.create_image(0, 0, image=bg_img, anchor="nw")
-        canvas.image = bg_img
-
-# ---- MENU VERTICAL (igual lista de funcionários) ----
-    icones_info = [
-        ("Cliente",     "assets/cliente.png"),
-        ("Serviços",    "assets/servicos.png"),
-        ("Funcionários","assets/funcionarios.png"),
-        ("Materiais",   "assets/materiais.png"),
-        ("Relatórios",  "assets/relatorios.png"),
-    ]
-
-    def acao_menu(opcao):
-        modal.destroy()
-        if opcao == "Cliente":
-            from view.tela_clientes import tela_clientes
-            tela_clientes()
-        elif opcao == "Serviços":
-            from view.tela_servicos import tela_servicos
-            tela_servicos()
-        elif opcao == "Funcionários":
-            tela_lista_funcionarios()
-        elif opcao == "Materiais":
-            messagebox.showinfo("Soft Car", "Em desenvolvimento")
-        elif opcao == "Relatórios":
-            messagebox.showinfo("Soft Car", "Em desenvolvimento")
-
-    def make_handler(opcao):
-        return lambda e: acao_menu(opcao)
-
-    y_pos = 120
-    for nome, arquivo in icones_info:
-        icone = _carregar_icone(arquivo, 24)
-        ativo = (nome == "Funcionários")
-        cor_texto = cor_cinza if ativo else cor_branco
-
-        img_item = canvas.create_image(20, y_pos, image=icone, anchor="nw")
-        txt_item = canvas.create_text(50, y_pos + 12, text=nome, font=("Arial", 11, "bold"), fill=cor_texto, anchor="nw")
-
-        def make_handler(opcao):
-            return lambda e: acao_menu(opcao)
-
-        def on_enter(e, txt=txt_item):
-            canvas.itemconfig(txt, fill=cor_dourado)
-        def on_leave(e, txt=txt_item, cor=cor_texto):
-            canvas.itemconfig(txt, fill=cor)
-
-        canvas.tag_bind(img_item, "<Enter>", on_enter)
-        canvas.tag_bind(img_item, "<Leave>", on_leave)
-        canvas.tag_bind(txt_item, "<Enter>", on_enter)
-        canvas.tag_bind(txt_item, "<Leave>", on_leave)
-
-        canvas.image_refs = getattr(canvas, "image_refs", [])
-        canvas.image_refs.append(icone)
-        y_pos += 50
-
-    # ---- FORMULÁRIO ----
-    frame = ctk.CTkFrame(canvas, fg_color="#2b3e50", corner_radius=15)
-    frame_window = canvas.create_window(580, 300, window=frame, anchor="center")
-
-    campos = ["nome_func", "email_func", "telefone_func", "cpf_func", "cargo", "endereco_func", "data_nascimento_func", "senha"]
-    labels = ["Nome", "E-mail", "Telefone", "CPF", "Cargo (lavador/atendente)", "Endereço", "Data de Nascimento", "Senha"]
+    campos = ["nome_servico", "estoque_id_produto", "data_hora_servico"]
+    labels = ["Nome do Serviço", "Produto (Estoque)", "Data/Hora (YYYY-MM-DD HH:MM:SS)"]
     entries = {}
 
+    try:
+        conn = conectar()
+        cursor = conn.cursor()
+        cursor.execute("SELECT id_produto, tipo FROM estoque ORDER BY tipo")
+        produtos = cursor.fetchall()
+        cursor.close()
+        conn.close()
+    except:
+        produtos = []
+
+    opcoes_produto = {f"{p[1]} (ID {p[0]})": p[0] for p in produtos}
+    lista_opcoes = list(opcoes_produto.keys())
+
     for i, (campo, label) in enumerate(zip(campos, labels)):
-        ctk.CTkLabel(frame, text=label, font=("Arial", 11, "bold"), text_color="#ffffff").grid(row=i, column=0, sticky="w", pady=4, padx=10)
-        entry = ctk.CTkEntry(frame, width=250, corner_radius=8)
-        entry.grid(row=i, column=1, pady=4, padx=10)
-        if dados:
-            entry.insert(0, dados[campo] if dados[campo] is not None else "")
-        entries[campo] = entry
+        tk.Label(frame, text=label, fg="#ffffff", bg="#2b3e50", font=("Arial", 10)).grid(row=i, column=0, sticky="w", pady=4, padx=(0, 10))
+        if campo == "estoque_id_produto":
+            var = tk.StringVar()
+            combo = ttk.Combobox(frame, textvariable=var, values=lista_opcoes, state="readonly", width=30, font=("Arial", 10))
+            combo.grid(row=i, column=1, pady=4, ipady=4)
+            if dados and dados[campo]:
+                for texto, pid in opcoes_produto.items():
+                    if pid == dados[campo]:
+                        combo.set(texto)
+                        break
+            entries[campo] = var
+        else:
+            entry = tk.Entry(frame, width=30, bg="#375269", fg="#ffffff", insertbackground="#ffffff", relief="flat", font=("Arial", 10))
+            entry.grid(row=i, column=1, pady=4, ipady=4)
+            if dados:
+                entry.insert(0, dados[campo] if dados[campo] is not None else "")
+            entries[campo] = entry
 
     def salvar():
-        valores = {}
-        for campo, entry in entries.items():
-            if not entry.get().strip():
-                messagebox.showwarning("Validação", f"O campo {labels[campos.index(campo)]} é obrigatório.")
-                return
-            valores[campo] = entry.get().strip()
+        nome = entries["nome_servico"].get().strip()
+        if not nome:
+            messagebox.showwarning("Validação", "O campo Nome do Serviço é obrigatório.")
+            return
+        produto_texto = entries["estoque_id_produto"].get().strip()
+        if not produto_texto:
+            messagebox.showwarning("Validação", "Selecione um Produto.")
+            return
+        if produto_texto not in opcoes_produto:
+            messagebox.showwarning("Validação", "Produto selecionado inválido.")
+            return
+        id_produto = str(opcoes_produto[produto_texto])
+        data_hora = entries["data_hora_servico"].get().strip() or None
         try:
             conn = conectar()
             cursor = conn.cursor()
             if dados:
                 cursor.execute(
-                    "UPDATE funcionarios SET nome_func=%s, email_func=%s, telefone_func=%s, cpf_func=%s, cargo=%s, endereco_func=%s, data_nascimento_func=%s, senha=%s WHERE id_func=%s",
-                    (valores["nome_func"], valores["email_func"], valores["telefone_func"], valores["cpf_func"], valores["cargo"], valores["endereco_func"], valores["data_nascimento_func"] if valores["data_nascimento_func"] else None, valores["senha"], dados["id_func"])
+                    "UPDATE servicos SET nome_servico=%s, estoque_id_produto=%s, data_hora_servico=%s WHERE id_servico=%s",
+                    (nome, id_produto, data_hora, dados["id_servico"])
                 )
             else:
                 cursor.execute(
-                    "INSERT INTO funcionarios (nome_func, email_func, telefone_func, cpf_func, cargo, endereco_func, data_nascimento_func, senha) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
-                    (valores["nome_func"], valores["email_func"], valores["telefone_func"], valores["cpf_func"], valores["cargo"], valores["endereco_func"], valores["data_nascimento_func"] if valores["data_nascimento_func"] else None, valores["senha"])
+                    "INSERT INTO servicos (nome_servico, estoque_id_produto, data_hora_servico) VALUES (%s, %s, %s)",
+                    (nome, id_produto, data_hora)
                 )
             conn.commit()
             cursor.close()
             conn.close()
             modal.destroy()
-            tela_lista_funcionarios()
+            carregar_servicos(tree)
         except mysql.connector.Error as e:
             messagebox.showerror("Erro", f"Erro ao salvar:\n{e}")
 
-    btn_frame = ctk.CTkFrame(frame, fg_color="transparent")
+    btn_frame = tk.Frame(frame, bg="#2b3e50")
     btn_frame.grid(row=len(campos), column=0, columnspan=2, pady=20)
-    ctk.CTkButton(btn_frame, text="Salvar", command=salvar, width=90).pack(side="left", padx=5)
-    ctk.CTkButton(btn_frame, text="Cancelar", command=modal.destroy, width=90).pack(side="left", padx=5)
+    tk.Button(btn_frame, text="Salvar", command=salvar, width=12, bg="#375269", fg="#ffffff", activebackground="#b88b4a", relief="flat", font=("Arial", 10, "bold")).pack(side="left", padx=5)
+    tk.Button(btn_frame, text="Cancelar", command=modal.destroy, width=12, bg="#375269", fg="#ffffff", activebackground="#b88b4a", relief="flat", font=("Arial", 10, "bold")).pack(side="left", padx=5)
 
-def excluir_funcionario(tree):
+
+def excluir_servico(tree):
     selecionado = tree.selection()
     if not selecionado:
-        messagebox.showwarning("Seleção", "Selecione um funcionário na lista.")
+        messagebox.showwarning("Seleção", "Selecione um serviço na lista.")
         return
-    if not messagebox.askyesno("Confirmar", "Tem certeza que deseja excluir este funcionário?"):
+    if not messagebox.askyesno("Confirmar", "Tem certeza que deseja excluir este serviço?"):
         return
-    id_func = tree.item(selecionado[0])["values"][0]
+    id_servico = tree.item(selecionado[0])["values"][0]
     try:
         conn = conectar()
         cursor = conn.cursor()
-        cursor.execute("DELETE FROM funcionarios WHERE id_func = %s", (id_func,))
+        cursor.execute("DELETE FROM servicos WHERE id_servico = %s", (id_servico,))
         conn.commit()
         cursor.close()
         conn.close()
-        carregar_funcionarios(tree)
+        carregar_servicos(tree)
     except mysql.connector.Error as e:
         messagebox.showerror("Erro", f"Erro ao excluir:\n{e}")
 
@@ -214,23 +170,16 @@ def _carregar_icone(caminho, tamanho):
     except Exception:
         return None
 
-def tela_lista_funcionarios():
-    janela = ctk.CTkToplevel()
-    janela.title("Soft Car - Lista de Funcionários")
+
+def tela_servicos():
+    janela = tk.Toplevel()
+    janela.title("Soft Car - Lista de Serviços")
     janela.geometry("1000x600")
     janela.minsize(800, 500)
-
-    def voltar_dashboard():
-        janela.destroy()
-        from view.bemvindo import tela_dashboard
-        tela_dashboard()
-
-    janela.protocol("WM_DELETE_WINDOW", voltar_dashboard)
 
     cor_dourado = "#b88b4a"
     cor_branco = "#ffffff"
     cor_fundo = "#2b3e50"
-    cor_fundo2 = "#1a2735"
 
     icones_info = [
         ("Cliente",     "assets/cliente.png"),
@@ -241,23 +190,21 @@ def tela_lista_funcionarios():
     ]
 
     def acao_menu(opcao):
-        janela.withdraw()
         if opcao == "Cliente":
             from view.tela_clientes import tela_clientes
             tela_clientes()
         elif opcao == "Serviços":
-            from view.tela_servicos import tela_servicos
-            tela_servicos()
+            pass
         elif opcao == "Funcionários":
+            from view.lista_funcionarios import tela_lista_funcionarios
             tela_lista_funcionarios()
         else:
-            janela.deiconify()
             messagebox.showinfo("Soft Car", f"Você clicou na opção: {opcao}")
 
     canvas = tk.Canvas(janela, highlightthickness=0, bg=cor_fundo)
     canvas.pack(fill="both", expand=True)
 
-    img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "listar_funcionarios.png")
+    img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "tabela.png")
     img_original = None
     if os.path.exists(img_path):
         img_original = Image.open(img_path)
@@ -322,53 +269,48 @@ def tela_lista_funcionarios():
     search_var = tk.StringVar()
     entry_busca = tk.Entry(frame_top, width=20, bg="#375269", fg="#ffffff", insertbackground="#ffffff", textvariable=search_var, relief="flat", font=("Arial", 10))
     entry_busca.pack(side="left", padx=5, ipady=3)
-    search_var.trace_add("write", lambda *args: buscar_funcionarios(tree, entry_busca))
-    entry_busca.bind("<Return>", lambda e: cmd_editar())
+    search_var.trace_add("write", lambda *args: buscar_servicos(tree, entry_busca))
 
-    btn_cadastrar = tk.Button(canvas, text="Cadastrar Funcionário +", font=("Arial", 11, "bold"),
+    btn_cadastrar = tk.Button(canvas, text="Cadastrar Serviço +", font=("Arial", 11, "bold"),
                               bg="#375269", fg=cor_branco, activebackground=cor_dourado,
                               activeforeground=cor_branco, relief="flat", bd=0,
-                              command=lambda: abrir_formulario(tree))
+                              command=lambda: abrir_formulario_servico(tree))
     btn_cadastrar_window = canvas.create_window(0, 0, window=btn_cadastrar, anchor="nw")
 
     def cmd_editar():
         selecionado = tree.selection()
         if not selecionado:
-            messagebox.showwarning("Seleção", "Selecione um funcionário na lista.")
+            messagebox.showwarning("Seleção", "Selecione um serviço na lista.")
             return
-        id_func = tree.item(selecionado[0])["values"][0]
+        id_servico = tree.item(selecionado[0])["values"][0]
         try:
             conn = conectar()
             cursor = conn.cursor(dictionary=True)
-            cursor.execute("SELECT * FROM funcionarios WHERE id_func = %s", (id_func,))
+            cursor.execute("SELECT * FROM servicos WHERE id_servico = %s", (id_servico,))
             dados = cursor.fetchone()
             cursor.close()
             conn.close()
             if dados:
-                abrir_formulario(tree, dados)
+                abrir_formulario_servico(tree, dados)
         except mysql.connector.Error as e:
             messagebox.showerror("Erro", f"Erro ao carregar dados:\n{e}")
 
     def cmd_excluir():
-        excluir_funcionario(tree)
+        excluir_servico(tree)
 
     frame_tabela = tk.Frame(canvas, bg="#375269")
     frame_tabela_window = canvas.create_window(0, 0, window=frame_tabela, anchor="nw")
 
-    colunas = ("id_func", "nome_func", "email_func", "telefone_func", "cpf_func", "cargo")
+    colunas = ("id_servico", "nome_servico", "estoque_id_produto", "data_hora_servico")
     tree = ttk.Treeview(frame_tabela, columns=colunas, show="headings", selectmode="browse", height=15)
-    tree.heading("id_func", text="ID")
-    tree.heading("nome_func", text="Nome")
-    tree.heading("email_func", text="E-mail")
-    tree.heading("telefone_func", text="Telefone")
-    tree.heading("cpf_func", text="CPF")
-    tree.heading("cargo", text="Cargo")
-    tree.column("id_func", width=0, stretch=False)
-    tree.column("cpf_func", width=0, stretch=False)
-    tree.column("nome_func", width=180)
-    tree.column("email_func", width=200)
-    tree.column("telefone_func", width=120, anchor="center")
-    tree.column("cargo", width=100, anchor="center")
+    tree.heading("id_servico", text="ID")
+    tree.heading("nome_servico", text="Serviço")
+    tree.heading("estoque_id_produto", text="ID Produto")
+    tree.heading("data_hora_servico", text="Data/Hora")
+    tree.column("id_servico", width=0, stretch=False)
+    tree.column("nome_servico", width=250)
+    tree.column("estoque_id_produto", width=120, anchor="center")
+    tree.column("data_hora_servico", width=200, anchor="center")
 
     tree.tag_configure("odd", background="#375269")
     tree.tag_configure("even", background="#375269")
@@ -387,7 +329,7 @@ def tela_lista_funcionarios():
     scrollbar.pack(side="right", fill="y")
     tree.pack(side="left", fill="both", expand=True)
 
-    carregar_funcionarios(tree)
+    carregar_servicos(tree)
 
     def _redimensionar(w, h):
         nonlocal bg_image_tk, menu_criado
@@ -403,11 +345,9 @@ def tela_lista_funcionarios():
             y_pos = 220
             for nome, arquivo in icones_info:
                 icone = _carregar_icone(arquivo, 24)
-                ativo = (nome == "Funcionários")
-                cor_texto = "#777777" if ativo else "#ffffff"
 
                 img_item = canvas.create_image(20, y_pos, image=icone, anchor="nw")
-                txt_item = canvas.create_text(50, y_pos + 12, text=nome, font=("Arial", 11, "bold"), fill=cor_texto, anchor="nw")
+                txt_item = canvas.create_text(50, y_pos + 12, text=nome, font=("Arial", 11, "bold"), fill=cor_branco, anchor="nw")
 
                 def make_handler(opcao):
                     return lambda e: acao_menu(opcao)
@@ -417,8 +357,8 @@ def tela_lista_funcionarios():
 
                 def on_enter(e, txt=txt_item):
                     canvas.itemconfig(txt, fill=cor_dourado)
-                def on_leave(e, txt=txt_item, cor=cor_texto):
-                    canvas.itemconfig(txt, fill=cor)
+                def on_leave(e, txt=txt_item):
+                    canvas.itemconfig(txt, fill=cor_branco)
 
                 canvas.tag_bind(img_item, "<Enter>", on_enter)
                 canvas.tag_bind(img_item, "<Leave>", on_leave)
@@ -426,12 +366,12 @@ def tela_lista_funcionarios():
                 canvas.tag_bind(txt_item, "<Leave>", on_leave)
 
                 canvas.image_refs.append(icone)
-                botoes_menu.append((img_item, txt_item, ativo))
+                botoes_menu.append((img_item, txt_item))
                 y_pos += 50
             menu_criado = True
 
         y = 220
-        for img_item, txt_item, ativo in botoes_menu:
+        for img_item, txt_item in botoes_menu:
             canvas.coords(img_item, 20, y)
             canvas.coords(txt_item, 50, y + 12)
             y += 50
@@ -461,5 +401,5 @@ def tela_lista_funcionarios():
 if __name__ == "__main__":
     root = tk.Tk()
     root.withdraw()
-    tela_lista_funcionarios()
+    tela_servicos()
     root.mainloop()

@@ -47,6 +47,9 @@ def tela_dashboard():
         if opcao == "Cliente":
             from view.tela_clientes import tela_clientes
             tela_clientes()
+        elif opcao == "Serviços":
+            from view.tela_servicos import tela_servicos
+            tela_servicos()
         elif opcao == "Funcionários":
             from view.lista_funcionarios import tela_lista_funcionarios
             tela_lista_funcionarios()
