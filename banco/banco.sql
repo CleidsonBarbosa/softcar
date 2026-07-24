@@ -75,19 +75,7 @@ CREATE TABLE IF NOT EXISTS `softcar`.`servicos` (
   `preco_servico` DECIMAL(10,2) NULL,
   `estoque_id_produto` INT NOT NULL,
   `data_hora_servico` DATETIME(4) NULL,
-  PRIMARY KEY (`id_servico`),
-  UNIQUE INDEX `id_servico_UNIQUE` (`id_servico` ASC) VISIBLE,
-  INDEX `fk_servicos_estoque1_idx` (`estoque_id_produto` ASC) VISIBLE,
-  CONSTRAINT `id_carro`
-    FOREIGN KEY (`id_servico`)
-    REFERENCES `softcar`.`carros` (`id_carro`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION,
-  CONSTRAINT `fk_servicos_estoque1`
-    FOREIGN KEY (`estoque_id_produto`)
-    REFERENCES `softcar`.`estoque` (`id_produto`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
+  PRIMARY KEY (`id_servico`))
 ENGINE = InnoDB;
 
 
