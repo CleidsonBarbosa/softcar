@@ -138,20 +138,24 @@ def abrir_formulario(tree, dados=None):
         y_pos += 50
 
     # ---- FORMULÁRIO ----
-    frame = ctk.CTkFrame(canvas, fg_color="#2b3e50", corner_radius=15)
-    frame_window = canvas.create_window(500, 300, window=frame, anchor="center")
-
     campos = ["nome_cliente", "email_cliente", "telefone_cliente", "cpf", "endereco", "data_nascimento"]
-    labels = ["Nome", "E-mail", "Telefone", "CPF", "Endereço", "Data de Nascimento"]
+    labels = ["Nome", "E-mail", "Telefone", "CPF", "Endereço", "Data de Nasc."]
     entries = {}
+    itens_form = []
+
+    x_label = 400
+    x_entry = 420
+    y_inicio = 140
 
     for i, (campo, label) in enumerate(zip(campos, labels)):
-        ctk.CTkLabel(frame, text=label, font=("Arial", 11, "bold"), text_color="#ffffff").grid(row=i, column=0, sticky="w", pady=4, padx=10)
-        entry = ctk.CTkEntry(frame, width=250, corner_radius=8)
-        entry.grid(row=i, column=1, pady=4, padx=10)
+        y_atual = y_inicio + i * 60
+        lbl = canvas.create_text(x_label, y_atual, text=label, font=("Arial", 11, "bold"), fill="#ffffff", anchor="e")
+        entry = ctk.CTkEntry(canvas, width=400, corner_radius=8, fg_color="#D9D9D9", text_color="#000000", border_color="#304C62", border_width=2)
+        entry_win = canvas.create_window(x_entry, y_atual, window=entry, anchor="w")
         if dados:
             entry.insert(0, dados[campo] if dados[campo] is not None else "")
         entries[campo] = entry
+        itens_form.append((lbl, entry_win))
 
     def salvar_e_avancar():
         valores = {}
@@ -187,10 +191,59 @@ def abrir_formulario(tree, dados=None):
         except mysql.connector.Error as e:
             messagebox.showerror("Erro", f"Erro ao salvar:\n{e}")
 
-    btn_frame = ctk.CTkFrame(frame, fg_color="transparent")
-    btn_frame.grid(row=len(campos), column=0, columnspan=2, pady=20)
-    ctk.CTkButton(btn_frame, text="Avançar", command=salvar_e_avancar, width=90).pack(side="left", padx=5)
-    ctk.CTkButton(btn_frame, text="Cancelar", command=modal.destroy, width=90).pack(side="left", padx=5)
+    img_avancar = None
+    if os.path.exists("assets/btn_avancar.png"):
+        img_a = Image.open("assets/btn_avancar.png")
+        img_a = img_a.resize((90, 30), Image.Resampling.LANCZOS)
+        img_avancar = ImageTk.PhotoImage(img_a)
+
+    if img_avancar:
+        lbl_avancar = canvas.create_image(x_entry, y_inicio + len(campos) * 60, image=img_avancar, anchor="w")
+        canvas.tag_bind(lbl_avancar, "<Button-1>", lambda e: salvar_e_avancar())
+        canvas.image_avancar = img_avancar  # manter referência
+    else:
+        btn_salvar = ctk.CTkButton(canvas, text="Avançar", command=salvar_e_avancar, width=90)
+        canvas.create_window(x_entry, y_inicio + len(campos) * 60, window=btn_salvar, anchor="w")
+
+    img_cancelar = None
+    if os.path.exists("assets/btn_cancelar.png"):
+        img_c = Image.open("assets/btn_cancelar.png")
+        img_c = img_c.resize((90, 30), Image.Resampling.LANCZOS)
+        img_cancelar = ImageTk.PhotoImage(img_c)
+
+    if img_cancelar:
+        lbl_cancelar = canvas.create_image(x_entry + 110, y_inicio + len(campos) * 60, image=img_cancelar, anchor="w")
+        canvas.tag_bind(lbl_cancelar, "<Button-1>", lambda e: modal.destroy())
+        canvas.image_cancelar = img_cancelar
+    else:
+        btn_cancelar = ctk.CTkButton(canvas, text="Cancelar", command=modal.destroy, width=90)
+        btn_cancelar_win = canvas.create_window(x_entry + 110, y_inicio + len(campos) * 60, window=btn_cancelar, anchor="w")
+
+    def _redimensionar_formulario(event=None):
+        nonlocal bg_img
+        if event is not None and event.widget != modal:
+            return
+        w, h = modal.winfo_width(), modal.winfo_height()
+        if w < 10 or h < 10:
+            return
+        if img_original:
+            img_resized = img_original.resize((w, h), Image.Resampling.LANCZOS)
+            bg_img = ImageTk.PhotoImage(img_resized)
+            canvas.delete("bg")
+            canvas.create_image(0, 0, image=bg_img, anchor="nw", tags="bg")
+            canvas.tag_lower("bg")
+        cx = 400 + (w - 1000) / 2
+        cy = 140 + (h - 600) / 2
+        for i, (lbl, entry_win) in enumerate(itens_form):
+            canvas.coords(lbl, cx, cy + i * 60)
+            canvas.coords(entry_win, cx + 80, cy + i * 60)
+        canvas.coords(lbl_avancar, cx + 80, cy + len(campos) * 60)
+        if img_cancelar:
+            canvas.coords(lbl_cancelar, cx + 190, cy + len(campos) * 60)
+
+    modal.bind("<Configure>", _redimensionar_formulario)
+    modal.after(500, lambda: [modal.update_idletasks(), _redimensionar_formulario()])
+    modal.after(100, _redimensionar_formulario)  # fallback rápido
 
 
 def abrir_formulario_carro(tree, id_cliente, nome_cliente, dados_carro=None, voltar_para_lista=False):
