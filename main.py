@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import messagebox
 from PIL import Image, ImageTk
 import os
-import mysql.connector  # Importação do conector MySQL
+import mysql.connector
 from view.bemvindo import tela_dashboard
 def verificar_login(root, entry_login, entry_senha):
     email = entry_login.get()
@@ -50,6 +50,7 @@ def tela_login():
     root.geometry("800x600")
     root.minsize(600, 450)
     root.resizable(True, True)
+    root.state("zoomed")  # abre maximizado
 
     img_path = "assets/Login.png"
 
@@ -62,30 +63,64 @@ def tela_login():
     canvas = tk.Canvas(root, highlightthickness=0)
     canvas.pack(fill="both", expand=True)
 
+    def rounded_rect(canvas, x, y, w, h, r, **kwargs):
+        """Desenha retângulo arredondado no canvas."""
+        return canvas.create_polygon(
+            x + r, y,
+            x + w - r, y,
+            x + w, y,
+            x + w, y + r,
+            x + w, y + h - r,
+            x + w, y + h,
+            x + w - r, y + h,
+            x + r, y + h,
+            x, y + h,
+            x, y + h - r,
+            x, y + r,
+            smooth=True, **kwargs
+        )
+
     bg_image_tk = None
 
-    entry_login = tk.Entry(root, font=("Arial", 13), bd=2, bg="#c2c7cc", justify="center")
-    entry_senha = tk.Entry(root, font=("Arial", 13), bd=2, bg="#c2c7cc", show="*", justify="center")
+    # fundos arredondados das entradas (serão reposicionados no redimensionar)
+    rect_login = rounded_rect(canvas, 0, 0, 300, 35, 10, fill="#c2c7cc", outline="#304C62", width=1)
+    entry_login = tk.Entry(root, font=("Arial", 13), bd=0, bg="#c2c7cc", fg="#333333", justify="center", highlightthickness=0, insertbackground="#333333")
+    entry_senha = tk.Entry(root, font=("Arial", 13), bd=0, bg="#c2c7cc", fg="#333333", show="*", justify="center", highlightthickness=0, insertbackground="#333333")
 
-    canvas_login_window = canvas.create_window(0, 0, window=entry_login)
-    canvas_senha_window = canvas.create_window(0, 0, window=entry_senha)
+    canvas_login_window = canvas.create_window(0, 0, window=entry_login, width=300, height=35)
+    canvas_senha_window = canvas.create_window(0, 0, window=entry_senha, width=300, height=35)
+
+    # 2º fundo arredondado (senha)
+    rect_senha = rounded_rect(canvas, 0, 0, 300, 35, 10, fill="#c2c7cc", outline="#304C62", width=1)
 
     text_usuario = canvas.create_text(0, 0, text="Usuário / E-mail", font=("Arial", 11, "bold"), fill="white")
     text_senha = canvas.create_text(0, 0, text="Senha", font=("Arial", 11, "bold"), fill="white")
 
-    btn_entrar = tk.Button(
-        root,
-        text="Entrar",
-        font=("Arial", 11, "bold"),
-        bg="#b0b5b9",
-        fg="#333333",
-        activebackground="#c2c7cc",
-        bd=0,
-        width=9,
-        height=1,
-        command=lambda: verificar_login(root, entry_login, entry_senha)
-    )
-    canvas_btn_window = canvas.create_window(0, 0, window=btn_entrar)
+    img_entrar = None
+    if os.path.exists("assets/btn_entrar.png"):
+        img_e = Image.open("assets/btn_entrar.png")
+        img_e = img_e.resize((100, 35), Image.Resampling.LANCZOS)
+        img_entrar = ImageTk.PhotoImage(img_e)
+
+    if img_entrar:
+        btn_entrar = canvas.create_image(0, 0, image=img_entrar, anchor="nw")
+        canvas.tag_bind(btn_entrar, "<Button-1>", lambda e: verificar_login(root, entry_login, entry_senha))
+        canvas.image_entrar = img_entrar
+        btn_entrar_img = btn_entrar
+    else:
+        btn_entrar = tk.Button(
+            root,
+            text="Entrar",
+            font=("Arial", 11, "bold"),
+            bg="#b0b5b9",
+            fg="#333333",
+            activebackground="#c2c7cc",
+            bd=0,
+            width=9,
+            height=1,
+            command=lambda: verificar_login(root, entry_login, entry_senha)
+        )
+        canvas_btn_window = canvas.create_window(0, 0, window=btn_entrar)
 
     root.bind("<Return>", lambda e: verificar_login(root, entry_login, entry_senha))
 
@@ -104,11 +139,22 @@ def tela_login():
         canvas.tag_lower("bg")
 
         cx = w * 0.806
+        cy_login = h * 0.463
+        cy_senha = h * 0.613
+
         canvas.coords(text_usuario, cx, h * 0.425)
-        canvas.coords(canvas_login_window, cx, h * 0.463)
+        canvas.coords(canvas_login_window, cx, cy_login)
         canvas.coords(text_senha, cx, h * 0.575)
-        canvas.coords(canvas_senha_window, cx, h * 0.613)
-        canvas.coords(canvas_btn_window, cx, h * 0.720)
+        canvas.coords(canvas_senha_window, cx, cy_senha)
+
+        # reposiciona retângulos arredondados
+        canvas.coords(rect_login, cx - 150, cy_login - 17, cx + 150, cy_login + 17)
+        canvas.coords(rect_senha, cx - 150, cy_senha - 17, cx + 150, cy_senha + 17)
+
+        if 'btn_entrar_img' in locals() or 'btn_entrar_img' in globals():
+            canvas.coords(btn_entrar_img, cx - 50, h * 0.68)
+        else:
+            canvas.coords(canvas_btn_window, cx, h * 0.68)
 
     root.bind("<Configure>", redimensionar)
     root.after(100, lambda: [root.update_idletasks(), redimensionar(type('Event', (), {'widget': root, 'width': root.winfo_width(), 'height': root.winfo_height()})())])

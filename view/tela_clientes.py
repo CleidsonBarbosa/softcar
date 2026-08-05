@@ -76,11 +76,12 @@ def abrir_formulario(tree, dados=None):
     canvas.pack(fill="both", expand=True)
 
     bg_img = None
+    img_original = None
     if os.path.exists(img_fundo):
-        img = Image.open(img_fundo)
-        img = img.resize((1000, 600), Image.Resampling.LANCZOS)
+        img_original = Image.open(img_fundo)
+        img = img_original.resize((1000, 600), Image.Resampling.LANCZOS)
         bg_img = ImageTk.PhotoImage(img)
-        canvas.create_image(0, 0, image=bg_img, anchor="nw")
+        canvas.create_image(0, 0, image=bg_img, anchor="nw", tags="bg")
         canvas.image = bg_img
 
     # ---- MENU VERTICAL ----
