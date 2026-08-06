@@ -56,26 +56,101 @@ def buscar_materiais(tree, entry_busca):
 def abrir_formulario_material(tree, dados=None):
     modal = tk.Toplevel()
     modal.title("Editar Material" if dados else "Novo Material")
-    modal.geometry("450x300")
+    modal.geometry("1000x600")
+    modal.minsize(800, 500)
     modal.resizable(False, False)
     modal.transient(tree.winfo_toplevel())
     modal.grab_set()
-    modal.configure(bg="#2b3e50")
 
-    frame = tk.Frame(modal, bg="#2b3e50")
-    frame.pack(fill="both", expand=True, padx=15, pady=15)
+    cor_dourado = "#b88b4a"
+    cor_branco = "#ffffff"
+    cor_cinza = "#777777"
+
+    img_fundo = "assets/formulario.png"
+
+    canvas = tk.Canvas(modal, highlightthickness=0)
+    canvas.pack(fill="both", expand=True)
+
+    bg_img = None
+    if os.path.exists(img_fundo):
+        img = Image.open(img_fundo)
+        img = img.resize((1000, 600), Image.Resampling.LANCZOS)
+        bg_img = ImageTk.PhotoImage(img)
+        canvas.create_image(0, 0, image=bg_img, anchor="nw")
+        canvas.image = bg_img
+
+    icones_info = [
+        ("Cliente",     "assets/cliente.png"),
+        ("Serviços",    "assets/servicos.png"),
+        ("Funcionários","assets/funcionarios.png"),
+        ("Materiais",   "assets/materiais.png"),
+        ("Relatórios",  "assets/relatorios.png"),
+    ]
+
+    def acao_menu(opcao):
+        modal.destroy()
+        if opcao == "Cliente":
+            from view.tela_clientes import tela_clientes
+            tela_clientes()
+        elif opcao == "Serviços":
+            from view.tela_servicos import tela_servicos
+            tela_servicos()
+        elif opcao == "Funcionários":
+            from view.lista_funcionarios import tela_lista_funcionarios
+            tela_lista_funcionarios()
+        elif opcao == "Materiais":
+            from view.tela_materiais import tela_materiais
+            tela_materiais()
+        else:
+            messagebox.showinfo("Soft Car", f"Você clicou na opção: {opcao}")
+
+    y_pos = 120
+    for nome, arquivo in icones_info:
+        icone = _carregar_icone(arquivo, 24)
+        ativo = (nome == "Materiais")
+        cor_texto = cor_cinza if ativo else cor_branco
+
+        img_item = canvas.create_image(20, y_pos, image=icone, anchor="nw")
+        txt_item = canvas.create_text(50, y_pos + 12, text=nome, font=("Arial", 11, "bold"), fill=cor_texto, anchor="nw")
+
+        def on_enter(e, txt=txt_item):
+            canvas.itemconfig(txt, fill=cor_dourado)
+        def on_leave(e, txt=txt_item, cor=cor_texto):
+            canvas.itemconfig(txt, fill=cor)
+
+        canvas.tag_bind(img_item, "<Enter>", on_enter)
+        canvas.tag_bind(img_item, "<Leave>", on_leave)
+        canvas.tag_bind(txt_item, "<Enter>", on_enter)
+        canvas.tag_bind(txt_item, "<Leave>", on_leave)
+
+        def make_handler(opcao):
+            return lambda e: acao_menu(opcao)
+
+        canvas.tag_bind(img_item, "<Button-1>", make_handler(nome))
+        canvas.tag_bind(txt_item, "<Button-1>", make_handler(nome))
+
+        canvas.image_refs = getattr(canvas, "image_refs", [])
+        canvas.image_refs.append(icone)
+        y_pos += 50
 
     campos = ["tipo", "quantidade"]
     labels = ["Tipo", "Quantidade"]
     entries = {}
+    itens_form = []
+
+    x_label = 400
+    x_entry = 420
+    y_inicio = 220
 
     for i, (campo, label) in enumerate(zip(campos, labels)):
-        tk.Label(frame, text=label, fg="#ffffff", bg="#2b3e50", font=("Arial", 10)).grid(row=i, column=0, sticky="w", pady=4, padx=(0, 10))
-        entry = tk.Entry(frame, width=30, bg="#375269", fg="#ffffff", insertbackground="#ffffff", relief="flat", font=("Arial", 10))
-        entry.grid(row=i, column=1, pady=4, ipady=4)
+        y_atual = y_inicio + i * 60
+        lbl = canvas.create_text(x_label, y_atual, text=label, font=("Arial", 11, "bold"), fill="#ffffff", anchor="e")
+        entry = tk.Entry(canvas, width=35, bg="#c2c7cc", fg="#000000", insertbackground="#000000", relief="flat", font=("Arial", 12))
+        entry_win = canvas.create_window(x_entry, y_atual, window=entry, anchor="w")
         if dados:
             entry.insert(0, dados[campo] if dados[campo] is not None else "")
         entries[campo] = entry
+        itens_form.append((lbl, entry_win))
 
     def salvar():
         for campo, label in zip(campos, labels):
@@ -110,10 +185,19 @@ def abrir_formulario_material(tree, dados=None):
         except mysql.connector.Error as e:
             messagebox.showerror("Erro", f"Erro ao salvar:\n{e}")
 
-    btn_frame = tk.Frame(frame, bg="#2b3e50")
-    btn_frame.grid(row=len(campos), column=0, columnspan=2, pady=20)
-    tk.Button(btn_frame, text="Salvar", command=salvar, width=12, bg="#375269", fg="#ffffff", activebackground="#b88b4a", relief="flat", font=("Arial", 10, "bold")).pack(side="left", padx=5)
-    tk.Button(btn_frame, text="Cancelar", command=modal.destroy, width=12, bg="#375269", fg="#ffffff", activebackground="#b88b4a", relief="flat", font=("Arial", 10, "bold")).pack(side="left", padx=5)
+    def voltar():
+        modal.destroy()
+        carregar_materiais(tree)
+
+    btn_salvar = tk.Button(canvas, text="Salvar", command=salvar, width=12,
+                           bg="#b88b4a", fg="#ffffff", activebackground="#d4a857",
+                           relief="flat", font=("Arial", 11, "bold"))
+    canvas.create_window(x_entry + 420, y_inicio + 120, window=btn_salvar, anchor="center")
+
+    btn_cancelar = tk.Button(canvas, text="Cancelar", command=voltar, width=12,
+                             bg="#375269", fg="#ffffff", activebackground="#b88b4a",
+                             relief="flat", font=("Arial", 11, "bold"))
+    canvas.create_window(x_entry + 420, y_inicio + 170, window=btn_cancelar, anchor="center")
 
 
 def excluir_material(tree):
