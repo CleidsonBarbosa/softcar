@@ -81,7 +81,7 @@ def tela_login():
             smooth=True, **kwargs
         )
 
-    bg_image_tk = None
+    bg_image_ctk = None
 
     # fundos arredondados das entradas (serão reposicionados no redimensionar)
     rect_login = rounded_rect(canvas, 0, 0, 300, 35, 10, fill="#c2c7cc", outline="#304C62", width=1)
@@ -137,7 +137,7 @@ def tela_login():
     root.bind("<Return>", lambda e: verificar_login(root, entry_login, entry_senha))
 
     def redimensionar(event):
-        nonlocal bg_image_tk
+        nonlocal bg_image_ctk
         if event.widget != root:
             return
         w, h = event.width, event.height
@@ -145,16 +145,16 @@ def tela_login():
             return
 
         img_resized = img_original.resize((w, h), Image.Resampling.LANCZOS)
-        bg_image_tk = ImageTk.PhotoImage(img_resized)
+        bg_image_ctk = ImageTk.PhotoImage(img_resized)
         canvas.delete("bg")
-        canvas.create_image(0, 0, image=bg_image_tk, anchor="nw", tags="bg")
+        canvas.create_image(0, 0, image=bg_image_ctk, anchor="nw", tags="bg")
         canvas.tag_lower("bg")
 
         cx = w * 0.806
         cy_login = h * 0.463
         cy_senha = h * 0.613
 
-        canvas.coords(text_usuario, cx - 150, cy_login - 50)
+        canvas.coords(text_usuario, cx - 155, cy_login - 50)
         canvas.coords(canvas_login_window, cx, cy_login)
         canvas.coords(text_senha, cx, h * 0.575)
         canvas.coords(canvas_senha_window, cx, cy_senha)
