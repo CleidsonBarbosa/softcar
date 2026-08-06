@@ -1,4 +1,5 @@
 import tkinter as tk
+import customtkinter as ctk
 from tkinter import messagebox
 from PIL import Image, ImageTk
 import os
@@ -45,7 +46,7 @@ def verificar_login(root, entry_login, entry_senha):
 
 
 def tela_login():
-    root = tk.Tk()
+    root = ctk.CTk()
     root.title("Soft Car - Login")
     root.geometry("800x600")
     root.minsize(600, 450)
@@ -60,7 +61,7 @@ def tela_login():
 
     img_original = Image.open(img_path)
 
-    canvas = tk.Canvas(root, highlightthickness=0)
+    canvas = ctk.CTkCanvas(root, highlightthickness=0)
     canvas.pack(fill="both", expand=True)
 
     def rounded_rect(canvas, x, y, w, h, r, **kwargs):
@@ -84,16 +85,27 @@ def tela_login():
 
     # fundos arredondados das entradas (serão reposicionados no redimensionar)
     rect_login = rounded_rect(canvas, 0, 0, 300, 35, 10, fill="#c2c7cc", outline="#304C62", width=1)
-    entry_login = tk.Entry(root, font=("Arial", 13), bd=0, bg="#c2c7cc", fg="#333333", justify="center", highlightthickness=0, insertbackground="#333333")
-    entry_senha = tk.Entry(root, font=("Arial", 13), bd=0, bg="#c2c7cc", fg="#333333", show="*", justify="center", highlightthickness=0, insertbackground="#333333")
+    entry_login = ctk.CTkEntry(root, font=("Arial", 13), border_width=0, corner_radius=10, placeholder_text="E-mail")
+    entry_senha = ctk.CTkEntry(root, font=("Arial", 13), border_width=0, corner_radius=10, placeholder_text="Senha", show="*")
 
-    canvas_login_window = canvas.create_window(0, 0, window=entry_login, width=300, height=35)
-    canvas_senha_window = canvas.create_window(0, 0, window=entry_senha, width=300, height=35)
+    canvas_login_window = canvas.create_window(0, 0, window=entry_login, width=250, height=35)
+    canvas_senha_window = canvas.create_window(0, 0, window=entry_senha, width=250, height=35)
 
     # 2º fundo arredondado (senha)
     rect_senha = rounded_rect(canvas, 0, 0, 300, 35, 10, fill="#c2c7cc", outline="#304C62", width=1)
 
-    text_usuario = canvas.create_text(0, 0, text="Usuário / E-mail", font=("Arial", 11, "bold"), fill="white")
+    img_email = None
+    if os.path.exists("assets/txt_email.png"):
+        img_e = Image.open("assets/txt_email.png")
+        img_e = img_e.resize((100, 30), Image.Resampling.LANCZOS)
+        img_email = ImageTk.PhotoImage(img_e)
+
+    if img_email:
+        text_usuario = canvas.create_image(0, 0, image=img_email, anchor="nw")
+        canvas.image_email = img_email
+    else:
+        text_usuario = canvas.create_text(0, 0, text="Usuário / E-mail", font=("Arial", 11, "bold"), fill="white")
+
     text_senha = canvas.create_text(0, 0, text="Senha", font=("Arial", 11, "bold"), fill="white")
 
     img_entrar = None
@@ -108,7 +120,7 @@ def tela_login():
         canvas.image_entrar = img_entrar
         btn_entrar_img = btn_entrar
     else:
-        btn_entrar = tk.Button(
+        btn_entrar = ctk.Button(
             root,
             text="Entrar",
             font=("Arial", 11, "bold"),
@@ -142,7 +154,7 @@ def tela_login():
         cy_login = h * 0.463
         cy_senha = h * 0.613
 
-        canvas.coords(text_usuario, cx, h * 0.425)
+        canvas.coords(text_usuario, cx - 150, cy_login - 50)
         canvas.coords(canvas_login_window, cx, cy_login)
         canvas.coords(text_senha, cx, h * 0.575)
         canvas.coords(canvas_senha_window, cx, cy_senha)
