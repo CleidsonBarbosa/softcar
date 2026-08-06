@@ -107,7 +107,8 @@ def abrir_formulario(tree, dados=None):
             from view.tela_materiais import tela_materiais
             tela_materiais()
         elif opcao == "Relatórios":
-            messagebox.showinfo("Soft Car", "Em desenvolvimento")
+            from view.tela_servico import tela_execucao_servico
+            tela_execucao_servico()
 
     def make_handler(opcao):
         return lambda e: acao_menu(opcao)

@@ -22,7 +22,7 @@ def _criar_icone_dourado(icone):
     except Exception:
         return None
 
-def tela_dashboard():
+def tela_dashboard(cargo='atendente'):
     root = tk.Tk()
     root.title("Soft Car - Dashboard")
     root.state("zoomed")
