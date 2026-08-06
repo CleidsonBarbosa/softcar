@@ -104,7 +104,8 @@ def abrir_formulario(tree, dados=None):
             from view.lista_funcionarios import tela_lista_funcionarios
             tela_lista_funcionarios()
         elif opcao == "Materiais":
-            messagebox.showinfo("Soft Car", "Em desenvolvimento")
+            from view.tela_materiais import tela_materiais
+            tela_materiais()
         elif opcao == "Relatórios":
             from view.tela_servico import tela_execucao_servico
             tela_execucao_servico()
@@ -292,7 +293,8 @@ def abrir_formulario_carro(tree, id_cliente, nome_cliente, dados_carro=None, vol
             from view.lista_funcionarios import tela_lista_funcionarios
             tela_lista_funcionarios()
         elif opcao == "Materiais":
-            messagebox.showinfo("Soft Car", "Em desenvolvimento")
+            from view.tela_materiais import tela_materiais
+            tela_materiais()
         elif opcao == "Relatórios":
             from view.tela_servico import tela_execucao_servico
             tela_execucao_servico()

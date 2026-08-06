@@ -198,6 +198,9 @@ def tela_servicos():
         elif opcao == "Funcionários":
             from view.lista_funcionarios import tela_lista_funcionarios
             tela_lista_funcionarios()
+        elif opcao == "Materiais":
+            from view.tela_materiais import tela_materiais
+            tela_materiais()
         else:
             messagebox.showinfo("Soft Car", f"Você clicou na opção: {opcao}")
 

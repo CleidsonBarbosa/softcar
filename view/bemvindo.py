@@ -53,9 +53,9 @@ def tela_dashboard(cargo='atendente'):
         elif opcao == "Funcionários":
             from view.lista_funcionarios import tela_lista_funcionarios
             tela_lista_funcionarios()
-        elif opcao == "Relatórios":
-            from view.tela_servico import tela_execucao_servico
-            tela_execucao_servico()
+        elif opcao == "Materiais":
+            from view.tela_materiais import tela_materiais
+            tela_materiais()
         else:
             root.deiconify()
             messagebox.showinfo("Soft Car", f"Você clicou na opção: {opcao}")
