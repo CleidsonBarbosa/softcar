@@ -1,4 +1,3 @@
-import customtkinter as ctk
 import tkinter as tk
 from tkinter import ttk, messagebox
 from PIL import Image, ImageTk
@@ -59,7 +58,7 @@ def buscar_funcionarios(tree, entry_busca):
 
 
 def abrir_formulario(tree, dados=None):
-    modal = ctk.CTkToplevel()
+    modal = tk.Toplevel()
     modal.title("Editar Funcionário" if dados else "Novo Funcionário")
     modal.geometry("1000x600")
     modal.minsize(800, 500)
@@ -70,8 +69,9 @@ def abrir_formulario(tree, dados=None):
     cor_branco = "#ffffff"
     cor_cinza = "#777777"
 
-    # Imagem de fundo: editar_funcionarios.png para edição, cadastrar_funcionarios.png para cadastro
-    img_fundo = "assets/editar_funcionarios.png" if dados else "assets/cadastrar_funcionarios.png"
+    img_fundo = "assets/cadastrar_funcionarios.png" if not dados else "assets/editar_funcionarios.png"
+    if not os.path.exists(img_fundo):
+        img_fundo = "assets/formulario.png"
 
     canvas = tk.Canvas(modal, highlightthickness=0)
     canvas.pack(fill="both", expand=True)
@@ -84,7 +84,6 @@ def abrir_formulario(tree, dados=None):
         canvas.create_image(0, 0, image=bg_img, anchor="nw")
         canvas.image = bg_img
 
-# ---- MENU VERTICAL (igual lista de funcionários) ----
     icones_info = [
         ("Cliente",     "assets/cliente.png"),
         ("Serviços",    "assets/servicos.png"),
@@ -106,12 +105,8 @@ def abrir_formulario(tree, dados=None):
         elif opcao == "Materiais":
             from view.tela_materiais import tela_materiais
             tela_materiais()
-        elif opcao == "Relatórios":
-            from view.tela_servico import tela_execucao_servico
-            tela_execucao_servico()
-
-    def make_handler(opcao):
-        return lambda e: acao_menu(opcao)
+        else:
+            messagebox.showinfo("Soft Car", f"Você clicou na opção: {opcao}")
 
     y_pos = 120
     for nome, arquivo in icones_info:
@@ -121,9 +116,6 @@ def abrir_formulario(tree, dados=None):
 
         img_item = canvas.create_image(20, y_pos, image=icone, anchor="nw")
         txt_item = canvas.create_text(50, y_pos + 12, text=nome, font=("Arial", 11, "bold"), fill=cor_texto, anchor="nw")
-
-        def make_handler(opcao):
-            return lambda e: acao_menu(opcao)
 
         def on_enter(e, txt=txt_item):
             canvas.itemconfig(txt, fill=cor_dourado)
@@ -135,33 +127,42 @@ def abrir_formulario(tree, dados=None):
         canvas.tag_bind(txt_item, "<Enter>", on_enter)
         canvas.tag_bind(txt_item, "<Leave>", on_leave)
 
+        def make_handler(opcao):
+            return lambda e: acao_menu(opcao)
+
+        canvas.tag_bind(img_item, "<Button-1>", make_handler(nome))
+        canvas.tag_bind(txt_item, "<Button-1>", make_handler(nome))
+
         canvas.image_refs = getattr(canvas, "image_refs", [])
         canvas.image_refs.append(icone)
         y_pos += 50
 
-    # ---- FORMULÁRIO ----
-    frame = ctk.CTkFrame(canvas, fg_color="#2b3e50", corner_radius=15)
-    frame_window = canvas.create_window(580, 300, window=frame, anchor="center")
-
     campos = ["nome_func", "email_func", "telefone_func", "cpf_func", "cargo", "endereco_func", "data_nascimento_func", "senha"]
-    labels = ["Nome", "E-mail", "Telefone", "CPF", "Cargo (lavador/atendente)", "Endereço", "Data de Nascimento", "Senha"]
+    labels = ["Nome", "E-mail", "Telefone", "CPF", "Cargo (lavador/atendente)", "Endereço", "Data de Nasc.", "Senha"]
     entries = {}
+    itens_form = []
+
+    x_label = 400
+    x_entry = 420
+    y_inicio = 100
 
     for i, (campo, label) in enumerate(zip(campos, labels)):
-        ctk.CTkLabel(frame, text=label, font=("Arial", 11, "bold"), text_color="#ffffff").grid(row=i, column=0, sticky="w", pady=4, padx=10)
-        entry = ctk.CTkEntry(frame, width=250, corner_radius=8)
-        entry.grid(row=i, column=1, pady=4, padx=10)
+        y_atual = y_inicio + i * 55
+        lbl = canvas.create_text(x_label, y_atual, text=label, font=("Arial", 11, "bold"), fill="#ffffff", anchor="e")
+        entry = tk.Entry(canvas, width=35, bg="#c2c7cc", fg="#000000", insertbackground="#000000", relief="flat", font=("Arial", 12))
+        entry_win = canvas.create_window(x_entry, y_atual, window=entry, anchor="w")
         if dados:
             entry.insert(0, dados[campo] if dados[campo] is not None else "")
         entries[campo] = entry
+        itens_form.append((lbl, entry_win))
 
     def salvar():
         valores = {}
-        for campo, entry in entries.items():
-            if not entry.get().strip():
-                messagebox.showwarning("Validação", f"O campo {labels[campos.index(campo)]} é obrigatório.")
+        for campo, label in zip(campos, labels):
+            if not entries[campo].get().strip():
+                messagebox.showwarning("Validação", f"O campo {label} é obrigatório.")
                 return
-            valores[campo] = entry.get().strip()
+            valores[campo] = entries[campo].get().strip()
         try:
             conn = conectar()
             cursor = conn.cursor()
@@ -183,10 +184,19 @@ def abrir_formulario(tree, dados=None):
         except mysql.connector.Error as e:
             messagebox.showerror("Erro", f"Erro ao salvar:\n{e}")
 
-    btn_frame = ctk.CTkFrame(frame, fg_color="transparent")
-    btn_frame.grid(row=len(campos), column=0, columnspan=2, pady=20)
-    ctk.CTkButton(btn_frame, text="Salvar", command=salvar, width=90).pack(side="left", padx=5)
-    ctk.CTkButton(btn_frame, text="Cancelar", command=modal.destroy, width=90).pack(side="left", padx=5)
+    def voltar():
+        modal.destroy()
+        tela_lista_funcionarios()
+
+    btn_salvar = tk.Button(canvas, text="Salvar", command=salvar, width=12,
+                           bg="#b88b4a", fg="#ffffff", activebackground="#d4a857",
+                           relief="flat", font=("Arial", 11, "bold"))
+    canvas.create_window(x_entry + 420, y_inicio + 440, window=btn_salvar, anchor="center")
+
+    btn_cancelar = tk.Button(canvas, text="Cancelar", command=voltar, width=12,
+                             bg="#375269", fg="#ffffff", activebackground="#b88b4a",
+                             relief="flat", font=("Arial", 11, "bold"))
+    canvas.create_window(x_entry + 420, y_inicio + 490, window=btn_cancelar, anchor="center")
 
 def excluir_funcionario(tree):
     selecionado = tree.selection()
@@ -217,22 +227,14 @@ def _carregar_icone(caminho, tamanho):
         return None
 
 def tela_lista_funcionarios():
-    janela = ctk.CTkToplevel()
+    janela = tk.Toplevel()
     janela.title("Soft Car - Lista de Funcionários")
     janela.geometry("1000x600")
     janela.minsize(800, 500)
 
-    def voltar_dashboard():
-        janela.destroy()
-        from view.bemvindo import tela_dashboard
-        tela_dashboard()
-
-    janela.protocol("WM_DELETE_WINDOW", voltar_dashboard)
-
     cor_dourado = "#b88b4a"
     cor_branco = "#ffffff"
     cor_fundo = "#2b3e50"
-    cor_fundo2 = "#1a2735"
 
     icones_info = [
         ("Cliente",     "assets/cliente.png"),
@@ -243,7 +245,6 @@ def tela_lista_funcionarios():
     ]
 
     def acao_menu(opcao):
-        janela.withdraw()
         if opcao == "Cliente":
             from view.tela_clientes import tela_clientes
             tela_clientes()
@@ -253,16 +254,13 @@ def tela_lista_funcionarios():
         elif opcao == "Materiais":
             from view.tela_materiais import tela_materiais
             tela_materiais()
-        elif opcao == "Funcionários":
-            tela_lista_funcionarios()
         else:
-            janela.deiconify()
-            messagebox.showinfo("Soft Car", f"Você clicou na opção: {opcao}")
+            pass
 
     canvas = tk.Canvas(janela, highlightthickness=0, bg=cor_fundo)
     canvas.pack(fill="both", expand=True)
 
-    img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "listar_funcionarios.png")
+    img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "tabela.png")
     img_original = None
     if os.path.exists(img_path):
         img_original = Image.open(img_path)
@@ -328,7 +326,6 @@ def tela_lista_funcionarios():
     entry_busca = tk.Entry(frame_top, width=20, bg="#375269", fg="#ffffff", insertbackground="#ffffff", textvariable=search_var, relief="flat", font=("Arial", 10))
     entry_busca.pack(side="left", padx=5, ipady=3)
     search_var.trace_add("write", lambda *args: buscar_funcionarios(tree, entry_busca))
-    entry_busca.bind("<Return>", lambda e: cmd_editar())
 
     btn_cadastrar = tk.Button(canvas, text="Cadastrar Funcionário +", font=("Arial", 11, "bold"),
                               bg="#375269", fg=cor_branco, activebackground=cor_dourado,
@@ -362,16 +359,16 @@ def tela_lista_funcionarios():
 
     colunas = ("id_func", "nome_func", "email_func", "telefone_func", "cpf_func", "cargo")
     tree = ttk.Treeview(frame_tabela, columns=colunas, show="headings", selectmode="browse", height=15)
-    tree.heading("id_func", text="ID")
-    tree.heading("nome_func", text="Nome")
-    tree.heading("email_func", text="E-mail")
-    tree.heading("telefone_func", text="Telefone")
-    tree.heading("cpf_func", text="CPF")
-    tree.heading("cargo", text="Cargo")
+    tree.heading("id_func", text="ID", anchor="center")
+    tree.heading("nome_func", text="Nome", anchor="center")
+    tree.heading("email_func", text="E-mail", anchor="center")
+    tree.heading("telefone_func", text="Telefone", anchor="center")
+    tree.heading("cpf_func", text="CPF", anchor="center")
+    tree.heading("cargo", text="Cargo", anchor="center")
     tree.column("id_func", width=0, stretch=False)
     tree.column("cpf_func", width=0, stretch=False)
-    tree.column("nome_func", width=180)
-    tree.column("email_func", width=200)
+    tree.column("nome_func", width=180, anchor="center")
+    tree.column("email_func", width=200, anchor="center")
     tree.column("telefone_func", width=120, anchor="center")
     tree.column("cargo", width=100, anchor="center")
 
@@ -379,8 +376,6 @@ def tela_lista_funcionarios():
     tree.tag_configure("even", background="#375269")
 
     tree.bind("<Double-1>", lambda e: cmd_editar())
-
-    style.configure("Vertical.TScrollbar", gripcount=0, background="white", troughcolor="#2c4a5c", bordercolor="#2c4a5c", arrowcolor="#000000")
 
     scrollbar = ttk.Scrollbar(frame_tabela, orient="vertical", command=tree.yview, style="Vertical.TScrollbar")
 
@@ -408,11 +403,9 @@ def tela_lista_funcionarios():
             y_pos = 220
             for nome, arquivo in icones_info:
                 icone = _carregar_icone(arquivo, 24)
-                ativo = (nome == "Funcionários")
-                cor_texto = "#777777" if ativo else "#ffffff"
 
                 img_item = canvas.create_image(20, y_pos, image=icone, anchor="nw")
-                txt_item = canvas.create_text(50, y_pos + 12, text=nome, font=("Arial", 11, "bold"), fill=cor_texto, anchor="nw")
+                txt_item = canvas.create_text(50, y_pos + 12, text=nome, font=("Arial", 11, "bold"), fill=cor_branco, anchor="nw")
 
                 def make_handler(opcao):
                     return lambda e: acao_menu(opcao)
@@ -422,8 +415,8 @@ def tela_lista_funcionarios():
 
                 def on_enter(e, txt=txt_item):
                     canvas.itemconfig(txt, fill=cor_dourado)
-                def on_leave(e, txt=txt_item, cor=cor_texto):
-                    canvas.itemconfig(txt, fill=cor)
+                def on_leave(e, txt=txt_item):
+                    canvas.itemconfig(txt, fill=cor_branco)
 
                 canvas.tag_bind(img_item, "<Enter>", on_enter)
                 canvas.tag_bind(img_item, "<Leave>", on_leave)
@@ -431,12 +424,12 @@ def tela_lista_funcionarios():
                 canvas.tag_bind(txt_item, "<Leave>", on_leave)
 
                 canvas.image_refs.append(icone)
-                botoes_menu.append((img_item, txt_item, ativo))
+                botoes_menu.append((img_item, txt_item))
                 y_pos += 50
             menu_criado = True
 
         y = 220
-        for img_item, txt_item, ativo in botoes_menu:
+        for img_item, txt_item in botoes_menu:
             canvas.coords(img_item, 20, y)
             canvas.coords(txt_item, 50, y + 12)
             y += 50
@@ -447,7 +440,7 @@ def tela_lista_funcionarios():
         ch = h * 0.750
 
         canvas.coords(frame_top_window, cx + 30, cy - 55)
-        canvas.coords(btn_cadastrar_window, cx + cw - 190, cy - 55)
+        canvas.coords(btn_cadastrar_window, cx + cw - 200, cy - 55)
         canvas.coords(frame_tabela_window, cx + 4, cy + 20)
         canvas.itemconfig(frame_tabela_window, width=max(100, cw - 4), height=max(100, ch - 42))
 
