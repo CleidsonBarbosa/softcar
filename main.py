@@ -85,8 +85,8 @@ def tela_login():
 
     # fundos arredondados das entradas (serão reposicionados no redimensionar)
     rect_login = rounded_rect(canvas, 0, 0, 300, 35, 10, fill="#c2c7cc", outline="#304C62", width=1)
-    entry_login = ctk.CTkEntry(root, font=("Arial", 13), border_width=0, corner_radius=10, placeholder_text="E-mail")
-    entry_senha = ctk.CTkEntry(root, font=("Arial", 13), border_width=0, corner_radius=10, placeholder_text="Senha", show="*")
+    entry_login = ctk.CTkEntry(root, font=("Inclusive Sans", 13, "bold"), border_width=2, corner_radius=10, placeholder_text="E-mail", fg_color="#c2c7cc", text_color="#333333", border_color="#000000", focus_color="#2b3e50")
+    entry_senha = ctk.CTkEntry(root, font=("Inclusive Sans", 13, "bold"), border_width=2, corner_radius=10, placeholder_text="Senha", show="*", fg_color="#c2c7cc", text_color="#333333", border_color="#000000", focus_color="#2b3e50")
 
     canvas_login_window = canvas.create_window(0, 0, window=entry_login, width=250, height=35)
     canvas_senha_window = canvas.create_window(0, 0, window=entry_senha, width=250, height=35)
@@ -106,7 +106,17 @@ def tela_login():
     else:
         text_usuario = canvas.create_text(0, 0, text="Usuário / E-mail", font=("Arial", 11, "bold"), fill="white")
 
-    text_senha = canvas.create_text(0, 0, text="Senha", font=("Arial", 11, "bold"), fill="white")
+    img_senha = None
+    if os.path.exists("assets/txt_senha.png"):
+        img_s = Image.open("assets/txt_senha.png")
+        img_s = img_s.resize((100, 25), Image.Resampling.LANCZOS)
+        img_senha = ImageTk.PhotoImage(img_s)
+
+    if img_senha:
+        text_senha = canvas.create_image(0, 0, image=img_senha, anchor="nw")
+        canvas.image_senha = img_senha
+    else:
+        text_senha = canvas.create_text(0, 0, text="Senha", font=("Arial", 11, "bold"), fill="white")
 
     img_entrar = None
     if os.path.exists("assets/btn_entrar.png"):
@@ -154,9 +164,9 @@ def tela_login():
         cy_login = h * 0.463
         cy_senha = h * 0.613
 
-        canvas.coords(text_usuario, cx - 155, cy_login - 50)
+        canvas.coords(text_usuario, cx - 125, cy_login - 50)
         canvas.coords(canvas_login_window, cx, cy_login)
-        canvas.coords(text_senha, cx, h * 0.575)
+        canvas.coords(text_senha, cx - 125, cy_senha - 45)
         canvas.coords(canvas_senha_window, cx, cy_senha)
 
         # reposiciona retângulos arredondados
