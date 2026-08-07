@@ -46,12 +46,16 @@ def verificar_login(root, entry_login, entry_senha):
 
 
 def tela_login():
-    root = ctk.CTk()
+    root = tk.Tk()
     root.title("Soft Car - Login")
     root.geometry("800x600")
     root.minsize(600, 450)
     root.resizable(True, True)
-    root.state("zoomed")  # abre maximizado
+    root.state("zoomed")
+    try:
+        root.attributes('-zoomed', True)
+    except:
+        pass
 
     img_path = "assets/Login.png"
 
@@ -61,38 +65,16 @@ def tela_login():
 
     img_original = Image.open(img_path)
 
-    canvas = ctk.CTkCanvas(root, highlightthickness=0)
+    canvas = tk.Canvas(root, highlightthickness=0, bd=0)
     canvas.pack(fill="both", expand=True)
-
-    def rounded_rect(canvas, x, y, w, h, r, **kwargs):
-        """Desenha retângulo arredondado no canvas."""
-        return canvas.create_polygon(
-            x + r, y,
-            x + w - r, y,
-            x + w, y,
-            x + w, y + r,
-            x + w, y + h - r,
-            x + w, y + h,
-            x + w - r, y + h,
-            x + r, y + h,
-            x, y + h,
-            x, y + h - r,
-            x, y + r,
-            smooth=True, **kwargs
-        )
 
     bg_image_ctk = None
 
-    # fundos arredondados das entradas (serão reposicionados no redimensionar)
-    rect_login = rounded_rect(canvas, 0, 0, 300, 35, 10, fill="#c2c7cc", outline="#304C62", width=1)
-    entry_login = ctk.CTkEntry(root, font=("Inclusive Sans", 13, "bold"), border_width=2, corner_radius=10, placeholder_text="E-mail", fg_color="#c2c7cc", text_color="#333333", border_color="#000000", focus_color="#2b3e50")
-    entry_senha = ctk.CTkEntry(root, font=("Inclusive Sans", 13, "bold"), border_width=2, corner_radius=10, placeholder_text="Senha", show="*", fg_color="#c2c7cc", text_color="#333333", border_color="#000000", focus_color="#2b3e50")
+    entry_login = ctk.CTkEntry(root, font=("Inclusive Sans", 13, "bold"), border_width=2, corner_radius=10, placeholder_text="E-mail", fg_color="#c2c7cc", text_color="#333333", border_color="#000000")
+    entry_senha = ctk.CTkEntry(root, font=("Inclusive Sans", 13, "bold"), border_width=2, corner_radius=10, placeholder_text="Senha", show="*", fg_color="#c2c7cc", text_color="#333333", border_color="#000000")
 
     canvas_login_window = canvas.create_window(0, 0, window=entry_login, width=250, height=35)
     canvas_senha_window = canvas.create_window(0, 0, window=entry_senha, width=250, height=35)
-
-    # 2º fundo arredondado (senha)
-    rect_senha = rounded_rect(canvas, 0, 0, 300, 35, 10, fill="#c2c7cc", outline="#304C62", width=1)
 
     img_email = None
     if os.path.exists("assets/txt_email.png"):
@@ -169,17 +151,24 @@ def tela_login():
         canvas.coords(text_senha, cx - 125, cy_senha - 45)
         canvas.coords(canvas_senha_window, cx, cy_senha)
 
-        # reposiciona retângulos arredondados
-        canvas.coords(rect_login, cx - 150, cy_login - 17, cx + 150, cy_login + 17)
-        canvas.coords(rect_senha, cx - 150, cy_senha - 17, cx + 150, cy_senha + 17)
-
         if 'btn_entrar_img' in locals() or 'btn_entrar_img' in globals():
             canvas.coords(btn_entrar_img, cx - 50, h * 0.68)
         else:
             canvas.coords(canvas_btn_window, cx, h * 0.68)
 
     root.bind("<Configure>", redimensionar)
-    root.after(100, lambda: [root.update_idletasks(), redimensionar(type('Event', (), {'widget': root, 'width': root.winfo_width(), 'height': root.winfo_height()})())])
+    def iniciar():
+        root.update_idletasks()
+        w = root.winfo_width()
+        h = root.winfo_height()
+        class FakeEvent:
+            pass
+        ev = FakeEvent()
+        ev.widget = root
+        ev.width = w
+        ev.height = h
+        redimensionar(ev)
+    root.after(100, iniciar)
 
     root.mainloop()
 

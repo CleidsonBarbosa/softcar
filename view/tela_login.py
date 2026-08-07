@@ -1,10 +1,11 @@
-import tkinter as tk
+#import tkinter as tk
+'''import customtkinter as ctk
 from tkinter import messagebox
 from PIL import Image, ImageTk
 import os
 
 def tela_login():
-    root = tk.Tk()
+    root = ctk.CTk()
     root.title("Soft Car - Login")
     root.geometry("800x600")
     root.resizable(True, True)
@@ -21,7 +22,7 @@ def tela_login():
     bg_image = ImageTk.PhotoImage(img)
 
     # 2. Configura o Canvas
-    canvas = tk.Canvas(root, width=800, height=600, highlightthickness=0)
+    canvas = ctk.CTkCanvas(root, width=800, height=600, highlightthickness=0)
     canvas.pack(fill="both", expand=True)
     canvas.create_image(0, 0, image=bg_image, anchor="nw")
 
@@ -34,15 +35,15 @@ def tela_login():
     # ------------------------------------------
 
     # 3. Campo de texto para o LOGIN
-    entry_login = tk.Entry(root, font=("Arial", 13), width=24, bd=2, bg="#c2c7cc", justify="center")
+    entry_login = ctk.CTkEntry(root, font=("Inclusive Sans", 13, "bold"), border_width=2, corner_radius=10, placeholder_text="E-mail", fg_color="#c2c7cc", text_color="#333333", border_color="#000000")
     canvas.create_window(645, 278, window=entry_login)
 
     # 4. Campo de texto para a SENHA
-    entry_senha = tk.Entry(root, font=("Arial", 13), width=24, bd=2, bg="#c2c7cc", show="*", justify="center")
+    entry_senha = ctk.CTkEntry(root, font=("Inclusive Sans", 13, "bold"), border_width=2, corner_radius=10, placeholder_text="Senha", show="*", fg_color="#c2c7cc", text_color="#333333", border_color="#000000")
     canvas.create_window(645, 368, window=entry_senha)
     
     # 5. Botão ENTRAR
-    btn_entrar = tk.Button(
+    btn_entrar = ctk.CTkButton(
         root, 
         text="Entrar", 
         font=("Arial", 11, "bold"), 
@@ -59,4 +60,4 @@ def tela_login():
     root.mainloop()
 
 if __name__ == "__main__":
-    tela_login()
+    tela_login()'''
