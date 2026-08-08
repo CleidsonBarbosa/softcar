@@ -22,7 +22,19 @@ def _criar_icone_dourado(icone):
     except Exception:
         return None
 
-def tela_dashboard(cargo='atendente'):
+def _criar_icone_fallback(tamanho, cor, forma="circle"):
+    from PIL import ImageDraw
+    img = Image.new("RGBA", (tamanho, tamanho), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+    if forma == "circle":
+        draw.ellipse([2, 2, tamanho-2, tamanho-2], fill=cor)
+    elif forma == "square":
+        draw.rectangle([2, 2, tamanho-2, tamanho-2], fill=cor)
+    return ImageTk.PhotoImage(img)
+
+def tela_dashboard(cargo='atendente', root_anterior=None):
+    if root_anterior:
+        root_anterior.destroy()
     root = tk.Tk()
     root.title("Soft Car - Dashboard")
     root.state("zoomed")
@@ -35,6 +47,7 @@ def tela_dashboard(cargo='atendente'):
     cor_branco = "#ffffff"
 
     icones_info = [
+        ("Dashboard",   "assets/dashboard_icon.png"),
         ("Cliente",     "assets/cliente.png"),
         ("Serviços",    "assets/servicos.png"),
         ("Funcionários","assets/funcionarios.png"),
@@ -42,23 +55,25 @@ def tela_dashboard(cargo='atendente'):
         ("Relatórios",  "assets/relatorios.png"),
     ]
 
-    def acao_menu(opcao):
-        root.withdraw()
+    def navegar(opcao):
+        if opcao == "Dashboard":
+            return
+        root.destroy()
         if opcao == "Cliente":
             from view.tela_clientes import tela_clientes
-            tela_clientes()
+            tela_clientes(root_anterior=root)
         elif opcao == "Serviços":
             from view.tela_servicos import tela_servicos
-            tela_servicos()
+            tela_servicos(root_anterior=root)
         elif opcao == "Funcionários":
             from view.lista_funcionarios import tela_lista_funcionarios
-            tela_lista_funcionarios()
+            tela_lista_funcionarios(root_anterior=root)
         elif opcao == "Materiais":
             from view.tela_materiais import tela_materiais
-            tela_materiais()
-        else:
-            root.deiconify()
-            messagebox.showinfo("Soft Car", f"Você clicou na opção: {opcao}")
+            tela_materiais(root_anterior=root)
+        elif opcao == "Relatórios":
+            from view.tela_servico import tela_execucao_servico
+            tela_execucao_servico(root_anterior=root)
 
     # ---- CONTEÚDO PRINCIPAL (CANVAS COM FUNDO) ----
     canvas = tk.Canvas(root, highlightthickness=0)
@@ -81,13 +96,16 @@ def tela_dashboard(cargo='atendente'):
         if icone is None:
             icone = _criar_icone_fallback(24, "#b88b4a", "circle")
         
+        ativo = (nome == "Dashboard")
+        cor_texto = "#777777" if ativo else "white"
+
         # Cria imagem e texto como itens do canvas (sem widget Button, sem fundo)
         img_item = canvas.create_image(20, y_pos, image=icone, anchor="nw")
-        txt_item = canvas.create_text(50, y_pos + 12, text=nome, font=("Arial", 11, "bold"), fill="white", anchor="nw")
+        txt_item = canvas.create_text(50, y_pos + 12, text=nome, font=("Arial", 11, "bold"), fill=cor_texto, anchor="nw")
         
         # Bind de clique no texto e na imagem
         def make_handler(opcao):
-            return lambda e: acao_menu(opcao)
+            return lambda e: navegar(opcao)
         
         canvas.tag_bind(img_item, "<Button-1>", make_handler(nome))
         canvas.tag_bind(txt_item, "<Button-1>", make_handler(nome))
@@ -95,8 +113,8 @@ def tela_dashboard(cargo='atendente'):
         # Hover visual
         def on_enter(e, txt=txt_item):
             canvas.itemconfig(txt, fill="#b88b4a")
-        def on_leave(e, txt=txt_item):
-            canvas.itemconfig(txt, fill="white")
+        def on_leave(e, txt=txt_item, cor=cor_texto):
+            canvas.itemconfig(txt, fill=cor)
         
         canvas.tag_bind(img_item, "<Enter>", on_enter)
         canvas.tag_bind(img_item, "<Leave>", on_leave)

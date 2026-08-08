@@ -93,22 +93,24 @@ def abrir_formulario(tree, dados=None):
     ]
 
     def acao_menu(opcao):
+        root_principal = tree.winfo_toplevel()
         modal.destroy()
+        root_principal.destroy()
         if opcao == "Cliente":
             from view.tela_clientes import tela_clientes
-            tela_clientes()
+            tela_clientes(root_anterior=root_principal)
         elif opcao == "Serviços":
             from view.tela_servicos import tela_servicos
-            tela_servicos()
+            tela_servicos(root_anterior=root_principal)
         elif opcao == "Funcionários":
             from view.lista_funcionarios import tela_lista_funcionarios
-            tela_lista_funcionarios()
+            tela_lista_funcionarios(root_anterior=root_principal)
         elif opcao == "Materiais":
             from view.tela_materiais import tela_materiais
-            tela_materiais()
+            tela_materiais(root_anterior=root_principal)
         elif opcao == "Relatórios":
             from view.tela_servico import tela_execucao_servico
-            tela_execucao_servico()
+            tela_execucao_servico(root_anterior=root_principal)
 
     def make_handler(opcao):
         return lambda e: acao_menu(opcao)
@@ -282,22 +284,24 @@ def abrir_formulario_carro(tree, id_cliente, nome_cliente, dados_carro=None, vol
     ]
 
     def acao_menu_modal(opcao):
+        root_principal = tree.winfo_toplevel()
         modal.destroy()
+        root_principal.destroy()
         if opcao == "Cliente":
             from view.tela_clientes import tela_clientes
-            tela_clientes()
+            tela_clientes(root_anterior=root_principal)
         elif opcao == "Serviços":
             from view.tela_servicos import tela_servicos
-            tela_servicos()
+            tela_servicos(root_anterior=root_principal)
         elif opcao == "Funcionários":
             from view.lista_funcionarios import tela_lista_funcionarios
-            tela_lista_funcionarios()
+            tela_lista_funcionarios(root_anterior=root_principal)
         elif opcao == "Materiais":
             from view.tela_materiais import tela_materiais
-            tela_materiais()
+            tela_materiais(root_anterior=root_principal)
         elif opcao == "Relatórios":
             from view.tela_servico import tela_execucao_servico
-            tela_execucao_servico()
+            tela_execucao_servico(root_anterior=root_principal)
 
     y_pos = 120
     for nome, arquivo in icones_info:
@@ -541,18 +545,24 @@ def listar_servicos(tree, id_cliente, nome_cliente, dados_carro):
     ]
 
     def acao_menu_modal(opcao):
+        root_principal = tree.winfo_toplevel()
         modal.destroy()
+        root_principal.destroy()
         if opcao == "Cliente":
             from view.tela_clientes import tela_clientes
-            tela_clientes()
+            tela_clientes(root_anterior=root_principal)
         elif opcao == "Serviços":
             from view.tela_servicos import tela_servicos
-            tela_servicos()
+            tela_servicos(root_anterior=root_principal)
         elif opcao == "Funcionários":
             from view.lista_funcionarios import tela_lista_funcionarios
-            tela_lista_funcionarios()
-        else:
-            messagebox.showinfo("Soft Car", "Em desenvolvimento")
+            tela_lista_funcionarios(root_anterior=root_principal)
+        elif opcao == "Materiais":
+            from view.tela_materiais import tela_materiais
+            tela_materiais(root_anterior=root_principal)
+        elif opcao == "Relatórios":
+            from view.tela_servico import tela_execucao_servico
+            tela_execucao_servico(root_anterior=root_principal)
 
     y_pos = 120
     for nome, arquivo in icones_info:
@@ -701,18 +711,31 @@ def _carregar_icone(caminho, tamanho):
     except Exception:
         return None
 
+def _criar_icone_fallback(tamanho, cor, forma="circle"):
+    from PIL import ImageDraw
+    img = Image.new("RGBA", (tamanho, tamanho), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+    if forma == "circle":
+        draw.ellipse([2, 2, tamanho-2, tamanho-2], fill=cor)
+    elif forma == "square":
+        draw.rectangle([2, 2, tamanho-2, tamanho-2], fill=cor)
+    return ImageTk.PhotoImage(img)
 
-def tela_clientes():
-    janela = tk.Toplevel()
-    janela.title("Soft Car - Lista de Clientes")
-    janela.geometry("1000x600")
-    janela.minsize(800, 500)
+def tela_clientes(root_anterior=None):
+    if root_anterior:
+        root_anterior.destroy()
+    root = tk.Tk()
+    root.title("Soft Car - Lista de Clientes")
+    root.state("zoomed")
+    root.minsize(800, 500)
+    root.resizable(True, True)
 
     cor_dourado = "#b88b4a"
     cor_branco = "#ffffff"
     cor_fundo = "#2b3e50"
 
     icones_info = [
+        ("Dashboard",   "assets/dashboard_icon.png"),
         ("Cliente",     "assets/cliente.png"),
         ("Serviços",    "assets/servicos.png"),
         ("Funcionários","assets/funcionarios.png"),
@@ -720,19 +743,27 @@ def tela_clientes():
         ("Relatórios",  "assets/relatorios.png"),
     ]
 
-    def acao_menu(opcao):
-        if opcao == "Serviços":
+    def navegar(opcao):
+        if opcao == "Cliente":
+            return
+        root.destroy()
+        if opcao == "Dashboard":
+            from view.bemvindo import tela_dashboard
+            tela_dashboard(root_anterior=root)
+        elif opcao == "Serviços":
             from view.tela_servicos import tela_servicos
-            tela_servicos()
+            tela_servicos(root_anterior=root)
         elif opcao == "Funcionários":
             from view.lista_funcionarios import tela_lista_funcionarios
-            tela_lista_funcionarios()
-        elif opcao == "Cliente":
-            pass
-        else:
-            messagebox.showinfo("Soft Car", f"Você clicou na opção: {opcao}")
+            tela_lista_funcionarios(root_anterior=root)
+        elif opcao == "Materiais":
+            from view.tela_materiais import tela_materiais
+            tela_materiais(root_anterior=root)
+        elif opcao == "Relatórios":
+            from view.tela_servico import tela_execucao_servico
+            tela_execucao_servico(root_anterior=root)
 
-    canvas = tk.Canvas(janela, highlightthickness=0, bg=cor_fundo)
+    canvas = tk.Canvas(root, highlightthickness=0, bg=cor_fundo)
     canvas.pack(fill="both", expand=True)
 
     img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "tabela.png")
@@ -880,20 +911,24 @@ def tela_clientes():
             y_pos = 220
             for nome, arquivo in icones_info:
                 icone = _carregar_icone(arquivo, 24)
+                if icone is None:
+                    icone = _criar_icone_fallback(24, cor_dourado, "circle")
 
+                ativo = (nome == "Cliente")
+                cor_texto = cor_cinza if ativo else cor_branco
                 img_item = canvas.create_image(20, y_pos, image=icone, anchor="nw")
-                txt_item = canvas.create_text(50, y_pos + 12, text=nome, font=("Arial", 11, "bold"), fill=cor_branco, anchor="nw")
+                txt_item = canvas.create_text(50, y_pos + 12, text=nome, font=("Arial", 11, "bold"), fill=cor_texto, anchor="nw")
 
                 def make_handler(opcao):
-                    return lambda e: acao_menu(opcao)
+                    return lambda e: navegar(opcao)
 
                 canvas.tag_bind(img_item, "<Button-1>", make_handler(nome))
                 canvas.tag_bind(txt_item, "<Button-1>", make_handler(nome))
 
                 def on_enter(e, txt=txt_item):
                     canvas.itemconfig(txt, fill=cor_dourado)
-                def on_leave(e, txt=txt_item):
-                    canvas.itemconfig(txt, fill=cor_branco)
+                def on_leave(e, txt=txt_item, cor=cor_texto):
+                    canvas.itemconfig(txt, fill=cor)
 
                 canvas.tag_bind(img_item, "<Enter>", on_enter)
                 canvas.tag_bind(img_item, "<Leave>", on_leave)
@@ -929,12 +964,9 @@ def tela_clientes():
             return
         _redimensionar(w, h)
 
-    janela.bind("<Configure>", redimensionar)
-    janela.after(100, lambda: [janela.update_idletasks(), _redimensionar(janela.winfo_width(), janela.winfo_height())])
+    root.bind("<Configure>", redimensionar)
+    root.after(100, lambda: [root.update_idletasks(), _redimensionar(root.winfo_width(), root.winfo_height())])
 
 
 if __name__ == "__main__":
-    root = tk.Tk()
-    root.withdraw()
     tela_clientes()
-    root.mainloop()

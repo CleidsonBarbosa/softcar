@@ -1,5 +1,5 @@
 #import tkinter as tk
-'''import customtkinter as ctk
+import customtkinter as ctk
 from tkinter import messagebox
 from PIL import Image, ImageTk
 import os
@@ -35,11 +35,11 @@ def tela_login():
     # ------------------------------------------
 
     # 3. Campo de texto para o LOGIN
-    entry_login = ctk.CTkEntry(root, font=("Inclusive Sans", 13, "bold"), border_width=2, corner_radius=10, placeholder_text="E-mail", fg_color="#c2c7cc", text_color="#333333", border_color="#000000")
+    entry_login = ctk.CTkEntry(root, font=("Inclusive Sans", 13, "bold"), border_width=2, corner_radius=10, placeholder_text="E-mail", fg_color="#c2c7cc", text_color="#333333", border_color="#304C62")
     canvas.create_window(645, 278, window=entry_login)
 
     # 4. Campo de texto para a SENHA
-    entry_senha = ctk.CTkEntry(root, font=("Inclusive Sans", 13, "bold"), border_width=2, corner_radius=10, placeholder_text="Senha", show="*", fg_color="#c2c7cc", text_color="#333333", border_color="#000000")
+    entry_senha = ctk.CTkEntry(root, font=("Inclusive Sans", 13, "bold"), border_width=2, corner_radius=10, placeholder_text="Senha", show="*", fg_color="#c2c7cc", text_color="#333333", border_color="#304C62")
     canvas.create_window(645, 368, window=entry_senha)
     
     # 5. Botão ENTRAR
@@ -60,4 +60,4 @@ def tela_login():
     root.mainloop()
 
 if __name__ == "__main__":
-    tela_login()'''
+    tela_login()

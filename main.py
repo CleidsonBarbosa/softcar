@@ -31,10 +31,8 @@ def verificar_login(root, entry_login, entry_senha):
         
         if resultado:
             messagebox.showinfo("Sucesso", "Login realizado com sucesso!")
-            # INSIRA AQUI a chamada para abrir a sua próxima tela
-            cargo = resultado[5]        # índice do campo 'cargo'
-            root.destroy()              # fecha o login
-            tela_dashboard(cargo)       # abre o dashboard com o cargo
+            cargo = resultado[5]
+            tela_dashboard(cargo, root_anterior=root)
         else:
             messagebox.showerror("Erro", "Usuário ou senha incorretos.")
             
@@ -46,7 +44,9 @@ def verificar_login(root, entry_login, entry_senha):
 
 
 def tela_login():
-    root = tk.Tk()
+    ctk.set_appearance_mode("dark")
+    ctk.set_default_color_theme("dark-blue")
+    root = ctk.CTk()
     root.title("Soft Car - Login")
     root.geometry("800x600")
     root.minsize(600, 450)
@@ -65,71 +65,30 @@ def tela_login():
 
     img_original = Image.open(img_path)
 
-    canvas = tk.Canvas(root, highlightthickness=0, bd=0)
+    canvas = ctk.CTkCanvas(root, highlightthickness=0, bd=0)
     canvas.pack(fill="both", expand=True)
 
     bg_image_ctk = None
 
-    entry_login = ctk.CTkEntry(root, font=("Inclusive Sans", 13, "bold"), border_width=2, corner_radius=10, placeholder_text="E-mail", fg_color="#c2c7cc", text_color="#333333", border_color="#000000")
-    entry_senha = ctk.CTkEntry(root, font=("Inclusive Sans", 13, "bold"), border_width=2, corner_radius=10, placeholder_text="Senha", show="*", fg_color="#c2c7cc", text_color="#333333", border_color="#000000")
+    entry_login = ctk.CTkEntry(root, font=("Inclusive Sans", 13, "bold"), border_width=2, corner_radius=15, placeholder_text="E-mail", fg_color="#c2c7cc", text_color="#333333", border_color="#304C62")
+    entry_senha = ctk.CTkEntry(root, font=("Inclusive Sans", 13, "bold"), border_width=2, corner_radius=15, placeholder_text="Senha", show="*", fg_color="#c2c7cc", text_color="#333333", border_color="#304C62")
 
     canvas_login_window = canvas.create_window(0, 0, window=entry_login, width=250, height=35)
     canvas_senha_window = canvas.create_window(0, 0, window=entry_senha, width=250, height=35)
 
-    img_email = None
-    if os.path.exists("assets/txt_email.png"):
-        img_e = Image.open("assets/txt_email.png")
-        img_e = img_e.resize((100, 30), Image.Resampling.LANCZOS)
-        img_email = ImageTk.PhotoImage(img_e)
+    img_email_pil = Image.open("assets/txt_email.png") if os.path.exists("assets/txt_email.png") else None
+    img_senha_pil = Image.open("assets/txt_senha.png") if os.path.exists("assets/txt_senha.png") else None
+    img_entrar_pil = Image.open("assets/btn_entrar.png") if os.path.exists("assets/btn_entrar.png") else None
 
-    if img_email:
-        text_usuario = canvas.create_image(0, 0, image=img_email, anchor="nw")
-        canvas.image_email = img_email
-    else:
-        text_usuario = canvas.create_text(0, 0, text="Usuário / E-mail", font=("Arial", 11, "bold"), fill="white")
-
-    img_senha = None
-    if os.path.exists("assets/txt_senha.png"):
-        img_s = Image.open("assets/txt_senha.png")
-        img_s = img_s.resize((100, 25), Image.Resampling.LANCZOS)
-        img_senha = ImageTk.PhotoImage(img_s)
-
-    if img_senha:
-        text_senha = canvas.create_image(0, 0, image=img_senha, anchor="nw")
-        canvas.image_senha = img_senha
-    else:
-        text_senha = canvas.create_text(0, 0, text="Senha", font=("Arial", 11, "bold"), fill="white")
-
-    img_entrar = None
-    if os.path.exists("assets/btn_entrar.png"):
-        img_e = Image.open("assets/btn_entrar.png")
-        img_e = img_e.resize((100, 35), Image.Resampling.LANCZOS)
-        img_entrar = ImageTk.PhotoImage(img_e)
-
-    if img_entrar:
-        btn_entrar = canvas.create_image(0, 0, image=img_entrar, anchor="nw")
-        canvas.tag_bind(btn_entrar, "<Button-1>", lambda e: verificar_login(root, entry_login, entry_senha))
-        canvas.image_entrar = img_entrar
-        btn_entrar_img = btn_entrar
-    else:
-        btn_entrar = ctk.Button(
-            root,
-            text="Entrar",
-            font=("Arial", 11, "bold"),
-            bg="#b0b5b9",
-            fg="#333333",
-            activebackground="#c2c7cc",
-            bd=0,
-            width=9,
-            height=1,
-            command=lambda: verificar_login(root, entry_login, entry_senha)
-        )
-        canvas_btn_window = canvas.create_window(0, 0, window=btn_entrar)
+    text_usuario_id = None
+    text_senha_id = None
+    btn_entrar_img_id = None
+    canvas_btn_window = None
 
     root.bind("<Return>", lambda e: verificar_login(root, entry_login, entry_senha))
 
     def redimensionar(event):
-        nonlocal bg_image_ctk
+        nonlocal bg_image_ctk, btn_entrar_img_id, canvas_btn_window, text_usuario_id, text_senha_id
         if event.widget != root:
             return
         w, h = event.width, event.height
@@ -146,15 +105,81 @@ def tela_login():
         cy_login = h * 0.463
         cy_senha = h * 0.613
 
-        canvas.coords(text_usuario, cx - 125, cy_login - 50)
-        canvas.coords(canvas_login_window, cx, cy_login)
-        canvas.coords(text_senha, cx - 125, cy_senha - 45)
-        canvas.coords(canvas_senha_window, cx, cy_senha)
+        entry_w = int(250 * w / 800)
+        entry_h = int(35 * h / 600)
+        label_w = int(100 * w / 800)
+        label_h = int(30 * h / 600)
+        btn_w = int(100 * w / 800)
+        btn_h = int(35 * h / 600)
 
-        if 'btn_entrar_img' in locals() or 'btn_entrar_img' in globals():
-            canvas.coords(btn_entrar_img, cx - 50, h * 0.68)
+        entry_x = cx
+        entry_w_canvas = entry_w
+
+        canvas.itemconfig(canvas_login_window, width=entry_w, height=entry_h)
+        canvas.itemconfig(canvas_senha_window, width=entry_w, height=entry_h)
+        canvas.coords(canvas_login_window, entry_x, cy_login)
+        canvas.coords(canvas_senha_window, entry_x, cy_senha)
+
+        # Position label images at top-left of each entry
+        entry_left = entry_x - entry_w // 2
+        label_y_login = cy_login - entry_h // 2 - label_h - 2
+        label_y_senha = cy_senha - entry_h // 2 - label_h - 2
+
+        if img_email_pil:
+            img_e_resized = img_email_pil.resize((label_w, label_h), Image.Resampling.LANCZOS)
+            img_email_tk = ImageTk.PhotoImage(img_e_resized)
+            canvas.image_email = img_email_tk
+            if text_usuario_id is None:
+                text_usuario_id = canvas.create_image(entry_left, label_y_login, image=img_email_tk, anchor="nw")
+            else:
+                canvas.itemconfig(text_usuario_id, image=img_email_tk)
+                canvas.coords(text_usuario_id, entry_left, label_y_login)
         else:
-            canvas.coords(canvas_btn_window, cx, h * 0.68)
+            if text_usuario_id is None:
+                text_usuario_id = canvas.create_text(entry_left, label_y_login, text="Usuário / E-mail", font=("Arial", 11, "bold"), fill="white", anchor="nw")
+            else:
+                canvas.coords(text_usuario_id, entry_left, label_y_login)
+
+        if img_senha_pil:
+            img_s_resized = img_senha_pil.resize((label_w, label_h), Image.Resampling.LANCZOS)
+            img_senha_tk = ImageTk.PhotoImage(img_s_resized)
+            canvas.image_senha = img_senha_tk
+            if text_senha_id is None:
+                text_senha_id = canvas.create_image(entry_left, label_y_senha, image=img_senha_tk, anchor="nw")
+            else:
+                canvas.itemconfig(text_senha_id, image=img_senha_tk)
+                canvas.coords(text_senha_id, entry_left, label_y_senha)
+        else:
+            if text_senha_id is None:
+                text_senha_id = canvas.create_text(entry_left, label_y_senha, text="Senha", font=("Arial", 11, "bold"), fill="white", anchor="nw")
+            else:
+                canvas.coords(text_senha_id, entry_left, label_y_senha)
+
+        btn_y = h * 0.72
+
+        if img_entrar_pil:
+            img_e_resized = img_entrar_pil.resize((btn_w, btn_h), Image.Resampling.LANCZOS)
+            img_entrar_tk = ImageTk.PhotoImage(img_e_resized)
+            canvas.image_entrar = img_entrar_tk
+            if btn_entrar_img_id is None:
+                btn_entrar_img_id = canvas.create_image(entry_x, btn_y, image=img_entrar_tk, anchor="center")
+                canvas.tag_bind(btn_entrar_img_id, "<Button-1>", lambda e: verificar_login(root, entry_login, entry_senha))
+            else:
+                canvas.itemconfig(btn_entrar_img_id, image=img_entrar_tk)
+                canvas.coords(btn_entrar_img_id, entry_x, btn_y)
+        else:
+            if canvas_btn_window is None:
+                btn_entrar_widget = ctk.CTkButton(
+                    root,
+                    text="Entrar",
+                    font=("Inclusive Sans", 13, "bold"),
+                    width=btn_w,
+                    height=btn_h,
+                    command=lambda: verificar_login(root, entry_login, entry_senha)
+                )
+                canvas_btn_window = canvas.create_window(entry_x, btn_y, window=btn_entrar_widget, anchor="center")
+            else:
+                canvas.coords(canvas_btn_window, entry_x, btn_y)
 
     root.bind("<Configure>", redimensionar)
     def iniciar():
