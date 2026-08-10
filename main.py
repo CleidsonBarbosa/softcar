@@ -70,8 +70,11 @@ def tela_login():
 
     bg_image_ctk = None
 
-    entry_login = ctk.CTkEntry(root, font=("Inclusive Sans", 13, "bold"), border_width=2, corner_radius=15, placeholder_text="E-mail", fg_color="#c2c7cc", text_color="#333333", border_color="#304C62")
-    entry_senha = ctk.CTkEntry(root, font=("Inclusive Sans", 13, "bold"), border_width=2, corner_radius=15, placeholder_text="Senha", show="*", fg_color="#c2c7cc", text_color="#333333", border_color="#304C62")
+    entry_login_font = ctk.CTkFont(family="Inclusive Sans", size=13, weight="bold")
+    entry_senha_font = ctk.CTkFont(family="Inclusive Sans", size=13, weight="bold")
+
+    entry_login = ctk.CTkEntry(root, font=entry_login_font, border_width=0, corner_radius=10, placeholder_text="E-mail", fg_color="#c2c7cc", text_color="#333333", border_color="#304C62")
+    entry_senha = ctk.CTkEntry(root, font=entry_senha_font, border_width=0, corner_radius=10, placeholder_text="Senha", show="*", fg_color="#c2c7cc", text_color="#333333", border_color="#EE1101")
 
     canvas_login_window = canvas.create_window(0, 0, window=entry_login, width=250, height=35)
     canvas_senha_window = canvas.create_window(0, 0, window=entry_senha, width=250, height=35)
@@ -111,6 +114,11 @@ def tela_login():
         label_h = int(30 * h / 600)
         btn_w = int(100 * w / 800)
         btn_h = int(35 * h / 600)
+
+        # Responsively resize font
+        font_size = max(10, int(13 * h / 600))
+        entry_login_font.configure(size=font_size)
+        entry_senha_font.configure(size=font_size)
 
         entry_x = cx
         entry_w_canvas = entry_w

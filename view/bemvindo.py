@@ -47,7 +47,6 @@ def tela_dashboard(cargo='atendente', root_anterior=None):
     cor_branco = "#ffffff"
 
     icones_info = [
-        ("Dashboard",   "assets/dashboard_icon.png"),
         ("Cliente",     "assets/cliente.png"),
         ("Serviços",    "assets/servicos.png"),
         ("Funcionários","assets/funcionarios.png"),
@@ -56,24 +55,22 @@ def tela_dashboard(cargo='atendente', root_anterior=None):
     ]
 
     def navegar(opcao):
-        if opcao == "Dashboard":
-            return
-        root.destroy()
+        print(f"Navegando para: {opcao}")
         if opcao == "Cliente":
             from view.tela_clientes import tela_clientes
-            tela_clientes(root_anterior=root)
+            root.after(10, lambda: tela_clientes(root_anterior=root))
         elif opcao == "Serviços":
             from view.tela_servicos import tela_servicos
-            tela_servicos(root_anterior=root)
+            root.after(10, lambda: tela_servicos(root_anterior=root))
         elif opcao == "Funcionários":
             from view.lista_funcionarios import tela_lista_funcionarios
-            tela_lista_funcionarios(root_anterior=root)
+            root.after(10, lambda: tela_lista_funcionarios(root_anterior=root))
         elif opcao == "Materiais":
             from view.tela_materiais import tela_materiais
-            tela_materiais(root_anterior=root)
+            root.after(10, lambda: tela_materiais(root_anterior=root))
         elif opcao == "Relatórios":
             from view.tela_servico import tela_execucao_servico
-            tela_execucao_servico(root_anterior=root)
+            root.after(10, lambda: tela_execucao_servico(root_anterior=root))
 
     # ---- CONTEÚDO PRINCIPAL (CANVAS COM FUNDO) ----
     canvas = tk.Canvas(root, highlightthickness=0)
@@ -96,8 +93,8 @@ def tela_dashboard(cargo='atendente', root_anterior=None):
         if icone is None:
             icone = _criar_icone_fallback(24, "#b88b4a", "circle")
         
-        ativo = (nome == "Dashboard")
-        cor_texto = "#777777" if ativo else "white"
+        ativo = False
+        cor_texto = cor_branco
 
         # Cria imagem e texto como itens do canvas (sem widget Button, sem fundo)
         img_item = canvas.create_image(20, y_pos, image=icone, anchor="nw")

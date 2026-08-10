@@ -732,10 +732,10 @@ def tela_clientes(root_anterior=None):
 
     cor_dourado = "#b88b4a"
     cor_branco = "#ffffff"
+    cor_cinza = "#777777"
     cor_fundo = "#2b3e50"
 
     icones_info = [
-        ("Dashboard",   "assets/dashboard_icon.png"),
         ("Cliente",     "assets/cliente.png"),
         ("Serviços",    "assets/servicos.png"),
         ("Funcionários","assets/funcionarios.png"),
@@ -747,10 +747,7 @@ def tela_clientes(root_anterior=None):
         if opcao == "Cliente":
             return
         root.destroy()
-        if opcao == "Dashboard":
-            from view.bemvindo import tela_dashboard
-            tela_dashboard(root_anterior=root)
-        elif opcao == "Serviços":
+        if opcao == "Serviços":
             from view.tela_servicos import tela_servicos
             tela_servicos(root_anterior=root)
         elif opcao == "Funcionários":
@@ -957,7 +954,7 @@ def tela_clientes(root_anterior=None):
         canvas.itemconfig(frame_tabela_window, width=max(100, cw - 4), height=max(100, ch - 42))
 
     def redimensionar(event):
-        if event.widget != janela:
+        if event.widget != root:
             return
         w, h = event.width, event.height
         if w < 10 or h < 10:

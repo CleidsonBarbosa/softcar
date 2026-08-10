@@ -256,7 +256,6 @@ def tela_materiais(root_anterior=None):
     cor_fundo = "#2b3e50"
 
     icones_info = [
-        ("Dashboard",   "assets/dashboard_icon.png"),
         ("Cliente",     "assets/cliente.png"),
         ("Serviços",    "assets/servicos.png"),
         ("Funcionários","assets/funcionarios.png"),
@@ -268,10 +267,7 @@ def tela_materiais(root_anterior=None):
         if opcao == "Materiais":
             return
         root.destroy()
-        if opcao == "Dashboard":
-            from view.bemvindo import tela_dashboard
-            tela_dashboard(root_anterior=root)
-        elif opcao == "Cliente":
+        if opcao == "Cliente":
             from view.tela_clientes import tela_clientes
             tela_clientes(root_anterior=root)
         elif opcao == "Serviços":
