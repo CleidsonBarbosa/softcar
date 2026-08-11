@@ -42,11 +42,15 @@ def _criar_icone_fallback(tamanho, cor, forma="circle"):
 def tela_execucao_servico(root_anterior=None):
     if root_anterior:
         root_anterior.destroy()
-    root = tk.Tk()
+    root = ctk.CTk()
     root.title("Soft Car - Execução de Serviço")
     root.state("zoomed")
     root.minsize(800, 500)
     root.resizable(True, True)
+    try:
+        root.attributes('-zoomed', True)
+    except:
+        pass
 
     cor_dourado = "#b88b4a"
     cor_branco = "#ffffff"
@@ -63,21 +67,22 @@ def tela_execucao_servico(root_anterior=None):
     def navegar(opcao):
         if opcao == "Relatórios":
             return
-        root.destroy()
-        if opcao == "Cliente":
-            from view.tela_clientes import tela_clientes
-            tela_clientes(root_anterior=root)
-        elif opcao == "Serviços":
-            from view.tela_servicos import tela_servicos
-            tela_servicos(root_anterior=root)
-        elif opcao == "Funcionários":
-            from view.lista_funcionarios import tela_lista_funcionarios
-            tela_lista_funcionarios(root_anterior=root)
-        elif opcao == "Materiais":
-            from view.tela_materiais import tela_materiais
-            tela_materiais(root_anterior=root)
+        def _navegar():
+            if opcao == "Cliente":
+                from view.tela_clientes import tela_clientes
+                tela_clientes(root_anterior=root)
+            elif opcao == "Serviços":
+                from view.tela_servicos import tela_servicos
+                tela_servicos(root_anterior=root)
+            elif opcao == "Funcionários":
+                from view.lista_funcionarios import tela_lista_funcionarios
+                tela_lista_funcionarios(root_anterior=root)
+            elif opcao == "Materiais":
+                from view.tela_materiais import tela_materiais
+                tela_materiais(root_anterior=root)
+        root.after(10, _navegar)
 
-    canvas = tk.Canvas(root, highlightthickness=0, bg=cor_fundo)
+    canvas = ctk.CTkCanvas(root, highlightthickness=0, bg=cor_fundo)
     canvas.pack(fill="both", expand=True)
 
     # ---- MENU VERTICAL ----
@@ -113,7 +118,7 @@ def tela_execucao_servico(root_anterior=None):
 
     ctk.CTkLabel(canvas, text="EXECUÇÃO DE SERVIÇO", font=("Arial", 18, "bold"), text_color=cor_dourado).place(x=30, y=20)
 
-    frame = tk.Frame(canvas, bg="#2b3e50")
+    frame = ctk.CTkFrame(canvas, fg_color="#2b3e50")
     frame.place(x=30, y=70, width=500, height=400)
 
     colunas = ("id_ordem", "cliente", "carro", "total", "data")

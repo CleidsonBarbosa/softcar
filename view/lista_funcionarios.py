@@ -1,4 +1,5 @@
 import tkinter as tk
+import customtkinter as ctk
 from tkinter import ttk, messagebox
 from PIL import Image, ImageTk
 import os
@@ -58,7 +59,7 @@ def buscar_funcionarios(tree, entry_busca):
 
 
 def abrir_formulario(tree, dados=None):
-    modal = tk.Toplevel()
+    modal = ctk.CTkToplevel()
     modal.title("Editar Funcionário" if dados else "Novo Funcionário")
     modal.geometry("1000x600")
     modal.minsize(800, 500)
@@ -73,7 +74,7 @@ def abrir_formulario(tree, dados=None):
     if not os.path.exists(img_fundo):
         img_fundo = "assets/formulario.png"
 
-    canvas = tk.Canvas(modal, highlightthickness=0)
+    canvas = ctk.CTkCanvas(modal, highlightthickness=0)
     canvas.pack(fill="both", expand=True)
 
     bg_img = None
@@ -158,7 +159,7 @@ def abrir_formulario(tree, dados=None):
     for i, (campo, label) in enumerate(zip(campos, labels)):
         y_atual = y_inicio + i * 55
         lbl = canvas.create_text(x_label, y_atual, text=label, font=("Arial", 11, "bold"), fill="#ffffff", anchor="e")
-        entry = tk.Entry(canvas, width=35, bg="#c2c7cc", fg="#000000", insertbackground="#000000", relief="flat", font=("Arial", 12))
+        entry = ctk.CTkEntry(canvas, width=35*10, fg_color="#c2c7cc", text_color="#000000", font=("Arial", 12))
         entry_win = canvas.create_window(x_entry, y_atual, window=entry, anchor="w")
         if dados:
             entry.insert(0, dados[campo] if dados[campo] is not None else "")
@@ -197,14 +198,14 @@ def abrir_formulario(tree, dados=None):
         modal.destroy()
         tela_lista_funcionarios()
 
-    btn_salvar = tk.Button(canvas, text="Salvar", command=salvar, width=12,
-                           bg="#b88b4a", fg="#ffffff", activebackground="#d4a857",
-                           relief="flat", font=("Arial", 11, "bold"))
+    btn_salvar = ctk.CTkButton(canvas, text="Salvar", command=salvar, width=12*10,
+                               fg_color="#b88b4a", text_color="#ffffff", hover_color="#d4a857",
+                               font=("Arial", 11, "bold"), corner_radius=8)
     canvas.create_window(x_entry + 420, y_inicio + 440, window=btn_salvar, anchor="center")
 
-    btn_cancelar = tk.Button(canvas, text="Cancelar", command=voltar, width=12,
-                             bg="#375269", fg="#ffffff", activebackground="#b88b4a",
-                             relief="flat", font=("Arial", 11, "bold"))
+    btn_cancelar = ctk.CTkButton(canvas, text="Cancelar", command=voltar, width=12*10,
+                                 fg_color="#375269", text_color="#ffffff", hover_color="#b88b4a",
+                                 font=("Arial", 11, "bold"), corner_radius=8)
     canvas.create_window(x_entry + 420, y_inicio + 490, window=btn_cancelar, anchor="center")
 
 def excluir_funcionario(tree):
@@ -248,11 +249,15 @@ def _criar_icone_fallback(tamanho, cor, forma="circle"):
 def tela_lista_funcionarios(root_anterior=None):
     if root_anterior:
         root_anterior.destroy()
-    root = tk.Tk()
+    root = ctk.CTk()
     root.title("Soft Car - Lista de Funcionários")
     root.state("zoomed")
     root.minsize(800, 500)
     root.resizable(True, True)
+    try:
+        root.attributes('-zoomed', True)
+    except:
+        pass
 
     cor_dourado = "#b88b4a"
     cor_branco = "#ffffff"
@@ -269,21 +274,22 @@ def tela_lista_funcionarios(root_anterior=None):
     def navegar(opcao):
         if opcao == "Funcionários":
             return
-        root.destroy()
-        if opcao == "Cliente":
-            from view.tela_clientes import tela_clientes
-            tela_clientes(root_anterior=root)
-        elif opcao == "Serviços":
-            from view.tela_servicos import tela_servicos
-            tela_servicos(root_anterior=root)
-        elif opcao == "Materiais":
-            from view.tela_materiais import tela_materiais
-            tela_materiais(root_anterior=root)
-        elif opcao == "Relatórios":
-            from view.tela_servico import tela_execucao_servico
-            tela_execucao_servico(root_anterior=root)
+        def _navegar():
+            if opcao == "Cliente":
+                from view.tela_clientes import tela_clientes
+                tela_clientes(root_anterior=root)
+            elif opcao == "Serviços":
+                from view.tela_servicos import tela_servicos
+                tela_servicos(root_anterior=root)
+            elif opcao == "Materiais":
+                from view.tela_materiais import tela_materiais
+                tela_materiais(root_anterior=root)
+            elif opcao == "Relatórios":
+                from view.tela_servico import tela_execucao_servico
+                tela_execucao_servico(root_anterior=root)
+        root.after(10, _navegar)
 
-    canvas = tk.Canvas(root, highlightthickness=0, bg=cor_fundo)
+    canvas = ctk.CTkCanvas(root, highlightthickness=0, bg=cor_fundo)
     canvas.pack(fill="both", expand=True)
 
     img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "tabela.png")
@@ -344,19 +350,22 @@ def tela_lista_funcionarios(root_anterior=None):
                     darkcolor="#375269",
                     arrowcolor="#375269")
 
-    frame_top = tk.Frame(canvas, bg="#375269")
+    frame_top = ctk.CTkFrame(canvas, fg_color="#375269")
     frame_top_window = canvas.create_window(0, 0, window=frame_top, anchor="nw")
 
-    tk.Label(frame_top, text="Pesquisar", font=("Arial", 11, "bold"), fg=cor_branco, bg="#375269").pack(side="left", padx=5)
-    search_var = tk.StringVar()
-    entry_busca = tk.Entry(frame_top, width=20, bg="#375269", fg="#ffffff", insertbackground="#ffffff", textvariable=search_var, relief="flat", font=("Arial", 10))
+    ctk.CTkLabel(frame_top, text="Pesquisar", font=("Arial", 11, "bold"), text_color=cor_branco, fg_color="transparent").pack(side="left", padx=5)
+    entry_busca = ctk.CTkEntry(frame_top, width=20*10, fg_color="#375269", text_color="#ffffff", placeholder_text="Pesquisar...", font=("Arial", 10))
     entry_busca.pack(side="left", padx=5, ipady=3)
-    search_var.trace_add("write", lambda *args: buscar_funcionarios(tree, entry_busca))
+    
+    def _buscar(*args):
+        buscar_funcionarios(tree, entry_busca)
+    
+    entry_busca.bind("<KeyRelease>", _buscar)
 
-    btn_cadastrar = tk.Button(canvas, text="Cadastrar Funcionário +", font=("Arial", 11, "bold"),
-                              bg="#375269", fg=cor_branco, activebackground=cor_dourado,
-                              activeforeground=cor_branco, relief="flat", bd=0,
-                              command=lambda: abrir_formulario(tree))
+    btn_cadastrar = ctk.CTkButton(canvas, text="Cadastrar Funcionário +", font=("Arial", 11, "bold"),
+                                  fg_color="#375269", text_color=cor_branco, hover_color=cor_dourado,
+                                  corner_radius=8,
+                                  command=lambda: abrir_formulario(tree))
     btn_cadastrar_window = canvas.create_window(0, 0, window=btn_cadastrar, anchor="nw")
 
     def cmd_editar():
@@ -380,7 +389,7 @@ def tela_lista_funcionarios(root_anterior=None):
     def cmd_excluir():
         excluir_funcionario(tree)
 
-    frame_tabela = tk.Frame(canvas, bg="#375269")
+    frame_tabela = ctk.CTkFrame(canvas, fg_color="#375269")
     frame_tabela_window = canvas.create_window(0, 0, window=frame_tabela, anchor="nw")
 
     colunas = ("id_func", "nome_func", "email_func", "telefone_func", "cpf_func", "cargo")
@@ -484,6 +493,8 @@ def tela_lista_funcionarios(root_anterior=None):
 
     root.bind("<Configure>", redimensionar)
     root.after(100, lambda: [root.update_idletasks(), _redimensionar(root.winfo_width(), root.winfo_height())])
+
+    root.mainloop()
 
 
 if __name__ == "__main__":

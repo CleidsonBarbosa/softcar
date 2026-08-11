@@ -32,7 +32,7 @@ def verificar_login(root, entry_login, entry_senha):
         if resultado:
             messagebox.showinfo("Sucesso", "Login realizado com sucesso!")
             cargo = resultado[5]
-            tela_dashboard(cargo, root_anterior=root)
+            root.after(100, lambda: tela_dashboard(cargo, root_anterior=root))
         else:
             messagebox.showerror("Erro", "Usuário ou senha incorretos.")
             

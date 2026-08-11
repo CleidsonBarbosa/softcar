@@ -1,4 +1,5 @@
 import tkinter as tk
+import customtkinter as ctk
 from tkinter import messagebox
 from PIL import Image, ImageTk
 import os
@@ -35,9 +36,11 @@ def _criar_icone_fallback(tamanho, cor, forma="circle"):
 def tela_dashboard(cargo='atendente', root_anterior=None):
     if root_anterior:
         root_anterior.destroy()
-    root = tk.Tk()
+    ctk.set_appearance_mode("dark")
+    ctk.set_default_color_theme("dark-blue")
+    root = ctk.CTk()
     root.title("Soft Car - Dashboard")
-    root.state("zoomed")
+    root.geometry("1200x700")
     root.minsize(800, 500)
     root.resizable(True, True)
 
@@ -55,7 +58,6 @@ def tela_dashboard(cargo='atendente', root_anterior=None):
     ]
 
     def navegar(opcao):
-        print(f"Navegando para: {opcao}")
         if opcao == "Cliente":
             from view.tela_clientes import tela_clientes
             root.after(10, lambda: tela_clientes(root_anterior=root))
@@ -73,7 +75,7 @@ def tela_dashboard(cargo='atendente', root_anterior=None):
             root.after(10, lambda: tela_execucao_servico(root_anterior=root))
 
     # ---- CONTEÚDO PRINCIPAL (CANVAS COM FUNDO) ----
-    canvas = tk.Canvas(root, highlightthickness=0)
+    canvas = ctk.CTkCanvas(root, highlightthickness=0)
     canvas.pack(side="right", fill="both", expand=True)
 
     img_path = "assets/dashboard.png"
@@ -177,6 +179,16 @@ def tela_dashboard(cargo='atendente', root_anterior=None):
 
     canvas.pack(side="right", fill="both", expand=True)
     root.bind("<Configure>", redimensionar_dashboard)
+
+    def maximizar():
+        root.update_idletasks()
+        root.state("zoomed")
+        try:
+            root.attributes('-zoomed', True)
+        except:
+            pass
+    root.after(100, maximizar)
+
     root.mainloop()
 
 if __name__ == "__main__":

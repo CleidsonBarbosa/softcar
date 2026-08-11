@@ -72,7 +72,7 @@ def abrir_formulario(tree, dados=None):
     # Imagem de fundo: formulario.png para edição, formulario.png para cadastro
     img_fundo = "assets/formulario.png" if dados else "assets/formulario.png"
 
-    canvas = tk.Canvas(modal, highlightthickness=0)
+    canvas = ctk.CTkCanvas(modal, highlightthickness=0)
     canvas.pack(fill="both", expand=True)
 
     bg_img = None
@@ -264,7 +264,7 @@ def abrir_formulario_carro(tree, id_cliente, nome_cliente, dados_carro=None, vol
 
     img_fundo = "assets/formulario.png"
 
-    canvas = tk.Canvas(modal, highlightthickness=0)
+    canvas = ctk.CTkCanvas(modal, highlightthickness=0)
     canvas.pack(fill="both", expand=True)
 
     if os.path.exists(img_fundo):
@@ -394,7 +394,7 @@ def listar_carros_cliente(tree, id_cliente, nome_cliente):
     modal.resizable(False, False)
     modal.grab_set()
 
-    canvas = tk.Canvas(modal, highlightthickness=0)
+    canvas = ctk.CTkCanvas(modal, highlightthickness=0)
     canvas.pack(fill="both", expand=True)
 
     if os.path.exists("assets/tabela.png"):
@@ -455,7 +455,7 @@ def listar_carros_cliente(tree, id_cliente, nome_cliente):
 
     ctk.CTkButton(canvas, text="+ Novo Carro", command=lambda: (modal.destroy(), abrir_formulario_carro(tree, id_cliente, nome_cliente, voltar_para_lista=True))).place(x=180, y=60)
 
-    frame = tk.Frame(canvas, bg="#2b3e50")
+    frame = ctk.CTkFrame(canvas, fg_color="#2b3e50", corner_radius=8)
     frame.place(x=180, y=110, width=580, height=340)
 
     colunas = ("id_carro", "placa", "modelo", "marca", "cor")
@@ -522,7 +522,7 @@ def listar_servicos(tree, id_cliente, nome_cliente, dados_carro):
     modal.resizable(False, False)
     modal.grab_set()
 
-    canvas = tk.Canvas(modal, highlightthickness=0)
+    canvas = ctk.CTkCanvas(modal, highlightthickness=0)
     canvas.pack(fill="both", expand=True)
 
     if os.path.exists("assets/tabela.png"):
@@ -588,7 +588,7 @@ def listar_servicos(tree, id_cliente, nome_cliente, dados_carro):
     placa_carro = dados_carro['placa'] if dados_carro else 'Novo carro'
     ctk.CTkLabel(canvas, text=f"Cliente: {nome_cliente}  |  Carro: {placa_carro}", font=("Arial", 12, "bold"), text_color="#ffffff").place(x=180, y=20)
 
-    frame = tk.Frame(canvas, bg="#2b3e50")
+    frame = ctk.CTkFrame(canvas, fg_color="#2b3e50", corner_radius=8)
     frame.place(x=180, y=60, width=580, height=380)
 
     colunas = ("check", "id_servico", "nome_servico", "preco_servico")
@@ -724,7 +724,9 @@ def _criar_icone_fallback(tamanho, cor, forma="circle"):
 def tela_clientes(root_anterior=None):
     if root_anterior:
         root_anterior.destroy()
-    root = tk.Tk()
+    ctk.set_appearance_mode("dark")
+    ctk.set_default_color_theme("dark-blue")
+    root = ctk.CTk()
     root.title("Soft Car - Lista de Clientes")
     root.state("zoomed")
     root.minsize(800, 500)
@@ -746,21 +748,22 @@ def tela_clientes(root_anterior=None):
     def navegar(opcao):
         if opcao == "Cliente":
             return
-        root.destroy()
-        if opcao == "Serviços":
-            from view.tela_servicos import tela_servicos
-            tela_servicos(root_anterior=root)
-        elif opcao == "Funcionários":
-            from view.lista_funcionarios import tela_lista_funcionarios
-            tela_lista_funcionarios(root_anterior=root)
-        elif opcao == "Materiais":
-            from view.tela_materiais import tela_materiais
-            tela_materiais(root_anterior=root)
-        elif opcao == "Relatórios":
-            from view.tela_servico import tela_execucao_servico
-            tela_execucao_servico(root_anterior=root)
+        def _navegar():
+            if opcao == "Serviços":
+                from view.tela_servicos import tela_servicos
+                tela_servicos(root_anterior=root)
+            elif opcao == "Funcionários":
+                from view.lista_funcionarios import tela_lista_funcionarios
+                tela_lista_funcionarios(root_anterior=root)
+            elif opcao == "Materiais":
+                from view.tela_materiais import tela_materiais
+                tela_materiais(root_anterior=root)
+            elif opcao == "Relatórios":
+                from view.tela_servico import tela_execucao_servico
+                tela_execucao_servico(root_anterior=root)
+        root.after(10, _navegar)
 
-    canvas = tk.Canvas(root, highlightthickness=0, bg=cor_fundo)
+    canvas = ctk.CTkCanvas(root, highlightthickness=0, bg=cor_fundo)
     canvas.pack(fill="both", expand=True)
 
     img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "tabela.png")
@@ -821,19 +824,18 @@ def tela_clientes(root_anterior=None):
                     darkcolor="#375269",
                     arrowcolor="#375269")
 
-    frame_top = tk.Frame(canvas, bg="#375269")
+    frame_top = ctk.CTkFrame(canvas, fg_color="#375269", corner_radius=0)
     frame_top_window = canvas.create_window(0, 0, window=frame_top, anchor="nw")
 
-    tk.Label(frame_top, text="Pesquisar", font=("Arial", 11, "bold"), fg=cor_branco, bg="#375269").pack(side="left", padx=5)
+    ctk.CTkLabel(frame_top, text="Pesquisar", font=("Arial", 11, "bold"), text_color=cor_branco).pack(side="left", padx=5)
     search_var = tk.StringVar()
-    entry_busca = tk.Entry(frame_top, width=20, bg="#375269", fg="#ffffff", insertbackground="#ffffff", textvariable=search_var, relief="flat", font=("Arial", 10))
+    entry_busca = ctk.CTkEntry(frame_top, width=200, fg_color="#375269", text_color="#ffffff", border_width=1, font=("Arial", 10))
     entry_busca.pack(side="left", padx=5, ipady=3)
     search_var.trace_add("write", lambda *args: buscar_clientes(tree, entry_busca))
 
-    btn_cadastrar = tk.Button(canvas, text="Cadastrar Cliente +", font=("Arial", 11, "bold"),
-                              bg="#375269", fg=cor_branco, activebackground=cor_dourado,
-                              activeforeground=cor_branco, relief="flat", bd=0,
-                              command=lambda: abrir_formulario(tree))
+    btn_cadastrar = ctk.CTkButton(canvas, text="Cadastrar Cliente +", font=("Arial", 11, "bold"),
+                               fg_color="#375269", text_color=cor_branco,
+                               command=lambda: abrir_formulario(tree))
     btn_cadastrar_window = canvas.create_window(0, 0, window=btn_cadastrar, anchor="nw")
 
     def cmd_editar():
@@ -857,7 +859,7 @@ def tela_clientes(root_anterior=None):
     def cmd_excluir():
         excluir_cliente(tree)
 
-    frame_tabela = tk.Frame(canvas, bg="#375269")
+    frame_tabela = ctk.CTkFrame(canvas, fg_color="#375269", corner_radius=0)
     frame_tabela_window = canvas.create_window(0, 0, window=frame_tabela, anchor="nw")
 
     colunas = ("id_cliente", "nome_cliente", "email_cliente", "telefone_cliente", "cpf", "endereco")
@@ -963,6 +965,8 @@ def tela_clientes(root_anterior=None):
 
     root.bind("<Configure>", redimensionar)
     root.after(100, lambda: [root.update_idletasks(), _redimensionar(root.winfo_width(), root.winfo_height())])
+
+    root.mainloop()
 
 
 if __name__ == "__main__":
