@@ -179,4 +179,13 @@ def tela_execucao_servico(root_anterior=None):
     ctk.CTkButton(canvas, text="Finalizar Ordem", command=finalizar_ordem, width=120).place(x=550, y=70)
     ctk.CTkButton(canvas, text="Sair", command=root.destroy, width=80).place(x=30, y=480)
 
+    def maximizar():
+        root.update_idletasks()
+        root.state("zoomed")
+        try:
+            root.attributes('-zoomed', True)
+        except:
+            pass
+    root.after(100, maximizar)
+
     root.mainloop()

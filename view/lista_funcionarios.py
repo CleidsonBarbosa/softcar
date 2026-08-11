@@ -494,6 +494,15 @@ def tela_lista_funcionarios(root_anterior=None):
     root.bind("<Configure>", redimensionar)
     root.after(100, lambda: [root.update_idletasks(), _redimensionar(root.winfo_width(), root.winfo_height())])
 
+    def maximizar():
+        root.update_idletasks()
+        root.state("zoomed")
+        try:
+            root.attributes('-zoomed', True)
+        except:
+            pass
+    root.after(100, maximizar)
+
     root.mainloop()
 
 

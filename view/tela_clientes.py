@@ -58,30 +58,27 @@ def buscar_clientes(tree, entry_busca):
 
 
 def abrir_formulario(tree, dados=None):
-    modal = ctk.CTkToplevel()
+    root_lista = tree.winfo_toplevel()
+    root_lista.destroy()
+
+    ctk.set_appearance_mode("dark")
+    ctk.set_default_color_theme("dark-blue")
+    modal = ctk.CTk()
     modal.title("Editar Cliente" if dados else "Novo Cliente")
-    modal.geometry("1000x600")
+    modal.state("zoomed")
     modal.minsize(800, 500)
-    modal.resizable(False, False)
-    modal.grab_set()
+    modal.resizable(True, True)
+    try:
+        modal.attributes('-zoomed', True)
+    except:
+        pass
 
     cor_dourado = "#b88b4a"
     cor_branco = "#ffffff"
     cor_cinza = "#777777"
 
-    # Imagem de fundo: formulario.png para edição, formulario.png para cadastro
-    img_fundo = "assets/formulario.png" if dados else "assets/formulario.png"
-
     canvas = ctk.CTkCanvas(modal, highlightthickness=0)
     canvas.pack(fill="both", expand=True)
-
-    bg_img = None
-    if os.path.exists(img_fundo):
-        img = Image.open(img_fundo)
-        img = img.resize((1000, 600), Image.Resampling.LANCZOS)
-        bg_img = ImageTk.PhotoImage(img)
-        canvas.create_image(0, 0, image=bg_img, anchor="nw")
-        canvas.image = bg_img
 
     # ---- MENU VERTICAL ----
     icones_info = [
@@ -93,24 +90,22 @@ def abrir_formulario(tree, dados=None):
     ]
 
     def acao_menu(opcao):
-        root_principal = tree.winfo_toplevel()
         modal.destroy()
-        root_principal.destroy()
         if opcao == "Cliente":
             from view.tela_clientes import tela_clientes
-            tela_clientes(root_anterior=root_principal)
+            tela_clientes()
         elif opcao == "Serviços":
             from view.tela_servicos import tela_servicos
-            tela_servicos(root_anterior=root_principal)
+            tela_servicos()
         elif opcao == "Funcionários":
             from view.lista_funcionarios import tela_lista_funcionarios
-            tela_lista_funcionarios(root_anterior=root_principal)
+            tela_lista_funcionarios()
         elif opcao == "Materiais":
             from view.tela_materiais import tela_materiais
-            tela_materiais(root_anterior=root_principal)
+            tela_materiais()
         elif opcao == "Relatórios":
             from view.tela_servico import tela_execucao_servico
-            tela_execucao_servico(root_anterior=root_principal)
+            tela_execucao_servico()
 
     def make_handler(opcao):
         return lambda e: acao_menu(opcao)
@@ -147,19 +142,18 @@ def abrir_formulario(tree, dados=None):
     entries = {}
     itens_form = []
 
-    x_label = 400
-    x_entry = 420
-    y_inicio = 140
-
     for i, (campo, label) in enumerate(zip(campos, labels)):
-        y_atual = y_inicio + i * 60
-        lbl = canvas.create_text(x_label, y_atual, text=label, font=("Arial", 11, "bold"), fill="#ffffff", anchor="e")
+        lbl = canvas.create_text(0, 0, text=label, font=("Arial", 11, "bold"), fill="#ffffff", anchor="e")
         entry = ctk.CTkEntry(canvas, width=400, corner_radius=8, fg_color="#c2c7cc", text_color="#000000", border_color="#304C62", border_width=2)
-        entry_win = canvas.create_window(x_entry, y_atual, window=entry, anchor="w")
+        entry_win = canvas.create_window(0, 0, window=entry, anchor="w")
         if dados:
             entry.insert(0, dados[campo] if dados[campo] is not None else "")
         entries[campo] = entry
         itens_form.append((lbl, entry_win))
+
+    def _abrir_lista_carros(id_cliente, nome_cliente):
+        modal.destroy()
+        listar_carros_cliente(id_cliente, nome_cliente)
 
     def salvar_e_avancar():
         valores = {}
@@ -186,77 +180,81 @@ def abrir_formulario(tree, dados=None):
             conn.commit()
             cursor.close()
             conn.close()
-            modal.destroy()
-            carregar_clientes(tree)
-            if dados:
-                listar_carros_cliente(tree, id_cliente, valores["nome_cliente"])
-            else:
-                abrir_formulario_carro(tree, id_cliente, valores["nome_cliente"])
+            id_salvo = id_cliente
+            nome_salvo = valores["nome_cliente"]
+            modal.after(100, lambda: _abrir_lista_carros(id_salvo, nome_salvo))
         except mysql.connector.Error as e:
             messagebox.showerror("Erro", f"Erro ao salvar:\n{e}")
 
-    img_avancar = None
-    if os.path.exists("assets/btn_avancar.png"):
-        img_a = Image.open("assets/btn_avancar.png")
-        img_a = img_a.resize((90, 30), Image.Resampling.LANCZOS)
-        img_avancar = ImageTk.PhotoImage(img_a)
+    btn_salvar = ctk.CTkButton(canvas, text="Avançar", command=salvar_e_avancar, width=90, fg_color=cor_dourado, text_color=cor_branco, hover_color="#d4a857")
+    btn_salvar_win = canvas.create_window(0, 0, window=btn_salvar, anchor="center")
 
-    if img_avancar:
-        lbl_avancar = canvas.create_image(520, y_inicio + len(campos) * 60 + 10, image=img_avancar, anchor="w")
-        canvas.tag_bind(lbl_avancar, "<Button-1>", lambda e: salvar_e_avancar())
-        canvas.image_avancar = img_avancar
-    else:
-        btn_salvar = ctk.CTkButton(canvas, text="Avançar", command=salvar_e_avancar, width=90)
-        canvas.create_window(x_entry, y_inicio + len(campos) * 60, window=btn_salvar, anchor="w")
+    btn_cancelar = ctk.CTkButton(canvas, text="Cancelar", command=modal.destroy, width=90, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
+    btn_cancelar_win = canvas.create_window(0, 0, window=btn_cancelar, anchor="center")
 
-    img_cancelar = None
-    if os.path.exists("assets/btn_cancelar.png"):
-        img_c = Image.open("assets/btn_cancelar.png")
-        img_c = img_c.resize((90, 30), Image.Resampling.LANCZOS)
-        img_cancelar = ImageTk.PhotoImage(img_c)
-
-    if img_cancelar:
-        lbl_cancelar = canvas.create_image(630, y_inicio + len(campos) * 60 + 10, image=img_cancelar, anchor="w")
-        canvas.tag_bind(lbl_cancelar, "<Button-1>", lambda e: modal.destroy())
-        canvas.image_cancelar = img_cancelar
-    else:
-        btn_cancelar = ctk.CTkButton(canvas, text="Cancelar", command=modal.destroy, width=90)
-        btn_cancelar_win = canvas.create_window(x_entry + 110, y_inicio + len(campos) * 60, window=btn_cancelar, anchor="w")
+    img_fundo = "assets/formulario.png"
+    img_original_form = None
+    if os.path.exists(img_fundo):
+        img_original_form = Image.open(img_fundo)
 
     def _redimensionar_formulario(event=None):
-        nonlocal bg_img
         if event is not None and event.widget != modal:
             return
         w, h = modal.winfo_width(), modal.winfo_height()
         if w < 10 or h < 10:
             return
-        if img_original:
-            img_resized = img_original.resize((w, h), Image.Resampling.LANCZOS)
-            bg_img = ImageTk.PhotoImage(img_resized)
+
+        if img_original_form:
+            img_resized = img_original_form.resize((w, h), Image.Resampling.LANCZOS)
+            bg_form = ImageTk.PhotoImage(img_resized)
             canvas.delete("bg")
-            canvas.create_image(0, 0, image=bg_img, anchor="nw", tags="bg")
+            canvas.create_image(0, 0, image=bg_form, anchor="nw", tags="bg")
             canvas.tag_lower("bg")
-        cx = 400 + (w - 1000) / 2
-        cy = 140 + (h - 600) / 2
+            canvas.image_bg_form = bg_form
+
+        form_w = min(500, w * 0.45)
+        cx = w * 0.5
+        cy_inicio = h * 0.15
+        entry_w = int(form_w * 0.65)
+        espacamento = max(45, min(60, h * 0.08))
+
         for i, (lbl, entry_win) in enumerate(itens_form):
-            canvas.coords(lbl, cx, cy + i * 60)
-            canvas.coords(entry_win, cx + 80, cy + i * 60)
-        canvas.coords(lbl_avancar, cx + 180, cy + len(campos) * 60 + 10)
-        if img_cancelar:
-            canvas.coords(lbl_cancelar, cx + 290, cy + len(campos) * 60 + 10)
+            cy = cy_inicio + i * espacamento
+            canvas.coords(lbl, cx - entry_w // 2 - 10, cy)
+            canvas.coords(entry_win, cx + entry_w // 2, cy)
+            canvas.itemconfig(entry_win, width=entry_w)
+
+        y_btns = cy_inicio + len(campos) * espacamento + 20
+        canvas.coords(btn_salvar_win, cx - 55, y_btns)
+        canvas.coords(btn_cancelar_win, cx + 55, y_btns)
 
     modal.bind("<Configure>", _redimensionar_formulario)
-    modal.after(500, lambda: [modal.update_idletasks(), _redimensionar_formulario()])
-    modal.after(100, _redimensionar_formulario)  # fallback rápido
+    modal.after(100, _redimensionar_formulario)
+
+    def maximizar():
+        modal.update_idletasks()
+        modal.state("zoomed")
+        try:
+            modal.attributes('-zoomed', True)
+        except:
+            pass
+    modal.after(100, maximizar)
+
+    modal.mainloop()
 
 
-def abrir_formulario_carro(tree, id_cliente, nome_cliente, dados_carro=None, voltar_para_lista=False):
-    modal = ctk.CTkToplevel()
+def abrir_formulario_carro(id_cliente, nome_cliente, dados_carro=None, voltar_para_lista=False):
+    ctk.set_appearance_mode("dark")
+    ctk.set_default_color_theme("dark-blue")
+    modal = ctk.CTk()
     modal.title("Editar Carro" if dados_carro else "Cadastrar Carro")
-    modal.geometry("1000x600")
+    modal.state("zoomed")
     modal.minsize(800, 500)
-    modal.resizable(False, False)
-    modal.grab_set()
+    modal.resizable(True, True)
+    try:
+        modal.attributes('-zoomed', True)
+    except:
+        pass
 
     cor_dourado = "#b88b4a"
     cor_branco = "#ffffff"
@@ -284,24 +282,24 @@ def abrir_formulario_carro(tree, id_cliente, nome_cliente, dados_carro=None, vol
     ]
 
     def acao_menu_modal(opcao):
-        root_principal = tree.winfo_toplevel()
-        modal.destroy()
-        root_principal.destroy()
-        if opcao == "Cliente":
-            from view.tela_clientes import tela_clientes
-            tela_clientes(root_anterior=root_principal)
-        elif opcao == "Serviços":
-            from view.tela_servicos import tela_servicos
-            tela_servicos(root_anterior=root_principal)
-        elif opcao == "Funcionários":
-            from view.lista_funcionarios import tela_lista_funcionarios
-            tela_lista_funcionarios(root_anterior=root_principal)
-        elif opcao == "Materiais":
-            from view.tela_materiais import tela_materiais
-            tela_materiais(root_anterior=root_principal)
-        elif opcao == "Relatórios":
-            from view.tela_servico import tela_execucao_servico
-            tela_execucao_servico(root_anterior=root_principal)
+        def _navegar():
+            modal.destroy()
+            if opcao == "Cliente":
+                from view.tela_clientes import tela_clientes
+                tela_clientes()
+            elif opcao == "Serviços":
+                from view.tela_servicos import tela_servicos
+                tela_servicos()
+            elif opcao == "Funcionários":
+                from view.lista_funcionarios import tela_lista_funcionarios
+                tela_lista_funcionarios()
+            elif opcao == "Materiais":
+                from view.tela_materiais import tela_materiais
+                tela_materiais()
+            elif opcao == "Relatórios":
+                from view.tela_servico import tela_execucao_servico
+                tela_execucao_servico()
+        modal.after(100, _navegar)
 
     y_pos = 120
     for nome, arquivo in icones_info:
@@ -374,7 +372,7 @@ def abrir_formulario_carro(tree, id_cliente, nome_cliente, dados_carro=None, vol
             modal.destroy()
             messagebox.showinfo("Sucesso", "Carro salvo com sucesso!")
             if voltar_para_lista:
-                listar_carros_cliente(tree, id_cliente, nome_cliente)
+                listar_carros_cliente(id_cliente, nome_cliente)
         except mysql.connector.IntegrityError:
             messagebox.showerror("Erro", "Placa já cadastrada.")
         except mysql.connector.Error as e:
@@ -383,16 +381,33 @@ def abrir_formulario_carro(tree, id_cliente, nome_cliente, dados_carro=None, vol
     btn_frame = ctk.CTkFrame(frame, fg_color="transparent")
     btn_frame.grid(row=len(campos), column=0, columnspan=2, pady=20)
     ctk.CTkButton(btn_frame, text="Salvar", command=salvar_carro, width=90).pack(side="left", padx=5)
-    ctk.CTkButton(btn_frame, text="Avançar", command=lambda: (modal.destroy(), listar_servicos(tree, id_cliente, nome_cliente, dados_carro)), width=90).pack(side="left", padx=5)
-    ctk.CTkButton(btn_frame, text="Cancelar", command=lambda: (modal.destroy(), voltar_para_lista and listar_carros_cliente(tree, id_cliente, nome_cliente)), width=90).pack(side="left", padx=5)
+    ctk.CTkButton(btn_frame, text="Avançar", command=lambda: (modal.destroy(), listar_servicos(id_cliente, nome_cliente, dados_carro)), width=90).pack(side="left", padx=5)
+    ctk.CTkButton(btn_frame, text="Cancelar", command=lambda: modal.after(100, lambda: (modal.destroy(), voltar_para_lista and listar_carros_cliente(id_cliente, nome_cliente))), width=90).pack(side="left", padx=5)
+
+    def maximizar():
+        modal.update_idletasks()
+        modal.state("zoomed")
+        try:
+            modal.attributes('-zoomed', True)
+        except:
+            pass
+    modal.after(100, maximizar)
+
+    modal.mainloop()
 
 
-def listar_carros_cliente(tree, id_cliente, nome_cliente):
-    modal = ctk.CTkToplevel()
+def listar_carros_cliente(id_cliente, nome_cliente):
+    ctk.set_appearance_mode("dark")
+    ctk.set_default_color_theme("dark-blue")
+    modal = ctk.CTk()
     modal.title("Carros do Cliente")
-    modal.geometry("800x500")
-    modal.resizable(False, False)
-    modal.grab_set()
+    modal.state("zoomed")
+    modal.minsize(800, 500)
+    modal.resizable(True, True)
+    try:
+        modal.attributes('-zoomed', True)
+    except:
+        pass
 
     canvas = ctk.CTkCanvas(modal, highlightthickness=0)
     canvas.pack(fill="both", expand=True)
@@ -417,18 +432,23 @@ def listar_carros_cliente(tree, id_cliente, nome_cliente):
     ]
 
     def acao_menu_modal(opcao):
-        modal.destroy()
-        if opcao == "Cliente":
-            from view.tela_clientes import tela_clientes
-            tela_clientes()
-        elif opcao == "Serviços":
-            from view.tela_servicos import tela_servicos
-            tela_servicos()
-        elif opcao == "Funcionários":
-            from view.lista_funcionarios import tela_lista_funcionarios
-            tela_lista_funcionarios()
-        else:
-            messagebox.showinfo("Soft Car", "Em desenvolvimento")
+        def _navegar():
+            modal.destroy()
+            if opcao == "Cliente":
+                from view.tela_clientes import tela_clientes
+                tela_clientes()
+            elif opcao == "Serviços":
+                from view.tela_servicos import tela_servicos
+                tela_servicos()
+            elif opcao == "Funcionários":
+                from view.lista_funcionarios import tela_lista_funcionarios
+                tela_lista_funcionarios()
+            elif opcao == "Materiais":
+                from view.tela_materiais import tela_materiais
+                tela_materiais()
+            else:
+                messagebox.showinfo("Soft Car", "Em desenvolvimento")
+        modal.after(100, _navegar)
 
     y_pos = 120
     for nome, arquivo in icones_info:
@@ -453,7 +473,7 @@ def listar_carros_cliente(tree, id_cliente, nome_cliente):
 
     ctk.CTkLabel(canvas, text=f"Cliente: {nome_cliente}", font=("Arial", 14, "bold"), text_color="#ffffff").place(x=180, y=20)
 
-    ctk.CTkButton(canvas, text="+ Novo Carro", command=lambda: (modal.destroy(), abrir_formulario_carro(tree, id_cliente, nome_cliente, voltar_para_lista=True))).place(x=180, y=60)
+    ctk.CTkButton(canvas, text="+ Novo Carro", command=lambda: modal.after(100, lambda: (modal.destroy(), abrir_formulario_carro(id_cliente, nome_cliente, voltar_para_lista=True)))).place(x=180, y=60)
 
     frame = ctk.CTkFrame(canvas, fg_color="#2b3e50", corner_radius=8)
     frame.place(x=180, y=110, width=580, height=340)
@@ -491,8 +511,7 @@ def listar_carros_cliente(tree, id_cliente, nome_cliente):
             return
         valores = tree_carros.item(selecionado[0])["values"]
         dados_carro = {"id_carro": valores[0], "placa": valores[1], "modelo": valores[2], "marca": valores[3], "cor": valores[4]}
-        modal.destroy()
-        abrir_formulario_carro(tree, id_cliente, nome_cliente, dados_carro, voltar_para_lista=True)
+        modal.after(100, lambda: (modal.destroy(), abrir_formulario_carro(id_cliente, nome_cliente, dados_carro, voltar_para_lista=True)))
 
     tree_carros.bind("<Double-1>", lambda e: editar_carro_tree())
 
@@ -514,13 +533,30 @@ def listar_carros_cliente(tree, id_cliente, nome_cliente):
 
     ctk.CTkButton(canvas, text="Fechar", command=modal.destroy).place(x=180, y=460)
 
+    def maximizar():
+        modal.update_idletasks()
+        modal.state("zoomed")
+        try:
+            modal.attributes('-zoomed', True)
+        except:
+            pass
+    modal.after(100, maximizar)
 
-def listar_servicos(tree, id_cliente, nome_cliente, dados_carro):
-    modal = ctk.CTkToplevel()
+    modal.mainloop()
+
+
+def listar_servicos(id_cliente, nome_cliente, dados_carro):
+    ctk.set_appearance_mode("dark")
+    ctk.set_default_color_theme("dark-blue")
+    modal = ctk.CTk()
     modal.title("Serviços Disponíveis")
-    modal.geometry("800x500")
-    modal.resizable(False, False)
-    modal.grab_set()
+    modal.state("zoomed")
+    modal.minsize(800, 500)
+    modal.resizable(True, True)
+    try:
+        modal.attributes('-zoomed', True)
+    except:
+        pass
 
     canvas = ctk.CTkCanvas(modal, highlightthickness=0)
     canvas.pack(fill="both", expand=True)
@@ -545,24 +581,24 @@ def listar_servicos(tree, id_cliente, nome_cliente, dados_carro):
     ]
 
     def acao_menu_modal(opcao):
-        root_principal = tree.winfo_toplevel()
-        modal.destroy()
-        root_principal.destroy()
-        if opcao == "Cliente":
-            from view.tela_clientes import tela_clientes
-            tela_clientes(root_anterior=root_principal)
-        elif opcao == "Serviços":
-            from view.tela_servicos import tela_servicos
-            tela_servicos(root_anterior=root_principal)
-        elif opcao == "Funcionários":
-            from view.lista_funcionarios import tela_lista_funcionarios
-            tela_lista_funcionarios(root_anterior=root_principal)
-        elif opcao == "Materiais":
-            from view.tela_materiais import tela_materiais
-            tela_materiais(root_anterior=root_principal)
-        elif opcao == "Relatórios":
-            from view.tela_servico import tela_execucao_servico
-            tela_execucao_servico(root_anterior=root_principal)
+        def _navegar():
+            modal.destroy()
+            if opcao == "Cliente":
+                from view.tela_clientes import tela_clientes
+                tela_clientes()
+            elif opcao == "Serviços":
+                from view.tela_servicos import tela_servicos
+                tela_servicos()
+            elif opcao == "Funcionários":
+                from view.lista_funcionarios import tela_lista_funcionarios
+                tela_lista_funcionarios()
+            elif opcao == "Materiais":
+                from view.tela_materiais import tela_materiais
+                tela_materiais()
+            elif opcao == "Relatórios":
+                from view.tela_servico import tela_execucao_servico
+                tela_execucao_servico()
+        modal.after(100, _navegar)
 
     y_pos = 120
     for nome, arquivo in icones_info:
@@ -679,8 +715,19 @@ def listar_servicos(tree, id_cliente, nome_cliente, dados_carro):
             messagebox.showerror("Erro", f"Erro ao salvar ordem:\n{e}")
 
     ctk.CTkButton(canvas, text="Salvar Ordem", command=salvar_ordem, width=100).place(x=440, y=455)
-    ctk.CTkButton(canvas, text="Voltar", command=lambda: (modal.destroy(), abrir_formulario_carro(tree, id_cliente, nome_cliente, dados_carro, voltar_para_lista=True))).place(x=180, y=455)
+    ctk.CTkButton(canvas, text="Voltar", command=lambda: modal.after(100, lambda: (modal.destroy(), abrir_formulario_carro(id_cliente, nome_cliente, dados_carro, voltar_para_lista=True)))).place(x=180, y=455)
     ctk.CTkButton(canvas, text="Fechar", command=modal.destroy).place(x=300, y=455)
+
+    def maximizar():
+        modal.update_idletasks()
+        modal.state("zoomed")
+        try:
+            modal.attributes('-zoomed', True)
+        except:
+            pass
+    modal.after(100, maximizar)
+
+    modal.mainloop()
 
 
 def excluir_cliente(tree):
@@ -965,6 +1012,15 @@ def tela_clientes(root_anterior=None):
 
     root.bind("<Configure>", redimensionar)
     root.after(100, lambda: [root.update_idletasks(), _redimensionar(root.winfo_width(), root.winfo_height())])
+
+    def maximizar():
+        root.update_idletasks()
+        root.state("zoomed")
+        try:
+            root.attributes('-zoomed', True)
+        except:
+            pass
+    root.after(100, maximizar)
 
     root.mainloop()
 
