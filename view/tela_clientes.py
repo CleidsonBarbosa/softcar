@@ -90,22 +90,24 @@ def abrir_formulario(tree, dados=None):
     ]
 
     def acao_menu(opcao):
-        modal.destroy()
-        if opcao == "Cliente":
-            from view.tela_clientes import tela_clientes
-            tela_clientes()
-        elif opcao == "Serviços":
-            from view.tela_servicos import tela_servicos
-            tela_servicos()
-        elif opcao == "Funcionários":
-            from view.lista_funcionarios import tela_lista_funcionarios
-            tela_lista_funcionarios()
-        elif opcao == "Materiais":
-            from view.tela_materiais import tela_materiais
-            tela_materiais()
-        elif opcao == "Relatórios":
-            from view.tela_servico import tela_execucao_servico
-            tela_execucao_servico()
+        def _navegar():
+            modal.destroy()
+            if opcao == "Cliente":
+                from view.tela_clientes import tela_clientes
+                tela_clientes()
+            elif opcao == "Serviços":
+                from view.tela_servicos import tela_servicos
+                tela_servicos()
+            elif opcao == "Funcionários":
+                from view.lista_funcionarios import tela_lista_funcionarios
+                tela_lista_funcionarios()
+            elif opcao == "Materiais":
+                from view.tela_materiais import tela_materiais
+                tela_materiais()
+            elif opcao == "Relatórios":
+                from view.tela_servico import tela_execucao_servico
+                tela_execucao_servico()
+        modal.after(100, _navegar)
 
     def make_handler(opcao):
         return lambda e: acao_menu(opcao)
@@ -248,31 +250,21 @@ def abrir_formulario_carro(id_cliente, nome_cliente, dados_carro=None, voltar_pa
     ctk.set_default_color_theme("dark-blue")
     modal = ctk.CTk()
     modal.title("Editar Carro" if dados_carro else "Cadastrar Carro")
-    modal.state("zoomed")
+    modal.geometry("1200x700")
     modal.minsize(800, 500)
     modal.resizable(True, True)
-    try:
-        modal.attributes('-zoomed', True)
-    except:
-        pass
 
     cor_dourado = "#b88b4a"
     cor_branco = "#ffffff"
     cor_cinza = "#777777"
 
-    img_fundo = "assets/formulario.png"
-
     canvas = ctk.CTkCanvas(modal, highlightthickness=0)
     canvas.pack(fill="both", expand=True)
 
-    if os.path.exists(img_fundo):
-        img = Image.open(img_fundo)
-        img = img.resize((1000, 600), Image.Resampling.LANCZOS)
-        bg_img = ImageTk.PhotoImage(img)
-        canvas.create_image(0, 0, image=bg_img, anchor="nw")
-        canvas.image = bg_img
+    img_original = None
+    if os.path.exists("assets/formulario.png"):
+        img_original = Image.open("assets/formulario.png")
 
-    # ---- MENU VERTICAL ----
     icones_info = [
         ("Cliente",     "assets/cliente.png"),
         ("Serviços",    "assets/servicos.png"),
@@ -301,13 +293,14 @@ def abrir_formulario_carro(id_cliente, nome_cliente, dados_carro=None, voltar_pa
                 tela_execucao_servico()
         modal.after(100, _navegar)
 
-    y_pos = 120
+    menu_items = []
     for nome, arquivo in icones_info:
         icone = _carregar_icone(arquivo, 24)
+        if icone is None:
+            icone = _criar_icone_fallback(24, cor_dourado, "circle")
         cor_texto = cor_cinza if nome == "Serviços" else cor_branco
-
-        img_item = canvas.create_image(20, y_pos, image=icone, anchor="nw")
-        txt_item = canvas.create_text(50, y_pos + 12, text=nome, font=("Arial", 11, "bold"), fill=cor_texto, anchor="nw")
+        img_item = canvas.create_image(0, 0, image=icone, anchor="nw")
+        txt_item = canvas.create_text(0, 0, text=nome, font=("Arial", 11, "bold"), fill=cor_texto, anchor="nw")
 
         def on_enter(e, t=txt_item):
             canvas.itemconfig(t, fill=cor_dourado)
@@ -323,11 +316,10 @@ def abrir_formulario_carro(id_cliente, nome_cliente, dados_carro=None, voltar_pa
 
         canvas.image_refs = getattr(canvas, "image_refs", [])
         canvas.image_refs.append(icone)
-        y_pos += 50
+        menu_items.append((img_item, txt_item))
 
-    # ---- FORMULÁRIO ----
     frame = ctk.CTkFrame(canvas, fg_color="#2b3e50", corner_radius=15)
-    canvas.create_window(500, 300, window=frame, anchor="center")
+    frame_win = canvas.create_window(0, 0, window=frame, anchor="center")
 
     labels_campos = ["Placa", "Modelo", "Marca", "Cor"]
     campos = ["placa", "modelo", "marca", "cor"]
@@ -369,10 +361,7 @@ def abrir_formulario_carro(id_cliente, nome_cliente, dados_carro=None, voltar_pa
             conn.commit()
             cursor.close()
             conn.close()
-            modal.destroy()
-            messagebox.showinfo("Sucesso", "Carro salvo com sucesso!")
-            if voltar_para_lista:
-                listar_carros_cliente(id_cliente, nome_cliente)
+            modal.after(100, lambda: (modal.destroy(), messagebox.showinfo("Sucesso", "Carro salvo com sucesso!"), listar_carros_cliente(id_cliente, nome_cliente) if voltar_para_lista else None))
         except mysql.connector.IntegrityError:
             messagebox.showerror("Erro", "Placa já cadastrada.")
         except mysql.connector.Error as e:
@@ -380,9 +369,40 @@ def abrir_formulario_carro(id_cliente, nome_cliente, dados_carro=None, voltar_pa
 
     btn_frame = ctk.CTkFrame(frame, fg_color="transparent")
     btn_frame.grid(row=len(campos), column=0, columnspan=2, pady=20)
-    ctk.CTkButton(btn_frame, text="Salvar", command=salvar_carro, width=90).pack(side="left", padx=5)
-    ctk.CTkButton(btn_frame, text="Avançar", command=lambda: (modal.destroy(), listar_servicos(id_cliente, nome_cliente, dados_carro)), width=90).pack(side="left", padx=5)
-    ctk.CTkButton(btn_frame, text="Cancelar", command=lambda: modal.after(100, lambda: (modal.destroy(), voltar_para_lista and listar_carros_cliente(id_cliente, nome_cliente))), width=90).pack(side="left", padx=5)
+    ctk.CTkButton(btn_frame, text="Salvar", command=salvar_carro, width=90, fg_color=cor_dourado, text_color=cor_branco, hover_color="#d4a857").pack(side="left", padx=5)
+    def _avancar():
+        id_c = id_cliente
+        nome_c = nome_cliente
+        dados_c = dados_carro
+        listar_servicos(id_c, nome_c, dados_c, root_anterior=modal)
+    ctk.CTkButton(btn_frame, text="Avançar", command=lambda: modal.after(100, _avancar), width=90, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c").pack(side="left", padx=5)
+    ctk.CTkButton(btn_frame, text="Cancelar", command=lambda: modal.after(100, lambda: (modal.destroy(), voltar_para_lista and listar_carros_cliente(id_cliente, nome_cliente))), width=90, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c").pack(side="left", padx=5)
+
+    def _redimensionar(event=None):
+        w, h = modal.winfo_width(), modal.winfo_height()
+        if w < 10 or h < 10:
+            return
+
+        if img_original:
+            img_resized = img_original.resize((w, h), Image.Resampling.LANCZOS)
+            bg_img = ImageTk.PhotoImage(img_resized)
+            canvas.delete("bg")
+            canvas.create_image(0, 0, image=bg_img, anchor="nw", tags="bg")
+            canvas.tag_lower("bg")
+            canvas.image_bg = bg_img
+
+        y = 220
+        for img_item, txt_item in menu_items:
+            canvas.coords(img_item, 20, y)
+            canvas.coords(txt_item, 50, y + 12)
+            y += 50
+
+        cx = w * 0.5
+        cy = h * 0.5
+        canvas.coords(frame_win, cx, cy)
+
+    modal.bind("<Configure>", _redimensionar)
+    modal.after(100, lambda: [modal.update_idletasks(), _redimensionar()])
 
     def maximizar():
         modal.update_idletasks()
@@ -401,23 +421,16 @@ def listar_carros_cliente(id_cliente, nome_cliente):
     ctk.set_default_color_theme("dark-blue")
     modal = ctk.CTk()
     modal.title("Carros do Cliente")
-    modal.state("zoomed")
+    modal.geometry("1200x700")
     modal.minsize(800, 500)
     modal.resizable(True, True)
-    try:
-        modal.attributes('-zoomed', True)
-    except:
-        pass
 
     canvas = ctk.CTkCanvas(modal, highlightthickness=0)
     canvas.pack(fill="both", expand=True)
 
+    img_original = None
     if os.path.exists("assets/tabela.png"):
-        img = Image.open("assets/tabela.png")
-        img = img.resize((800, 500), Image.Resampling.LANCZOS)
-        bg_img = ImageTk.PhotoImage(img)
-        canvas.create_image(0, 0, image=bg_img, anchor="nw")
-        canvas.image = bg_img
+        img_original = Image.open("assets/tabela.png")
 
     cor_dourado = "#b88b4a"
     cor_branco = "#ffffff"
@@ -450,13 +463,15 @@ def listar_carros_cliente(id_cliente, nome_cliente):
                 messagebox.showinfo("Soft Car", "Em desenvolvimento")
         modal.after(100, _navegar)
 
-    y_pos = 120
+    menu_items = []
     for nome, arquivo in icones_info:
         icone = _carregar_icone(arquivo, 24)
+        if icone is None:
+            icone = _criar_icone_fallback(24, cor_dourado, "circle")
         ativo = (nome == "Cliente")
         cor_texto = cor_cinza if ativo else cor_branco
-        img_item = canvas.create_image(20, y_pos, image=icone, anchor="nw")
-        txt_item = canvas.create_text(50, y_pos + 12, text=nome, font=("Arial", 11, "bold"), fill=cor_texto, anchor="nw")
+        img_item = canvas.create_image(0, 0, image=icone, anchor="nw")
+        txt_item = canvas.create_text(0, 0, text=nome, font=("Arial", 11, "bold"), fill=cor_texto, anchor="nw")
         def on_enter(e, t=txt_item):
             canvas.itemconfig(t, fill=cor_dourado)
         def on_leave(e, t=txt_item, c=cor_texto):
@@ -469,14 +484,15 @@ def listar_carros_cliente(id_cliente, nome_cliente):
         canvas.tag_bind(txt_item, "<Button-1>", lambda e, o=nome: acao_menu_modal(o))
         canvas.image_refs = getattr(canvas, "image_refs", [])
         canvas.image_refs.append(icone)
-        y_pos += 50
+        menu_items.append((img_item, txt_item))
 
-    ctk.CTkLabel(canvas, text=f"Cliente: {nome_cliente}", font=("Arial", 14, "bold"), text_color="#ffffff").place(x=180, y=20)
+    lbl_cliente = canvas.create_text(0, 0, text=f"Cliente: {nome_cliente}", font=("Arial", 14, "bold"), fill="#ffffff", anchor="nw")
 
-    ctk.CTkButton(canvas, text="+ Novo Carro", command=lambda: modal.after(100, lambda: (modal.destroy(), abrir_formulario_carro(id_cliente, nome_cliente, voltar_para_lista=True)))).place(x=180, y=60)
+    btn_novo = ctk.CTkButton(canvas, text="+ Novo Carro", command=lambda: modal.after(100, lambda: (modal.destroy(), abrir_formulario_carro(id_cliente, nome_cliente, voltar_para_lista=True))), fg_color=cor_dourado, text_color=cor_branco, hover_color="#d4a857")
+    btn_novo_win = canvas.create_window(0, 0, window=btn_novo, anchor="nw")
 
     frame = ctk.CTkFrame(canvas, fg_color="#2b3e50", corner_radius=8)
-    frame.place(x=180, y=110, width=580, height=340)
+    frame_win = canvas.create_window(0, 0, window=frame, anchor="nw")
 
     colunas = ("id_carro", "placa", "modelo", "marca", "cor")
     tree_carros = ttk.Treeview(frame, columns=colunas, show="headings", height=14)
@@ -531,7 +547,42 @@ def listar_carros_cliente(id_cliente, nome_cliente):
     except mysql.connector.Error as e:
         messagebox.showerror("Erro", f"Erro ao buscar carros:\n{e}")
 
-    ctk.CTkButton(canvas, text="Fechar", command=modal.destroy).place(x=180, y=460)
+    btn_fechar = ctk.CTkButton(canvas, text="Fechar", command=modal.destroy, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
+    btn_fechar_win = canvas.create_window(0, 0, window=btn_fechar, anchor="nw")
+
+    def _redimensionar(event=None):
+        w, h = modal.winfo_width(), modal.winfo_height()
+        if w < 10 or h < 10:
+            return
+
+        if img_original:
+            img_resized = img_original.resize((w, h), Image.Resampling.LANCZOS)
+            bg_img = ImageTk.PhotoImage(img_resized)
+            canvas.delete("bg")
+            canvas.create_image(0, 0, image=bg_img, anchor="nw", tags="bg")
+            canvas.tag_lower("bg")
+            canvas.image_bg = bg_img
+
+        y = 220
+        for img_item, txt_item in menu_items:
+            canvas.coords(img_item, 20, y)
+            canvas.coords(txt_item, 50, y + 12)
+            y += 50
+
+        cx = w * 0.191
+        cy = h * 0.05
+        cw = w * 0.753
+        ch = h * 0.80
+
+        canvas.coords(lbl_cliente, cx + 4, cy)
+        canvas.coords(btn_novo_win, cx + cw - 120, cy)
+        canvas.coords(frame_win, cx + 4, cy + 40)
+        canvas.itemconfig(frame_win, width=max(100, cw - 4), height=max(100, ch - 50))
+
+        canvas.coords(btn_fechar_win, cx + 4, cy + ch + 10)
+
+    modal.bind("<Configure>", _redimensionar)
+    modal.after(100, lambda: [modal.update_idletasks(), _redimensionar()])
 
     def maximizar():
         modal.update_idletasks()
@@ -545,32 +596,28 @@ def listar_carros_cliente(id_cliente, nome_cliente):
     modal.mainloop()
 
 
-def listar_servicos(id_cliente, nome_cliente, dados_carro):
+def listar_servicos(id_cliente, nome_cliente, dados_carro, root_anterior=None):
+    if root_anterior:
+        root_anterior.destroy()
     ctk.set_appearance_mode("dark")
     ctk.set_default_color_theme("dark-blue")
     modal = ctk.CTk()
     modal.title("Serviços Disponíveis")
-    modal.state("zoomed")
+    modal.geometry("1200x700")
     modal.minsize(800, 500)
     modal.resizable(True, True)
-    try:
-        modal.attributes('-zoomed', True)
-    except:
-        pass
 
     canvas = ctk.CTkCanvas(modal, highlightthickness=0)
     canvas.pack(fill="both", expand=True)
 
+    img_original = None
     if os.path.exists("assets/tabela.png"):
-        img = Image.open("assets/tabela.png")
-        img = img.resize((800, 500), Image.Resampling.LANCZOS)
-        bg_img = ImageTk.PhotoImage(img)
-        canvas.create_image(0, 0, image=bg_img, anchor="nw")
-        canvas.image = bg_img
+        img_original = Image.open("assets/tabela.png")
 
-    cor_dourado = "#b88b4a"
-    cor_branco = "#ffffff"
-    cor_cinza = "#777777"
+    bg_image_tk = None
+
+    menu_items = []
+    img_refs = []
 
     icones_info = [
         ("Cliente",     "assets/cliente.png"),
@@ -580,63 +627,76 @@ def listar_servicos(id_cliente, nome_cliente, dados_carro):
         ("Relatórios",  "assets/relatorios.png"),
     ]
 
-    def acao_menu_modal(opcao):
-        def _navegar():
-            modal.destroy()
-            if opcao == "Cliente":
-                from view.tela_clientes import tela_clientes
-                tela_clientes()
-            elif opcao == "Serviços":
-                from view.tela_servicos import tela_servicos
-                tela_servicos()
-            elif opcao == "Funcionários":
-                from view.lista_funcionarios import tela_lista_funcionarios
-                tela_lista_funcionarios()
-            elif opcao == "Materiais":
-                from view.tela_materiais import tela_materiais
-                tela_materiais()
-            elif opcao == "Relatórios":
-                from view.tela_servico import tela_execucao_servico
-                tela_execucao_servico()
-        modal.after(100, _navegar)
-
-    y_pos = 120
     for nome, arquivo in icones_info:
         icone = _carregar_icone(arquivo, 24)
-        ativo = (nome == "Serviços")
-        cor_texto = cor_cinza if ativo else cor_branco
+        if icone is None:
+            icone = _criar_icone_fallback(24, "#b88b4a", "circle")
+        img_refs.append(icone)
+
+    y_pos = 220
+    for nome, icone in zip(icones_info, img_refs):
+        nome_texto = nome[0]
+        ativo = (nome_texto == "Serviços")
+        cor_texto = "#777777" if ativo else "#ffffff"
         img_item = canvas.create_image(20, y_pos, image=icone, anchor="nw")
-        txt_item = canvas.create_text(50, y_pos + 12, text=nome, font=("Arial", 11, "bold"), fill=cor_texto, anchor="nw")
+        txt_item = canvas.create_text(50, y_pos + 12, text=nome_texto, font=("Arial", 11, "bold"), fill=cor_texto, anchor="nw")
+
         def on_enter(e, t=txt_item):
-            canvas.itemconfig(t, fill=cor_dourado)
+            canvas.itemconfig(t, fill="#b88b4a")
         def on_leave(e, t=txt_item, c=cor_texto):
             canvas.itemconfig(t, fill=c)
+
         canvas.tag_bind(img_item, "<Enter>", on_enter)
         canvas.tag_bind(img_item, "<Leave>", on_leave)
         canvas.tag_bind(txt_item, "<Enter>", on_enter)
         canvas.tag_bind(txt_item, "<Leave>", on_leave)
-        canvas.tag_bind(img_item, "<Button-1>", lambda e, o=nome: acao_menu_modal(o))
-        canvas.tag_bind(txt_item, "<Button-1>", lambda e, o=nome: acao_menu_modal(o))
-        canvas.image_refs = getattr(canvas, "image_refs", [])
-        canvas.image_refs.append(icone)
+
+        def make_handler(opcao):
+            def _navegar():
+                if opcao == "Cliente":
+                    from view.tela_clientes import tela_clientes
+                    tela_clientes(root_anterior=modal)
+                elif opcao == "Serviços":
+                    pass
+                elif opcao == "Funcionários":
+                    from view.lista_funcionarios import tela_lista_funcionarios
+                    tela_lista_funcionarios(root_anterior=modal)
+                elif opcao == "Materiais":
+                    from view.tela_materiais import tela_materiais
+                    tela_materiais(root_anterior=modal)
+                elif opcao == "Relatórios":
+                    from view.tela_servico import tela_execucao_servico
+                    tela_execucao_servico(root_anterior=modal)
+            modal.after(100, _navegar)
+
+        canvas.tag_bind(img_item, "<Button-1>", make_handler(nome_texto))
+        canvas.tag_bind(txt_item, "<Button-1>", make_handler(nome_texto))
+        menu_items.append((img_item, txt_item))
         y_pos += 50
 
-    placa_carro = dados_carro['placa'] if dados_carro else 'Novo carro'
-    ctk.CTkLabel(canvas, text=f"Cliente: {nome_cliente}  |  Carro: {placa_carro}", font=("Arial", 12, "bold"), text_color="#ffffff").place(x=180, y=20)
+    cor_dourado = "#b88b4a"
+    cor_branco = "#ffffff"
+    cor_cinza = "#777777"
+
+    titulo_lbl = ctk.CTkLabel(canvas, text=f"Cliente: {nome_cliente}  |  Carro: {dados_carro['placa'] if dados_carro else 'Novo carro'}", font=("Arial", 12, "bold"), text_color="#ffffff")
+    titulo_win = canvas.create_window(180, 20, window=titulo_lbl, anchor="nw")
+
+    total_label = ctk.CTkLabel(canvas, text="Total: R$ 0.00", font=("Arial", 14, "bold"), text_color="#b88b4a")
+    total_win = canvas.create_window(0, 0, window=total_label, anchor="nw")
 
     frame = ctk.CTkFrame(canvas, fg_color="#2b3e50", corner_radius=8)
-    frame.place(x=180, y=60, width=580, height=380)
+    frame_win = canvas.create_window(180, 60, window=frame, anchor="nw")
 
     colunas = ("check", "id_servico", "nome_servico", "preco_servico")
-    tree_servicos = ttk.Treeview(frame, columns=colunas, show="headings", height=16)
+    tree_servicos = ttk.Treeview(frame, columns=colunas, show="headings", height=12)
     tree_servicos.heading("check", text="✓")
     tree_servicos.heading("id_servico", text="Código")
     tree_servicos.heading("nome_servico", text="Serviço")
     tree_servicos.heading("preco_servico", text="Preço")
-    tree_servicos.column("check", width=40, anchor="center")
-    tree_servicos.column("id_servico", width=60, anchor="center")
-    tree_servicos.column("nome_servico", width=370)
-    tree_servicos.column("preco_servico", width=90, anchor="center")
+    tree_servicos.column("check", width=40, stretch=False, anchor="center")
+    tree_servicos.column("id_servico", width=60, stretch=False, anchor="center")
+    tree_servicos.column("nome_servico", width=370, stretch=True)
+    tree_servicos.column("preco_servico", width=90, stretch=True, anchor="center")
 
     scrollbar = ttk.Scrollbar(frame, orient="vertical", command=tree_servicos.yview)
     tree_servicos.configure(yscrollcommand=scrollbar.set)
@@ -651,9 +711,6 @@ def listar_servicos(id_cliente, nome_cliente, dados_carro):
 
     servicos_checks = {}
     servicos_precos = {}
-
-    total_label = ctk.CTkLabel(canvas, text="Total: R$ 0.00", font=("Arial", 14, "bold"), text_color="#b88b4a")
-    total_label.place(x=600, y=20)
 
     def atualizar_total():
         total = sum(servicos_precos[i] for i, checked in servicos_checks.items() if checked)
@@ -709,14 +766,59 @@ def listar_servicos(id_cliente, nome_cliente, dados_carro):
             conn.commit()
             cursor.close()
             conn.close()
-            modal.destroy()
-            messagebox.showinfo("Sucesso", f"Ordem de serviço #{id_ordem} criada! Total: R$ {total:.2f}")
+            modal.after(100, lambda: (modal.destroy(), messagebox.showinfo("Sucesso", f"Ordem de serviço #{id_ordem} criada! Total: R$ {total:.2f}")))
         except mysql.connector.Error as e:
             messagebox.showerror("Erro", f"Erro ao salvar ordem:\n{e}")
 
-    ctk.CTkButton(canvas, text="Salvar Ordem", command=salvar_ordem, width=100).place(x=440, y=455)
-    ctk.CTkButton(canvas, text="Voltar", command=lambda: modal.after(100, lambda: (modal.destroy(), abrir_formulario_carro(id_cliente, nome_cliente, dados_carro, voltar_para_lista=True)))).place(x=180, y=455)
-    ctk.CTkButton(canvas, text="Fechar", command=modal.destroy).place(x=300, y=455)
+    btn_salvar = ctk.CTkButton(canvas, text="Salvar Ordem", command=salvar_ordem, width=100, fg_color=cor_dourado, text_color=cor_branco, hover_color="#d4a857")
+    btn_voltar = ctk.CTkButton(canvas, text="Voltar", command=lambda: modal.after(100, lambda: (modal.destroy(), abrir_formulario_carro(id_cliente, nome_cliente, dados_carro, voltar_para_lista=True))), width=80, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
+    btn_fechar = ctk.CTkButton(canvas, text="Fechar", command=modal.destroy, width=80, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
+
+    btn_salvar_win = canvas.create_window(0, 0, window=btn_salvar, anchor="nw")
+    btn_voltar_win = canvas.create_window(0, 0, window=btn_voltar, anchor="nw")
+    btn_fechar_win = canvas.create_window(0, 0, window=btn_fechar, anchor="nw")
+
+    def _redim(event=None):
+        w = modal.winfo_width()
+        h = modal.winfo_height()
+        if w < 10 or h < 10:
+            return
+
+        if img_original:
+            img_resized = img_original.resize((w, h), Image.Resampling.LANCZOS)
+            bg_img = ImageTk.PhotoImage(img_resized)
+            canvas.delete("bg")
+            canvas.create_image(0, 0, image=bg_img, anchor="nw", tags="bg")
+            canvas.tag_lower("bg")
+            canvas.image_bg = bg_img
+
+        y = 220
+        for img_item, txt_item in menu_items:
+            canvas.coords(img_item, 20, y)
+            canvas.coords(txt_item, 50, y + 12)
+            y += 50
+
+        canvas.coords(titulo_win, 180, 20)
+        canvas.coords(total_win, w * 0.75, 20)
+
+        cx = w * 0.17
+        cy = h * 0.10
+        cw = w * 0.78
+        ch = h * 0.65
+        canvas.coords(frame_win, cx, cy)
+        canvas.itemconfig(frame_win, width=max(100, cw), height=max(100, ch))
+
+        btn_y = h * 0.80
+        canvas.coords(btn_salvar_win, cx, btn_y)
+        canvas.coords(btn_voltar_win, cx + 110, btn_y)
+        canvas.coords(btn_fechar_win, cx + 200, btn_y)
+
+        col_w = max(200, cw - 60)
+        tree_servicos.column("nome_servico", width=int(col_w * 0.60))
+        tree_servicos.column("preco_servico", width=int(col_w * 0.40))
+
+    modal.bind("<Configure>", _redim)
+    modal.after(100, lambda: [modal.update_idletasks(), _redim()])
 
     def maximizar():
         modal.update_idletasks()
@@ -725,7 +827,9 @@ def listar_servicos(id_cliente, nome_cliente, dados_carro):
             modal.attributes('-zoomed', True)
         except:
             pass
-    modal.after(100, maximizar)
+        modal.update_idletasks()
+        _redim()
+    modal.after(200, maximizar)
 
     modal.mainloop()
 

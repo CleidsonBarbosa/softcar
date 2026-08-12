@@ -44,13 +44,9 @@ def tela_execucao_servico(root_anterior=None):
         root_anterior.destroy()
     root = ctk.CTk()
     root.title("Soft Car - Execução de Serviço")
-    root.state("zoomed")
+    root.geometry("1200x700")
     root.minsize(800, 500)
     root.resizable(True, True)
-    try:
-        root.attributes('-zoomed', True)
-    except:
-        pass
 
     cor_dourado = "#b88b4a"
     cor_branco = "#ffffff"
@@ -85,8 +81,15 @@ def tela_execucao_servico(root_anterior=None):
     canvas = ctk.CTkCanvas(root, highlightthickness=0, bg=cor_fundo)
     canvas.pack(fill="both", expand=True)
 
-    # ---- MENU VERTICAL ----
-    y_pos = 220
+    bg_image_tk = None
+    img_original = None
+    img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "tabela.png")
+    if os.path.exists(img_path):
+        img_original = Image.open(img_path)
+
+    menu_items = []
+    img_refs = []
+
     for nome, arquivo in icones_info:
         icone = _carregar_icone(arquivo, 24)
         if icone is None:
@@ -94,11 +97,8 @@ def tela_execucao_servico(root_anterior=None):
         ativo = (nome == "Relatórios")
         cor_texto = "#777777" if ativo else cor_branco
 
-        img_item = canvas.create_image(20, y_pos, image=icone, anchor="nw")
-        txt_item = canvas.create_text(50, y_pos + 12, text=nome, font=("Arial", 11, "bold"), fill=cor_texto, anchor="nw")
-
-        def make_handler(opcao):
-            return lambda e: navegar(opcao)
+        img_item = canvas.create_image(20, 0, image=icone, anchor="nw")
+        txt_item = canvas.create_text(50, 12, text=nome, font=("Arial", 11, "bold"), fill=cor_texto, anchor="nw")
 
         def on_enter(e, txt=txt_item):
             canvas.itemconfig(txt, fill=cor_dourado)
@@ -109,30 +109,34 @@ def tela_execucao_servico(root_anterior=None):
         canvas.tag_bind(img_item, "<Leave>", on_leave)
         canvas.tag_bind(txt_item, "<Enter>", on_enter)
         canvas.tag_bind(txt_item, "<Leave>", on_leave)
+
+        def make_handler(opcao):
+            return lambda e: navegar(opcao)
+
         canvas.tag_bind(img_item, "<Button-1>", make_handler(nome))
         canvas.tag_bind(txt_item, "<Button-1>", make_handler(nome))
 
-        canvas.image_refs = getattr(canvas, "image_refs", [])
-        canvas.image_refs.append(icone)
-        y_pos += 50
+        img_refs.append(icone)
+        menu_items.append((img_item, txt_item))
 
-    ctk.CTkLabel(canvas, text="EXECUÇÃO DE SERVIÇO", font=("Arial", 18, "bold"), text_color=cor_dourado).place(x=30, y=20)
+    titulo_lbl = ctk.CTkLabel(canvas, text="EXECUÇÃO DE SERVIÇO", font=("Arial", 18, "bold"), text_color=cor_dourado)
+    titulo_win = canvas.create_window(30, 20, window=titulo_lbl, anchor="nw")
 
     frame = ctk.CTkFrame(canvas, fg_color="#2b3e50")
-    frame.place(x=30, y=70, width=500, height=400)
+    frame_win = canvas.create_window(30, 70, window=frame, anchor="nw")
 
     colunas = ("id_ordem", "cliente", "carro", "total", "data")
-    tree = ttk.Treeview(frame, columns=colunas, show="headings", height=18)
+    tree = ttk.Treeview(frame, columns=colunas, show="headings", height=12)
     tree.heading("id_ordem", text="Ordem #")
     tree.heading("cliente", text="Cliente")
     tree.heading("carro", text="Carro (Placa)")
     tree.heading("total", text="Total")
     tree.heading("data", text="Data")
-    tree.column("id_ordem", width=70, anchor="center")
-    tree.column("cliente", width=150)
-    tree.column("carro", width=120)
-    tree.column("total", width=80, anchor="center")
-    tree.column("data", width=150)
+    tree.column("id_ordem", width=70, stretch=False, anchor="center")
+    tree.column("cliente", width=200, stretch=True)
+    tree.column("carro", width=150, stretch=True)
+    tree.column("total", width=100, stretch=True, anchor="center")
+    tree.column("data", width=150, stretch=True, anchor="center")
 
     scrollbar = ttk.Scrollbar(frame, orient="vertical", command=tree.yview)
     tree.configure(yscrollcommand=scrollbar.set)
@@ -176,8 +180,53 @@ def tela_execucao_servico(root_anterior=None):
             except mysql.connector.Error as e:
                 messagebox.showerror("Erro", f"Erro ao finalizar:\n{e}")
 
-    ctk.CTkButton(canvas, text="Finalizar Ordem", command=finalizar_ordem, width=120).place(x=550, y=70)
-    ctk.CTkButton(canvas, text="Sair", command=root.destroy, width=80).place(x=30, y=480)
+    btn_finalizar = ctk.CTkButton(canvas, text="Finalizar Ordem", command=finalizar_ordem, width=120, fg_color=cor_dourado, text_color=cor_branco, hover_color="#d4a857")
+    btn_finalizar_win = canvas.create_window(550, 70, window=btn_finalizar, anchor="nw")
+
+    btn_sair = ctk.CTkButton(canvas, text="Sair", command=root.destroy, width=80, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
+    btn_sair_win = canvas.create_window(30, 0, window=btn_sair, anchor="nw")
+
+    def _redimensionar(event=None):
+        nonlocal bg_image_tk
+        w, h = root.winfo_width(), root.winfo_height()
+        if w < 10 or h < 10:
+            return
+
+        if img_original:
+            img_resized = img_original.resize((w, h), Image.Resampling.LANCZOS)
+            bg_image_tk = ImageTk.PhotoImage(img_resized)
+            canvas.delete("bg")
+            canvas.create_image(0, 0, image=bg_image_tk, anchor="nw", tags="bg")
+            canvas.tag_lower("bg")
+
+        y = 220
+        for img_item, txt_item in menu_items:
+            canvas.coords(img_item, 20, y)
+            canvas.coords(txt_item, 50, y + 12)
+            y += 50
+
+        canvas.coords(titulo_win, 30, 20)
+
+        cx = w * 0.03
+        cy = h * 0.10
+        cw = w * 0.75
+        ch = h * 0.70
+        canvas.coords(frame_win, cx, cy)
+        canvas.itemconfig(frame_win, width=max(100, cw), height=max(100, ch))
+
+        btn_x = w * 0.80
+        btn_y = h * 0.10
+        canvas.coords(btn_finalizar_win, btn_x, btn_y)
+        canvas.coords(btn_sair_win, cx, h * 0.92)
+
+        col_w = max(200, cw - 90)
+        tree.column("cliente", width=int(col_w * 0.35))
+        tree.column("carro", width=int(col_w * 0.25))
+        tree.column("total", width=int(col_w * 0.20))
+        tree.column("data", width=int(col_w * 0.20))
+
+    root.bind("<Configure>", _redimensionar)
+    root.after(100, lambda: [root.update_idletasks(), _redimensionar()])
 
     def maximizar():
         root.update_idletasks()
@@ -186,6 +235,8 @@ def tela_execucao_servico(root_anterior=None):
             root.attributes('-zoomed', True)
         except:
             pass
-    root.after(100, maximizar)
+        root.update_idletasks()
+        _redimensionar()
+    root.after(200, maximizar)
 
     root.mainloop()

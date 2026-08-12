@@ -40,11 +40,11 @@ def buscar_servicos(tree, entry_busca):
         cursor = conn.cursor()
         if termo:
             cursor.execute(
-                "SELECT id_servico, nome_servico, estoque_id_produto, data_hora_servico FROM servicos WHERE nome_servico LIKE %s ORDER BY nome_servico",
+                "SELECT id_servico, nome_servico, preco_servico, estoque_id_produto FROM servicos WHERE nome_servico LIKE %s ORDER BY nome_servico",
                 (f"%{termo}%",)
             )
         else:
-            cursor.execute("SELECT id_servico, nome_servico, estoque_id_produto, data_hora_servico FROM servicos ORDER BY nome_servico")
+            cursor.execute("SELECT id_servico, nome_servico, preco_servico, estoque_id_produto FROM servicos ORDER BY nome_servico")
         for i, row in enumerate(cursor.fetchall()):
             tag = "even" if i % 2 == 0 else "odd"
             tree.insert("", "end", values=row, tags=(tag,))
@@ -54,31 +54,27 @@ def buscar_servicos(tree, entry_busca):
         messagebox.showerror("Erro", f"Erro ao buscar:\n{e}")
 
 
-def abrir_formulario_servico(tree, dados=None):
-    modal = ctk.CTkToplevel()
+def abrir_formulario_servico(tree, dados=None, root_anterior=None):
+    if root_anterior:
+        root_anterior.destroy()
+    ctk.set_appearance_mode("dark")
+    ctk.set_default_color_theme("dark-blue")
+    modal = ctk.CTk()
     modal.title("Editar Serviço" if dados else "Novo Serviço")
-    modal.geometry("1000x600")
+    modal.geometry("1200x700")
     modal.minsize(800, 500)
-    modal.resizable(False, False)
-    modal.transient(tree.winfo_toplevel())
-    modal.grab_set()
+    modal.resizable(True, True)
 
     cor_dourado = "#b88b4a"
     cor_branco = "#ffffff"
     cor_cinza = "#777777"
 
-    img_fundo = "assets/formulario.png"
-
     canvas = ctk.CTkCanvas(modal, highlightthickness=0)
     canvas.pack(fill="both", expand=True)
 
-    bg_img = None
-    if os.path.exists(img_fundo):
-        img = Image.open(img_fundo)
-        img = img.resize((1000, 600), Image.Resampling.LANCZOS)
-        bg_img = ImageTk.PhotoImage(img)
-        canvas.create_image(0, 0, image=bg_img, anchor="nw")
-        canvas.image = bg_img
+    img_original = None
+    if os.path.exists("assets/formulario.png"):
+        img_original = Image.open("assets/formulario.png")
 
     icones_info = [
         ("Cliente",     "assets/cliente.png"),
@@ -88,54 +84,55 @@ def abrir_formulario_servico(tree, dados=None):
         ("Relatórios",  "assets/relatorios.png"),
     ]
 
-    def acao_menu(opcao):
-        root_principal = tree.winfo_toplevel()
-        modal.destroy()
-        root_principal.destroy()
-        if opcao == "Cliente":
-            from view.tela_clientes import tela_clientes
-            tela_clientes(root_anterior=root_principal)
-        elif opcao == "Serviços":
-            from view.tela_servicos import tela_servicos
-            tela_servicos(root_anterior=root_principal)
-        elif opcao == "Funcionários":
-            from view.lista_funcionarios import tela_lista_funcionarios
-            tela_lista_funcionarios(root_anterior=root_principal)
-        elif opcao == "Materiais":
-            from view.tela_materiais import tela_materiais
-            tela_materiais(root_anterior=root_principal)
-        elif opcao == "Relatórios":
-            from view.tela_servico import tela_execucao_servico
-            tela_execucao_servico(root_anterior=root_principal)
+    def navegar(opcao):
+        if opcao == "Serviços":
+            return
+        def _navegar():
+            modal.destroy()
+            if opcao == "Cliente":
+                from view.tela_clientes import tela_clientes
+                tela_clientes(root_anterior=None)
+            elif opcao == "Funcionários":
+                from view.lista_funcionarios import tela_lista_funcionarios
+                tela_lista_funcionarios(root_anterior=None)
+            elif opcao == "Materiais":
+                from view.tela_materiais import tela_materiais
+                tela_materiais(root_anterior=None)
+            elif opcao == "Relatórios":
+                from view.tela_servico import tela_execucao_servico
+                tela_execucao_servico(root_anterior=None)
+        modal.after(100, _navegar)
 
-    y_pos = 120
+    menu_items = []
     for nome, arquivo in icones_info:
         icone = _carregar_icone(arquivo, 24)
+        if icone is None:
+            icone = _criar_icone_fallback(24, cor_dourado, "circle")
         ativo = (nome == "Serviços")
         cor_texto = cor_cinza if ativo else cor_branco
 
-        img_item = canvas.create_image(20, y_pos, image=icone, anchor="nw")
-        txt_item = canvas.create_text(50, y_pos + 12, text=nome, font=("Arial", 11, "bold"), fill=cor_texto, anchor="nw")
+        img_item = canvas.create_image(0, 0, image=icone, anchor="nw")
+        txt_item = canvas.create_text(0, 0, text=nome, font=("Arial", 11, "bold"), fill=cor_texto, anchor="nw")
 
-        def on_enter(e, txt=txt_item):
-            canvas.itemconfig(txt, fill=cor_dourado)
-        def on_leave(e, txt=txt_item, cor=cor_texto):
-            canvas.itemconfig(txt, fill=cor)
+        def on_enter(e, t=txt_item):
+            canvas.itemconfig(t, fill=cor_dourado)
+        def on_leave(e, t=txt_item, c=cor_texto):
+            canvas.itemconfig(t, fill=c)
 
         canvas.tag_bind(img_item, "<Enter>", on_enter)
         canvas.tag_bind(img_item, "<Leave>", on_leave)
         canvas.tag_bind(txt_item, "<Enter>", on_enter)
         canvas.tag_bind(txt_item, "<Leave>", on_leave)
 
-        def make_handler(opcao):
-            return lambda e: acao_menu(opcao)
+        def make_handler(opcao, i=nome):
+            return lambda e: navegar(i)
 
         canvas.tag_bind(img_item, "<Button-1>", make_handler(nome))
         canvas.tag_bind(txt_item, "<Button-1>", make_handler(nome))
 
         canvas.image_refs = getattr(canvas, "image_refs", [])
         canvas.image_refs.append(icone)
-        y_pos += 50
+        menu_items.append((img_item, txt_item))
 
     try:
         conn = conectar()
@@ -155,17 +152,13 @@ def abrir_formulario_servico(tree, dados=None):
     entries = {}
     itens_form = []
 
-    x_label = 400
-    x_entry = 420
-    y_inicio = 180
-
     for i, (campo, label) in enumerate(zip(campos, labels)):
-        y_atual = y_inicio + i * 70
-        lbl = canvas.create_text(x_label, y_atual, text=label, font=("Arial", 11, "bold"), fill="#ffffff", anchor="e")
+        y_atual = 180 + i * 70
+        lbl = canvas.create_text(0, 0, text=label, font=("Arial", 11, "bold"), fill="#ffffff", anchor="e")
         if campo == "estoque_id_produto":
             var = tk.StringVar()
             combo = ttk.Combobox(canvas, textvariable=var, values=lista_opcoes, state="readonly", width=35, font=("Arial", 12))
-            entry_win = canvas.create_window(x_entry, y_atual, window=combo, anchor="w")
+            entry_win = canvas.create_window(0, 0, window=combo, anchor="w")
             if dados and dados[campo]:
                 for texto, pid in opcoes_produto.items():
                     if pid == dados[campo]:
@@ -174,11 +167,21 @@ def abrir_formulario_servico(tree, dados=None):
             entries[campo] = var
         else:
             entry = ctk.CTkEntry(canvas, fg_color="#c2c7cc", text_color="#000000", corner_radius=8, border_color="#304C62", border_width=2, width=35, font=("Arial", 12))
-            entry_win = canvas.create_window(x_entry, y_atual, window=entry, anchor="w")
+            entry_win = canvas.create_window(0, 0, window=entry, anchor="w")
             if dados:
                 entry.insert(0, dados[campo] if dados[campo] is not None else "")
             entries[campo] = entry
         itens_form.append((lbl, entry_win))
+
+    btn_salvar = ctk.CTkButton(canvas, text="Salvar",
+                               fg_color="#b88b4a", text_color="#ffffff", hover_color="#d4a857",
+                               corner_radius=8, font=("Arial", 11, "bold"))
+    btn_cancelar = ctk.CTkButton(canvas, text="Cancelar",
+                                 fg_color="#375269", text_color="#ffffff", hover_color="#b88b4a",
+                                 corner_radius=8, font=("Arial", 11, "bold"))
+
+    btn_salvar_win = canvas.create_window(0, 0, window=btn_salvar, anchor="center")
+    btn_cancelar_win = canvas.create_window(0, 0, window=btn_cancelar, anchor="center")
 
     def salvar():
         nome = entries["nome_servico"].get().strip()
@@ -210,24 +213,65 @@ def abrir_formulario_servico(tree, dados=None):
             conn.commit()
             cursor.close()
             conn.close()
-            modal.destroy()
-            carregar_servicos(tree)
+            modal.after(100, lambda: (modal.destroy(), tela_servicos(root_anterior=None)))
         except mysql.connector.Error as e:
             messagebox.showerror("Erro", f"Erro ao salvar:\n{e}")
 
     def voltar():
-        modal.destroy()
-        carregar_servicos(tree)
+        modal.after(100, lambda: (modal.destroy(), tela_servicos(root_anterior=None)))
 
-    btn_salvar = ctk.CTkButton(canvas, text="Salvar", command=salvar,
-                               fg_color="#b88b4a", text_color="#ffffff", hover_color="#d4a857",
-                               corner_radius=8, font=("Arial", 11, "bold"))
-    canvas.create_window(x_entry + 420, y_inicio + 140, window=btn_salvar, anchor="center")
+    btn_salvar.configure(command=salvar)
+    btn_cancelar.configure(command=voltar)
 
-    btn_cancelar = ctk.CTkButton(canvas, text="Cancelar", command=voltar,
-                                 fg_color="#375269", text_color="#ffffff", hover_color="#b88b4a",
-                                 corner_radius=8, font=("Arial", 11, "bold"))
-    canvas.create_window(x_entry + 420, y_inicio + 190, window=btn_cancelar, anchor="center")
+    def _redimensionar(event=None):
+        w, h = modal.winfo_width(), modal.winfo_height()
+        if w < 10 or h < 10:
+            return
+
+        if img_original:
+            img_resized = img_original.resize((w, h), Image.Resampling.LANCZOS)
+            bg_img = ImageTk.PhotoImage(img_resized)
+            canvas.delete("bg")
+            canvas.create_image(0, 0, image=bg_img, anchor="nw", tags="bg")
+            canvas.tag_lower("bg")
+            canvas.image_bg = bg_img
+
+        y = 220
+        for img_item, txt_item in menu_items:
+            canvas.coords(img_item, 20, y)
+            canvas.coords(txt_item, 50, y + 12)
+            y += 50
+
+        x_label = w * 0.30
+        x_entry = w * 0.32
+        y_inicio = h * 0.35
+
+        for i, (lbl, entry_win) in enumerate(itens_form):
+            y_atual = y_inicio + i * 70
+            canvas.coords(lbl, x_label, y_atual)
+            canvas.coords(entry_win, x_entry, y_atual)
+
+        btn_x = w * 0.75
+        btn_y1 = y_inicio + 140
+        btn_y2 = y_inicio + 190
+        canvas.coords(btn_salvar_win, btn_x, btn_y1)
+        canvas.coords(btn_cancelar_win, btn_x, btn_y2)
+
+    modal.bind("<Configure>", _redimensionar)
+    modal.after(100, lambda: [modal.update_idletasks(), _redimensionar()])
+
+    def maximizar():
+        modal.update_idletasks()
+        modal.state("zoomed")
+        try:
+            modal.attributes('-zoomed', True)
+        except:
+            pass
+        modal.update_idletasks()
+        _redimensionar(None)
+    modal.after(200, maximizar)
+
+    modal.mainloop()
 
 
 def excluir_servico(tree):
@@ -274,13 +318,9 @@ def tela_servicos(root_anterior=None):
         root_anterior.destroy()
     root = ctk.CTk()
     root.title("Soft Car - Lista de Serviços")
-    root.state("zoomed")
+    root.geometry("1200x700")
     root.minsize(800, 500)
     root.resizable(True, True)
-    try:
-        root.attributes('-zoomed', True)
-    except:
-        pass
 
     cor_dourado = "#b88b4a"
     cor_branco = "#ffffff"
@@ -385,7 +425,7 @@ def tela_servicos(root_anterior=None):
     btn_cadastrar = ctk.CTkButton(canvas, text="Cadastrar Serviço +", font=("Arial", 11, "bold"),
                                   fg_color="#375269", text_color=cor_branco, hover_color=cor_dourado,
                                   corner_radius=8,
-                                  command=lambda: abrir_formulario_servico(tree))
+                                  command=lambda: abrir_formulario_servico(tree, root_anterior=root))
     btn_cadastrar_window = canvas.create_window(0, 0, window=btn_cadastrar, anchor="nw")
 
     def cmd_editar():
@@ -402,7 +442,7 @@ def tela_servicos(root_anterior=None):
             cursor.close()
             conn.close()
             if dados:
-                abrir_formulario_servico(tree, dados)
+                abrir_formulario_servico(tree, dados, root_anterior=root)
         except mysql.connector.Error as e:
             messagebox.showerror("Erro", f"Erro ao carregar dados:\n{e}")
 
@@ -412,16 +452,16 @@ def tela_servicos(root_anterior=None):
     frame_tabela = ctk.CTkFrame(canvas, fg_color="#375269")
     frame_tabela_window = canvas.create_window(0, 0, window=frame_tabela, anchor="nw")
 
-    colunas = ("id_servico", "nome_servico", "estoque_id_produto", "data_hora_servico")
-    tree = ttk.Treeview(frame_tabela, columns=colunas, show="headings", selectmode="browse", height=15)
+    colunas = ("id_servico", "nome_servico", "preco_servico", "estoque_id_produto")
+    tree = ttk.Treeview(frame_tabela, columns=colunas, show="headings", selectmode="browse", height=8)
     tree.heading("id_servico", text="ID")
     tree.heading("nome_servico", text="Serviço")
+    tree.heading("preco_servico", text="Valor")
     tree.heading("estoque_id_produto", text="ID Produto")
-    tree.heading("data_hora_servico", text="Data/Hora")
-    tree.column("id_servico", width=0, stretch=False)
-    tree.column("nome_servico", width=250)
-    tree.column("estoque_id_produto", width=120, anchor="center")
-    tree.column("data_hora_servico", width=200, anchor="center")
+    tree.column("id_servico", width=70, stretch=False, anchor="center")
+    tree.column("nome_servico", width=250, stretch=True)
+    tree.column("preco_servico", width=100, stretch=True, anchor="center")
+    tree.column("estoque_id_produto", width=120, stretch=True, anchor="center")
 
     tree.tag_configure("odd", background="#375269")
     tree.tag_configure("even", background="#375269")
@@ -491,15 +531,20 @@ def tela_servicos(root_anterior=None):
             canvas.coords(txt_item, 50, y + 12)
             y += 50
 
-        cx = w * 0.191
-        cy = h * 0.178
-        cw = w * 0.753
-        ch = h * 0.750
+        cx = w * 0.17
+        cy = h * 0.17
+        cw = w * 0.78
+        ch = h * 0.55
 
         canvas.coords(frame_top_window, cx + 30, cy - 55)
         canvas.coords(btn_cadastrar_window, cx + cw - 190, cy - 55)
         canvas.coords(frame_tabela_window, cx + 4, cy + 20)
         canvas.itemconfig(frame_tabela_window, width=max(100, cw - 4), height=max(100, ch - 42))
+
+        col_w = max(200, cw - 90)
+        tree.column("nome_servico", width=int(col_w * 0.50))
+        tree.column("preco_servico", width=int(col_w * 0.20))
+        tree.column("estoque_id_produto", width=int(col_w * 0.30))
 
     def redimensionar(event):
         if event.widget != root:
@@ -519,7 +564,9 @@ def tela_servicos(root_anterior=None):
             root.attributes('-zoomed', True)
         except:
             pass
-    root.after(100, maximizar)
+        root.update_idletasks()
+        _redimensionar(root.winfo_width(), root.winfo_height())
+    root.after(200, maximizar)
 
     root.mainloop()
 

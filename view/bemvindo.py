@@ -141,17 +141,15 @@ def tela_dashboard(cargo='atendente', root_anterior=None):
     total_recebido_label = canvas.create_text(0, 0, text="Total recebido", font=("Arial", 13, "bold"), fill=cor_branco, anchor="w")
     bem_vindo_label = canvas.create_text(0, 0, text="SEJA BEM VINDO AO SOFTCAR", font=("Bungee", 16, "bold"), fill=cor_branco, anchor="se")
 
-    bg_image_tk = None
-
-    def redimensionar_dashboard(event):
+    def redimensionar_dashboard(w=None, h=None):
         nonlocal bg_image_tk
 
-        if event.widget != root:
+        if w is None or h is None:
             return
-        if event.width < 10 or event.height < 10:
+        if w < 10 or h < 10:
             return
 
-        img_redimensionada = img_original.resize((event.width, event.height), Image.Resampling.LANCZOS)
+        img_redimensionada = img_original.resize((w, h), Image.Resampling.LANCZOS)
         bg_image_tk = ImageTk.PhotoImage(img_redimensionada)
 
         canvas.delete("bg")
@@ -165,20 +163,24 @@ def tela_dashboard(cargo='atendente', root_anterior=None):
             canvas.coords(txt_item, 50, y + 12)
             y += 50
 
-        canvas.coords(valor_agendados, event.width * 0.315, event.height * 0.28)
-        canvas.coords(valor_realizados, event.width * 0.562, event.height * 0.28)
-        canvas.coords(valor_clientes, event.width * 0.812, event.height * 0.17)
-        canvas.coords(valor_veiculos, event.width * 0.812, event.height * 0.36)
-        canvas.coords(valor_total, event.width * 0.23, event.height * 0.68)
-        canvas.coords(total_recebido_label, event.width * 0.23, event.height * 0.55)
-        canvas.coords(total_servicos_agendados_label, event.width * 0.215, event.height * 0.15)
-        canvas.coords(total_servicos_realizados_label, event.width * 0.579, event.height * 0.15)
-        canvas.coords(total_clientes_label, event.width * 0.831, event.height * 0.11)
-        canvas.coords(total_veiculos_label, event.width * 0.83, event.height * 0.3)
-        canvas.coords(bem_vindo_label, event.width - 10, event.height - 20)
+        canvas.coords(valor_agendados, w * 0.315, h * 0.28)
+        canvas.coords(valor_realizados, w * 0.562, h * 0.28)
+        canvas.coords(valor_clientes, w * 0.812, h * 0.17)
+        canvas.coords(valor_veiculos, w * 0.812, h * 0.36)
+        canvas.coords(valor_total, w * 0.23, h * 0.68)
+        canvas.coords(total_recebido_label, w * 0.23, h * 0.55)
+        canvas.coords(total_servicos_agendados_label, w * 0.215, h * 0.15)
+        canvas.coords(total_servicos_realizados_label, w * 0.579, h * 0.15)
+        canvas.coords(total_clientes_label, w * 0.831, h * 0.11)
+        canvas.coords(total_veiculos_label, w * 0.83, h * 0.30)
+        canvas.coords(bem_vindo_label, w - 10, h - 20)
 
-    canvas.pack(side="right", fill="both", expand=True)
-    root.bind("<Configure>", redimensionar_dashboard)
+    def _on_configure(event):
+        if event.widget != root:
+            return
+        redimensionar_dashboard(event.width, event.height)
+
+    root.bind("<Configure>", _on_configure)
 
     def maximizar():
         root.update_idletasks()
@@ -187,6 +189,8 @@ def tela_dashboard(cargo='atendente', root_anterior=None):
             root.attributes('-zoomed', True)
         except:
             pass
+        root.update_idletasks()
+        redimensionar_dashboard(root.winfo_width(), root.winfo_height())
     root.after(100, maximizar)
 
     root.mainloop()

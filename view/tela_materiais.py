@@ -89,24 +89,26 @@ def abrir_formulario_material(tree, dados=None):
     ]
 
     def acao_menu(opcao):
-        root_principal = tree.winfo_toplevel()
-        modal.destroy()
-        root_principal.destroy()
-        if opcao == "Cliente":
-            from view.tela_clientes import tela_clientes
-            tela_clientes(root_anterior=root_principal)
-        elif opcao == "Serviços":
-            from view.tela_servicos import tela_servicos
-            tela_servicos(root_anterior=root_principal)
-        elif opcao == "Funcionários":
-            from view.lista_funcionarios import tela_lista_funcionarios
-            tela_lista_funcionarios(root_anterior=root_principal)
-        elif opcao == "Materiais":
-            from view.tela_materiais import tela_materiais
-            tela_materiais(root_anterior=root_principal)
-        elif opcao == "Relatórios":
-            from view.tela_servico import tela_execucao_servico
-            tela_execucao_servico(root_anterior=root_principal)
+        def _navegar():
+            root_principal = tree.winfo_toplevel()
+            modal.destroy()
+            root_principal.destroy()
+            if opcao == "Cliente":
+                from view.tela_clientes import tela_clientes
+                tela_clientes(root_anterior=root_principal)
+            elif opcao == "Serviços":
+                from view.tela_servicos import tela_servicos
+                tela_servicos(root_anterior=root_principal)
+            elif opcao == "Funcionários":
+                from view.lista_funcionarios import tela_lista_funcionarios
+                tela_lista_funcionarios(root_anterior=root_principal)
+            elif opcao == "Materiais":
+                from view.tela_materiais import tela_materiais
+                tela_materiais(root_anterior=root_principal)
+            elif opcao == "Relatórios":
+                from view.tela_servico import tela_execucao_servico
+                tela_execucao_servico(root_anterior=root_principal)
+        modal.after(100, _navegar)
 
     y_pos = 120
     for nome, arquivo in icones_info:
