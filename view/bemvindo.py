@@ -3,6 +3,7 @@ import customtkinter as ctk
 from tkinter import messagebox
 from PIL import Image, ImageTk
 import os
+import mysql.connector
 
 def _carregar_icone(caminho, tamanho):
     try:
@@ -11,6 +12,18 @@ def _carregar_icone(caminho, tamanho):
         return ImageTk.PhotoImage(img)
     except Exception:
         return None
+
+def contar_servicos_agendados():
+    try:
+        conn = mysql.connector.connect(host="localhost", user="root", password="", database="softcar")
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM servicos WHERE data_hora_servico >= NOW()")
+        resultado = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        return resultado[0] if resultado else 0
+    except Exception:
+        return 0
 
 def _criar_icone_dourado(icone):
     try:
@@ -129,7 +142,8 @@ def tela_dashboard(cargo='atendente', root_anterior=None):
         y_pos += 50
 
     # ---- CARDS (TEXTOS) ----
-    valor_agendados = canvas.create_text(0, 0, text="20", font=("Arial", 54, "bold"), fill=cor_dourado)
+    servicos_agendados = contar_servicos_agendados()
+    valor_agendados = canvas.create_text(0, 0, text=str(servicos_agendados), font=("Arial", 54, "bold"), fill=cor_dourado)
     valor_realizados = canvas.create_text(0, 0, text="31", font=("Arial", 54, "bold"), fill=cor_dourado)
     valor_clientes = canvas.create_text(0, 0, text="352", font=("Arial", 36, "bold"), fill=cor_dourado)
     valor_veiculos = canvas.create_text(0, 0, text="426", font=("Arial", 36, "bold"), fill=cor_dourado)
