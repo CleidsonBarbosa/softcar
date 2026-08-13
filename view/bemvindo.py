@@ -17,7 +17,19 @@ def contar_servicos_agendados():
     try:
         conn = mysql.connector.connect(host="localhost", user="root", password="", database="softcar")
         cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM servicos WHERE data_hora_servico >= NOW()")
+        cursor.execute("SELECT COUNT(*) FROM ordem_servico WHERE status = 'aberto'")
+        resultado = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        return resultado[0] if resultado else 0
+    except Exception:
+        return 0
+
+def contar_servicos_realizados():
+    try:
+        conn = mysql.connector.connect(host="localhost", user="root", password="", database="softcar")
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM ordem_servico WHERE status = 'finalizado'")
         resultado = cursor.fetchone()
         cursor.close()
         conn.close()
@@ -144,7 +156,8 @@ def tela_dashboard(cargo='atendente', root_anterior=None):
     # ---- CARDS (TEXTOS) ----
     servicos_agendados = contar_servicos_agendados()
     valor_agendados = canvas.create_text(0, 0, text=str(servicos_agendados), font=("Arial", 54, "bold"), fill=cor_dourado)
-    valor_realizados = canvas.create_text(0, 0, text="31", font=("Arial", 54, "bold"), fill=cor_dourado)
+    servicos_realizados = contar_servicos_realizados()
+    valor_realizados = canvas.create_text(0, 0, text=str(servicos_realizados), font=("Arial", 54, "bold"), fill=cor_dourado)
     valor_clientes = canvas.create_text(0, 0, text="352", font=("Arial", 36, "bold"), fill=cor_dourado)
     valor_veiculos = canvas.create_text(0, 0, text="426", font=("Arial", 36, "bold"), fill=cor_dourado)
     valor_total = canvas.create_text(0, 0, text="R$ 863,00", font=("Arial", 64, "bold"), fill=cor_dourado, anchor="w")
