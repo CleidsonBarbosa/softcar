@@ -122,11 +122,11 @@ def tela_execucao_servico(root_anterior=None):
     titulo_lbl = ctk.CTkLabel(canvas, text="EXECUÇÃO DE SERVIÇO", font=("Arial", 18, "bold"), text_color=cor_dourado)
     titulo_win = canvas.create_window(30, 20, window=titulo_lbl, anchor="nw")
 
-    frame = ctk.CTkFrame(canvas, fg_color="#2b3e50")
-    frame_win = canvas.create_window(30, 70, window=frame, anchor="nw")
+    frame = ctk.CTkFrame(canvas, fg_color="#2b3e50", corner_radius=8)
+    frame_win = canvas.create_window(0, 0, window=frame, anchor="nw")
 
     colunas = ("id_ordem", "cliente", "carro", "total", "data")
-    tree = ttk.Treeview(frame, columns=colunas, show="headings", height=12)
+    tree = ttk.Treeview(frame, columns=colunas, show="headings", height=6)
     tree.heading("id_ordem", text="Ordem #")
     tree.heading("cliente", text="Cliente")
     tree.heading("carro", text="Carro (Placa)")
@@ -141,6 +141,12 @@ def tela_execucao_servico(root_anterior=None):
     scrollbar = ttk.Scrollbar(frame, orient="vertical", command=tree.yview)
     tree.configure(yscrollcommand=scrollbar.set)
     tree.pack(side="left", fill="both", expand=True)
+
+    style = ttk.Style()
+    style.theme_use("clam")
+    style.configure("Treeview", background="#375269", foreground="#ffffff", fieldbackground="#375269", rowheight=28, borderwidth=0)
+    style.configure("Treeview.Heading", background="#2c4a5c", foreground="#ffffff", borderwidth=0)
+    style.layout("Treeview", [("Treeview.field", {"sticky": "nswe", "children": [("Treeview.padding", {"sticky": "nswe", "children": [("Treeview.treearea", {"sticky": "nswe"})]})]})])
     scrollbar.pack(side="right", fill="y")
 
     try:
@@ -211,7 +217,7 @@ def tela_execucao_servico(root_anterior=None):
         cy = h * 0.10
         cw = w * 0.75
         ch = h * 0.70
-        canvas.coords(frame_win, cx, cy)
+        canvas.coords(frame_win, cx + 4, cy + 40)
         canvas.itemconfig(frame_win, width=max(100, cw), height=max(100, ch))
 
         btn_x = w * 0.80
