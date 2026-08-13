@@ -147,8 +147,8 @@ def abrir_formulario_servico(tree, dados=None, root_anterior=None):
     opcoes_produto = {f"{p[1]} (ID {p[0]})": p[0] for p in produtos}
     lista_opcoes = list(opcoes_produto.keys())
 
-    campos = ["nome_servico", "estoque_id_produto", "data_hora_servico"]
-    labels = ["Nome do Serviço", "Produto (Estoque)", "Data/Hora"]
+    campos = ["nome_servico", "preco_servico", "estoque_id_produto", "data_hora_servico"]
+    labels = ["Nome do Serviço", "Preço", "Produto (Estoque)", "Data/Hora"]
     entries = {}
     itens_form = []
 
@@ -188,6 +188,15 @@ def abrir_formulario_servico(tree, dados=None, root_anterior=None):
         if not nome:
             messagebox.showwarning("Validação", "O campo Nome do Serviço é obrigatório.")
             return
+        preco_str = entries["preco_servico"].get().strip()
+        if preco_str:
+            try:
+                preco = float(preco_str)
+            except ValueError:
+                messagebox.showwarning("Validação", "Preço inválido.")
+                return
+        else:
+            preco = None
         produto_texto = entries["estoque_id_produto"].get().strip()
         if not produto_texto:
             messagebox.showwarning("Validação", "Selecione um Produto.")
@@ -202,13 +211,13 @@ def abrir_formulario_servico(tree, dados=None, root_anterior=None):
             cursor = conn.cursor()
             if dados:
                 cursor.execute(
-                    "UPDATE servicos SET nome_servico=%s, estoque_id_produto=%s, data_hora_servico=%s WHERE id_servico=%s",
-                    (nome, id_produto, data_hora, dados["id_servico"])
+                    "UPDATE servicos SET nome_servico=%s, preco_servico=%s, estoque_id_produto=%s, data_hora_servico=%s WHERE id_servico=%s",
+                    (nome, preco, id_produto, data_hora, dados["id_servico"])
                 )
             else:
                 cursor.execute(
-                    "INSERT INTO servicos (nome_servico, estoque_id_produto, data_hora_servico) VALUES (%s, %s, %s)",
-                    (nome, id_produto, data_hora)
+                    "INSERT INTO servicos (nome_servico, preco_servico, estoque_id_produto, data_hora_servico) VALUES (%s, %s, %s, %s)",
+                    (nome, preco, id_produto, data_hora)
                 )
             conn.commit()
             cursor.close()
@@ -567,6 +576,9 @@ def tela_servicos(root_anterior=None):
         root.update_idletasks()
         _redimensionar(root.winfo_width(), root.winfo_height())
     root.after(200, maximizar)
+
+    btn_sair = ctk.CTkButton(root, text="Sair", command=root.destroy, width=80, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
+    btn_sair.pack(pady=10)
 
     root.mainloop()
 

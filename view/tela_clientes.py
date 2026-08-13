@@ -370,13 +370,9 @@ def abrir_formulario_carro(id_cliente, nome_cliente, dados_carro=None, voltar_pa
     btn_frame = ctk.CTkFrame(frame, fg_color="transparent")
     btn_frame.grid(row=len(campos), column=0, columnspan=2, pady=20)
     ctk.CTkButton(btn_frame, text="Salvar", command=salvar_carro, width=90, fg_color=cor_dourado, text_color=cor_branco, hover_color="#d4a857").pack(side="left", padx=5)
-    def _avancar():
-        id_c = id_cliente
-        nome_c = nome_cliente
-        dados_c = dados_carro
-        listar_servicos(id_c, nome_c, dados_c, root_anterior=modal)
-    ctk.CTkButton(btn_frame, text="Avançar", command=lambda: modal.after(100, _avancar), width=90, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c").pack(side="left", padx=5)
+    ctk.CTkButton(btn_frame, text="Avançar", command=lambda: modal.after(10, lambda: listar_servicos(id_cliente, nome_cliente, dados_carro, root_anterior=modal)), width=90, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c").pack(side="left", padx=5)
     ctk.CTkButton(btn_frame, text="Cancelar", command=lambda: modal.after(100, lambda: (modal.destroy(), voltar_para_lista and listar_carros_cliente(id_cliente, nome_cliente))), width=90, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c").pack(side="left", padx=5)
+    ctk.CTkButton(btn_frame, text="Sair", command=modal.destroy, width=90, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c").pack(side="left", padx=5)
 
     def _redimensionar(event=None):
         w, h = modal.winfo_width(), modal.winfo_height()
@@ -644,7 +640,7 @@ def listar_servicos(id_cliente, nome_cliente, dados_carro, root_anterior=None):
         def on_enter(e, t=txt_item):
             canvas.itemconfig(t, fill="#b88b4a")
         def on_leave(e, t=txt_item, c=cor_texto):
-            canvas.itemconfig(t, fill=c)
+            canvas.itemconfig(t, fill=cor_texto)
 
         canvas.tag_bind(img_item, "<Enter>", on_enter)
         canvas.tag_bind(img_item, "<Leave>", on_leave)
@@ -654,7 +650,6 @@ def listar_servicos(id_cliente, nome_cliente, dados_carro, root_anterior=None):
         def make_handler(opcao):
             def _navegar():
                 if opcao == "Cliente":
-                    from view.tela_clientes import tela_clientes
                     tela_clientes(root_anterior=modal)
                 elif opcao == "Serviços":
                     pass
@@ -667,7 +662,7 @@ def listar_servicos(id_cliente, nome_cliente, dados_carro, root_anterior=None):
                 elif opcao == "Relatórios":
                     from view.tela_servico import tela_execucao_servico
                     tela_execucao_servico(root_anterior=modal)
-            modal.after(100, _navegar)
+            return _navegar
 
         canvas.tag_bind(img_item, "<Button-1>", make_handler(nome_texto))
         canvas.tag_bind(txt_item, "<Button-1>", make_handler(nome_texto))
@@ -766,7 +761,11 @@ def listar_servicos(id_cliente, nome_cliente, dados_carro, root_anterior=None):
             conn.commit()
             cursor.close()
             conn.close()
-            modal.after(100, lambda: (modal.destroy(), messagebox.showinfo("Sucesso", f"Ordem de serviço #{id_ordem} criada! Total: R$ {total:.2f}")))
+            def _abrir_dashboard():
+                modal.destroy()
+                from view.bemvindo import tela_dashboard
+                tela_dashboard()
+            modal.after(100, lambda: (messagebox.showinfo("Sucesso", f"Ordem de serviço #{id_ordem} criada! Total: R$ {total:.2f}"), _abrir_dashboard()))
         except mysql.connector.Error as e:
             messagebox.showerror("Erro", f"Erro ao salvar ordem:\n{e}")
 

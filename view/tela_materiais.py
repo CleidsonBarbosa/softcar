@@ -493,6 +493,9 @@ def tela_materiais(root_anterior=None):
             pass
     root.after(100, maximizar)
 
+    btn_sair = ctk.CTkButton(root, text="Sair", command=root.destroy, width=80, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
+    btn_sair.pack(pady=10)
+
     root.mainloop()
 
 

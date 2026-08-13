@@ -175,6 +175,9 @@ def tela_dashboard(cargo='atendente', root_anterior=None):
         canvas.coords(total_veiculos_label, w * 0.83, h * 0.30)
         canvas.coords(bem_vindo_label, w - 10, h - 20)
 
+    btn_sair = ctk.CTkButton(canvas, text="Sair", command=root.destroy, width=80, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
+    btn_sair_win = canvas.create_window(2, root.winfo_height() - 40, window=btn_sair, anchor="nw")
+
     def _on_configure(event):
         if event.widget != root:
             return
