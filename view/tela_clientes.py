@@ -250,9 +250,13 @@ def abrir_formulario_carro(id_cliente, nome_cliente, dados_carro=None, voltar_pa
     ctk.set_default_color_theme("dark-blue")
     modal = ctk.CTk()
     modal.title("Editar Carro" if dados_carro else "Cadastrar Carro")
-    modal.geometry("1200x700")
+    modal.state("zoomed")
     modal.minsize(800, 500)
     modal.resizable(True, True)
+    try:
+        modal.attributes('-zoomed', True)
+    except:
+        pass
 
     cor_dourado = "#b88b4a"
     cor_branco = "#ffffff"
@@ -265,6 +269,7 @@ def abrir_formulario_carro(id_cliente, nome_cliente, dados_carro=None, voltar_pa
     if os.path.exists("assets/formulario.png"):
         img_original = Image.open("assets/formulario.png")
 
+    # ---- MENU VERTICAL ----
     icones_info = [
         ("Cliente",     "assets/cliente.png"),
         ("Serviços",    "assets/servicos.png"),
@@ -293,45 +298,50 @@ def abrir_formulario_carro(id_cliente, nome_cliente, dados_carro=None, voltar_pa
                 tela_execucao_servico()
         modal.after(100, _navegar)
 
-    menu_items = []
+    def make_handler(opcao):
+        return lambda e: acao_menu_modal(opcao)
+
+    y_pos = 120
     for nome, arquivo in icones_info:
         icone = _carregar_icone(arquivo, 24)
         if icone is None:
             icone = _criar_icone_fallback(24, cor_dourado, "circle")
-        cor_texto = cor_cinza if nome == "Serviços" else cor_branco
-        img_item = canvas.create_image(0, 0, image=icone, anchor="nw")
-        txt_item = canvas.create_text(0, 0, text=nome, font=("Arial", 11, "bold"), fill=cor_texto, anchor="nw")
+        ativo = (nome == "Serviços")
+        cor_texto = cor_cinza if ativo else cor_branco
 
-        def on_enter(e, t=txt_item):
-            canvas.itemconfig(t, fill=cor_dourado)
-        def on_leave(e, t=txt_item, c=cor_texto):
-            canvas.itemconfig(t, fill=c)
+        img_item = canvas.create_image(20, y_pos, image=icone, anchor="nw")
+        txt_item = canvas.create_text(50, y_pos + 12, text=nome, font=("Arial", 11, "bold"), fill=cor_texto, anchor="nw")
+
+        def on_enter(e, txt=txt_item):
+            canvas.itemconfig(txt, fill=cor_dourado)
+        def on_leave(e, txt=txt_item, cor=cor_texto):
+            canvas.itemconfig(txt, fill=cor)
 
         canvas.tag_bind(img_item, "<Enter>", on_enter)
         canvas.tag_bind(img_item, "<Leave>", on_leave)
         canvas.tag_bind(txt_item, "<Enter>", on_enter)
         canvas.tag_bind(txt_item, "<Leave>", on_leave)
-        canvas.tag_bind(img_item, "<Button-1>", lambda e, o=nome: acao_menu_modal(o))
-        canvas.tag_bind(txt_item, "<Button-1>", lambda e, o=nome: acao_menu_modal(o))
+        canvas.tag_bind(img_item, "<Button-1>", make_handler(nome))
+        canvas.tag_bind(txt_item, "<Button-1>", make_handler(nome))
 
         canvas.image_refs = getattr(canvas, "image_refs", [])
         canvas.image_refs.append(icone)
-        menu_items.append((img_item, txt_item))
+        y_pos += 50
 
-    frame = ctk.CTkFrame(canvas, fg_color="#2b3e50", corner_radius=15)
-    frame_win = canvas.create_window(0, 0, window=frame, anchor="center")
-
-    labels_campos = ["Placa", "Modelo", "Marca", "Cor"]
+    # ---- FORMULÁRIO ----
     campos = ["placa", "modelo", "marca", "cor"]
+    labels = ["Placa", "Modelo", "Marca", "Cor"]
     entries = {}
+    itens_form = []
 
-    for i, (campo, label) in enumerate(zip(campos, labels_campos)):
-        ctk.CTkLabel(frame, text=label, font=("Arial", 11, "bold"), text_color="#ffffff").grid(row=i, column=0, sticky="w", pady=4, padx=10)
-        entry = ctk.CTkEntry(frame, width=250, corner_radius=8)
-        entry.grid(row=i, column=1, pady=4, padx=10)
+    for i, (campo, label) in enumerate(zip(campos, labels)):
+        lbl = canvas.create_text(0, 0, text=label, font=("Arial", 11, "bold"), fill="#ffffff", anchor="e")
+        entry = ctk.CTkEntry(canvas, width=400, corner_radius=8, fg_color="#c2c7cc", text_color="#000000", border_color="#304C62", border_width=2)
+        entry_win = canvas.create_window(0, 0, window=entry, anchor="w")
         if dados_carro:
             entry.insert(0, dados_carro[campo] if dados_carro[campo] is not None else "")
         entries[campo] = entry
+        itens_form.append((lbl, entry_win))
 
     def salvar_carro():
         valores = {}
@@ -367,38 +377,56 @@ def abrir_formulario_carro(id_cliente, nome_cliente, dados_carro=None, voltar_pa
         except mysql.connector.Error as e:
             messagebox.showerror("Erro", f"Erro ao salvar carro:\n{e}")
 
-    btn_frame = ctk.CTkFrame(frame, fg_color="transparent")
-    btn_frame.grid(row=len(campos), column=0, columnspan=2, pady=20)
-    ctk.CTkButton(btn_frame, text="Salvar", command=salvar_carro, width=90, fg_color=cor_dourado, text_color=cor_branco, hover_color="#d4a857").pack(side="left", padx=5)
-    ctk.CTkButton(btn_frame, text="Avançar", command=lambda: modal.after(10, lambda: listar_servicos(id_cliente, nome_cliente, dados_carro, root_anterior=modal)), width=90, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c").pack(side="left", padx=5)
-    ctk.CTkButton(btn_frame, text="Cancelar", command=lambda: modal.after(100, lambda: (modal.destroy(), voltar_para_lista and listar_carros_cliente(id_cliente, nome_cliente))), width=90, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c").pack(side="left", padx=5)
-    ctk.CTkButton(btn_frame, text="Sair", command=modal.destroy, width=90, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c").pack(side="left", padx=5)
+    def avancar():
+        modal.after(10, lambda: listar_servicos(id_cliente, nome_cliente, dados_carro, root_anterior=modal))
 
-    def _redimensionar(event=None):
+    def cancelar():
+        modal.after(100, lambda: (modal.destroy(), voltar_para_lista and listar_carros_cliente(id_cliente, nome_cliente)))
+
+    btn_salvar = ctk.CTkButton(canvas, text="Salvar", command=salvar_carro, width=90, fg_color=cor_dourado, text_color=cor_branco, hover_color="#d4a857")
+    btn_salvar_win = canvas.create_window(0, 0, window=btn_salvar, anchor="center")
+    btn_avancar = ctk.CTkButton(canvas, text="Avançar", command=avancar, width=90, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
+    btn_avancar_win = canvas.create_window(0, 0, window=btn_avancar, anchor="center")
+    btn_cancelar = ctk.CTkButton(canvas, text="Cancelar", command=cancelar, width=90, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
+    btn_cancelar_win = canvas.create_window(0, 0, window=btn_cancelar, anchor="center")
+    btn_sair = ctk.CTkButton(canvas, text="Sair", command=modal.destroy, width=90, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
+    btn_sair_win = canvas.create_window(0, 0, window=btn_sair, anchor="center")
+
+    def _redimensionar_formulario(event=None):
+        if event is not None and event.widget != modal:
+            return
         w, h = modal.winfo_width(), modal.winfo_height()
         if w < 10 or h < 10:
             return
 
         if img_original:
             img_resized = img_original.resize((w, h), Image.Resampling.LANCZOS)
-            bg_img = ImageTk.PhotoImage(img_resized)
+            bg_form = ImageTk.PhotoImage(img_resized)
             canvas.delete("bg")
-            canvas.create_image(0, 0, image=bg_img, anchor="nw", tags="bg")
+            canvas.create_image(0, 0, image=bg_form, anchor="nw", tags="bg")
             canvas.tag_lower("bg")
-            canvas.image_bg = bg_img
+            canvas.image_bg_form = bg_form
 
-        y = 220
-        for img_item, txt_item in menu_items:
-            canvas.coords(img_item, 20, y)
-            canvas.coords(txt_item, 50, y + 12)
-            y += 50
-
+        form_w = min(500, w * 0.45)
         cx = w * 0.5
-        cy = h * 0.5
-        canvas.coords(frame_win, cx, cy)
+        cy_inicio = h * 0.15
+        entry_w = int(form_w * 0.65)
+        espacamento = max(45, min(60, h * 0.08))
 
-    modal.bind("<Configure>", _redimensionar)
-    modal.after(100, lambda: [modal.update_idletasks(), _redimensionar()])
+        for i, (lbl, entry_win) in enumerate(itens_form):
+            cy = cy_inicio + i * espacamento
+            canvas.coords(lbl, cx - entry_w // 2 - 10, cy)
+            canvas.coords(entry_win, cx + entry_w // 2, cy)
+            canvas.itemconfig(entry_win, width=entry_w)
+
+        y_btns = cy_inicio + len(campos) * espacamento + 30
+        canvas.coords(btn_salvar_win, cx - 165, y_btns)
+        canvas.coords(btn_avancar_win, cx - 55, y_btns)
+        canvas.coords(btn_cancelar_win, cx + 55, y_btns)
+        canvas.coords(btn_sair_win, cx + 165, y_btns)
+
+    modal.bind("<Configure>", _redimensionar_formulario)
+    modal.after(100, _redimensionar_formulario)
 
     def maximizar():
         modal.update_idletasks()
@@ -797,17 +825,17 @@ def listar_servicos(id_cliente, nome_cliente, dados_carro, root_anterior=None):
             canvas.coords(txt_item, 50, y + 12)
             y += 50
 
-        canvas.coords(titulo_win, 180, 20)
-        canvas.coords(total_win, w * 0.75, 20)
+        cx = w * 0.191
+        cy = h * 0.178
+        cw = w * 0.753
+        ch = h * 0.750
 
-        cx = w * 0.17
-        cy = h * 0.10
-        cw = w * 0.78
-        ch = h * 0.65
-        canvas.coords(frame_win, cx, cy)
-        canvas.itemconfig(frame_win, width=max(100, cw), height=max(100, ch))
+        canvas.coords(titulo_win, cx + 30, cy - 55)
+        canvas.coords(total_win, cx + cw - 150, cy - 55)
+        canvas.coords(frame_win, cx + 4, cy + 20)
+        canvas.itemconfig(frame_win, width=max(100, cw - 4), height=max(100, ch - 42))
 
-        btn_y = h * 0.80
+        btn_y = cy + ch + 10
         canvas.coords(btn_salvar_win, cx, btn_y)
         canvas.coords(btn_voltar_win, cx + 110, btn_y)
         canvas.coords(btn_fechar_win, cx + 200, btn_y)

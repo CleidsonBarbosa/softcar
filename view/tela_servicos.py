@@ -540,10 +540,10 @@ def tela_servicos(root_anterior=None):
             canvas.coords(txt_item, 50, y + 12)
             y += 50
 
-        cx = w * 0.17
-        cy = h * 0.17
-        cw = w * 0.78
-        ch = h * 0.55
+        cx = w * 0.191
+        cy = h * 0.178
+        cw = w * 0.753
+        ch = h * 0.750
 
         canvas.coords(frame_top_window, cx + 30, cy - 55)
         canvas.coords(btn_cadastrar_window, cx + cw - 190, cy - 55)

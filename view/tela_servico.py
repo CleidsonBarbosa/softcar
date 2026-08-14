@@ -213,23 +213,21 @@ def tela_execucao_servico(root_anterior=None):
 
         canvas.coords(titulo_win, 30, 20)
 
-        cx = w * 0.03
-        cy = h * 0.10
-        cw = w * 0.75
-        ch = h * 0.70
-        canvas.coords(frame_win, cx + 4, cy + 40)
-        canvas.itemconfig(frame_win, width=max(100, cw), height=max(100, ch))
+        cx = w * 0.191
+        cy = h * 0.178
+        cw = w * 0.753
+        ch = h * 0.750
+        canvas.coords(frame_win, cx + 4, cy + 20)
+        canvas.itemconfig(frame_win, width=max(100, cw - 4), height=max(100, ch - 42))
 
-        btn_x = w * 0.80
-        btn_y = h * 0.10
-        canvas.coords(btn_finalizar_win, btn_x, btn_y)
-        canvas.coords(btn_sair_win, cx, h * 0.92)
+        canvas.coords(btn_finalizar_win, cx + cw - 150, cy - 55)
+        canvas.coords(btn_sair_win, cx, cy + ch + 10)
 
         col_w = max(200, cw - 90)
-        tree.column("cliente", width=int(col_w * 0.35))
-        tree.column("carro", width=int(col_w * 0.25))
-        tree.column("total", width=int(col_w * 0.20))
-        tree.column("data", width=int(col_w * 0.20))
+        tree.column("cliente", width=int(col_w * 0.28))
+        tree.column("carro", width=int(col_w * 0.20))
+        tree.column("total", width=int(col_w * 0.16))
+        tree.column("data", width=int(col_w * 0.16))
 
     root.bind("<Configure>", _redimensionar)
     root.after(100, lambda: [root.update_idletasks(), _redimensionar()])
