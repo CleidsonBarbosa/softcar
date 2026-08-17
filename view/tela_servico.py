@@ -189,7 +189,7 @@ def tela_execucao_servico(root_anterior=None):
     btn_finalizar = ctk.CTkButton(canvas, text="Finalizar Ordem", command=finalizar_ordem, width=120, fg_color=cor_dourado, text_color=cor_branco, hover_color="#d4a857")
     btn_finalizar_win = canvas.create_window(550, 70, window=btn_finalizar, anchor="nw")
 
-    btn_sair = ctk.CTkButton(canvas, text="Sair", command=root.destroy, width=80, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
+    btn_sair = ctk.CTkButton(canvas, text="Sair", command=root.destroy, width=80, corner_radius=0, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
     btn_sair_win = canvas.create_window(30, 0, window=btn_sair, anchor="nw")
 
     def _redimensionar(event=None):
@@ -221,7 +221,7 @@ def tela_execucao_servico(root_anterior=None):
         canvas.itemconfig(frame_win, width=max(100, cw - 4), height=max(100, ch - 42))
 
         canvas.coords(btn_finalizar_win, cx + cw - 150, cy - 55)
-        canvas.coords(btn_sair_win, cx, cy + ch + 10)
+        canvas.coords(btn_sair_win, w * 0.02, h - 50)
 
         col_w = max(200, cw - 90)
         tree.column("cliente", width=int(col_w * 0.28))

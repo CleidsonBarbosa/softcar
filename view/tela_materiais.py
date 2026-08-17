@@ -414,6 +414,9 @@ def tela_materiais(root_anterior=None):
 
     carregar_materiais(tree)
 
+    btn_sair = ctk.CTkButton(canvas, text="Sair", command=root.destroy, width=80, corner_radius=0, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
+    btn_sair_win = canvas.create_window(30, 0, window=btn_sair, anchor="nw")
+
     def _redimensionar(w, h):
         nonlocal bg_image_tk, menu_criado
 
@@ -472,6 +475,7 @@ def tela_materiais(root_anterior=None):
         canvas.coords(btn_cadastrar_window, cx + cw - 200, cy - 55)
         canvas.coords(frame_tabela_window, cx + 4, cy + 20)
         canvas.itemconfig(frame_tabela_window, width=max(100, cw - 4), height=max(100, ch - 42))
+        canvas.coords(btn_sair_win, w * 0.02, h - 50)
 
     def redimensionar(event):
         if event.widget != root:
@@ -492,9 +496,6 @@ def tela_materiais(root_anterior=None):
         except:
             pass
     root.after(100, maximizar)
-
-    btn_sair = ctk.CTkButton(root, text="Sair", command=root.destroy, width=80, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
-    btn_sair.pack(pady=10)
 
     root.mainloop()
 

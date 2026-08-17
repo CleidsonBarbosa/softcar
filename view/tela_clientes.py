@@ -389,7 +389,7 @@ def abrir_formulario_carro(id_cliente, nome_cliente, dados_carro=None, voltar_pa
     btn_avancar_win = canvas.create_window(0, 0, window=btn_avancar, anchor="center")
     btn_cancelar = ctk.CTkButton(canvas, text="Cancelar", command=cancelar, width=90, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
     btn_cancelar_win = canvas.create_window(0, 0, window=btn_cancelar, anchor="center")
-    btn_sair = ctk.CTkButton(canvas, text="Sair", command=modal.destroy, width=90, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
+    btn_sair = ctk.CTkButton(canvas, text="Sair", command=modal.destroy, width=80, corner_radius=0, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
     btn_sair_win = canvas.create_window(0, 0, window=btn_sair, anchor="center")
 
     def _redimensionar_formulario(event=None):
@@ -423,7 +423,7 @@ def abrir_formulario_carro(id_cliente, nome_cliente, dados_carro=None, voltar_pa
         canvas.coords(btn_salvar_win, cx - 165, y_btns)
         canvas.coords(btn_avancar_win, cx - 55, y_btns)
         canvas.coords(btn_cancelar_win, cx + 55, y_btns)
-        canvas.coords(btn_sair_win, cx + 165, y_btns)
+        canvas.coords(btn_sair_win, w * 0.02, h - 50)
 
     modal.bind("<Configure>", _redimensionar_formulario)
     modal.after(100, _redimensionar_formulario)
@@ -1074,6 +1074,9 @@ def tela_clientes(root_anterior=None):
 
     carregar_clientes(tree)
 
+    btn_sair = ctk.CTkButton(canvas, text="Sair", command=root.destroy, width=80, corner_radius=0, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
+    btn_sair_win = canvas.create_window(30, 0, window=btn_sair, anchor="nw")
+
     def _redimensionar(w, h):
         nonlocal bg_image_tk, menu_criado
 
@@ -1132,6 +1135,7 @@ def tela_clientes(root_anterior=None):
         canvas.coords(btn_cadastrar_window, cx + cw - 190, cy - 55)
         canvas.coords(frame_tabela_window, cx + 4, cy + 20)
         canvas.itemconfig(frame_tabela_window, width=max(100, cw - 4), height=max(100, ch - 42))
+        canvas.coords(btn_sair_win, w * 0.02, h - 50)
 
     def redimensionar(event):
         if event.widget != root:
