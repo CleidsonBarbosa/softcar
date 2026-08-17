@@ -37,6 +37,42 @@ def contar_servicos_realizados():
     except Exception:
         return 0
 
+def contar_clientes():
+    try:
+        conn = mysql.connector.connect(host="localhost", user="root", password="", database="softcar")
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM clientes")
+        resultado = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        return resultado[0] if resultado else 0
+    except Exception:
+        return 0
+
+def contar_veiculos():
+    try:
+        conn = mysql.connector.connect(host="localhost", user="root", password="", database="softcar")
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM carros")
+        resultado = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        return resultado[0] if resultado else 0
+    except Exception:
+        return 0
+
+def calcular_total_recebido():
+    try:
+        conn = mysql.connector.connect(host="localhost", user="root", password="", database="softcar")
+        cursor = conn.cursor()
+        cursor.execute("SELECT COALESCE(SUM(total), 0) FROM ordem_servico WHERE status = 'finalizado'")
+        resultado = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        return float(resultado[0]) if resultado else 0.0
+    except Exception:
+        return 0.0
+
 def _criar_icone_dourado(icone):
     try:
         pil_img = ImageTk.getimage(icone)
@@ -158,15 +194,21 @@ def tela_dashboard(cargo='atendente', root_anterior=None):
     valor_agendados = canvas.create_text(0, 0, text=str(servicos_agendados), font=("Arial", 54, "bold"), fill=cor_dourado)
     servicos_realizados = contar_servicos_realizados()
     valor_realizados = canvas.create_text(0, 0, text=str(servicos_realizados), font=("Arial", 54, "bold"), fill=cor_dourado)
-    valor_clientes = canvas.create_text(0, 0, text="352", font=("Arial", 36, "bold"), fill=cor_dourado)
-    valor_veiculos = canvas.create_text(0, 0, text="426", font=("Arial", 36, "bold"), fill=cor_dourado)
-    valor_total = canvas.create_text(0, 0, text="R$ 863,00", font=("Arial", 64, "bold"), fill=cor_dourado, anchor="w")
+    clientes_cadastrados = contar_clientes()
+    valor_clientes = canvas.create_text(0, 0, text=str(clientes_cadastrados), font=("Arial", 36, "bold"), fill=cor_dourado)
+    veiculos_cadastrados = contar_veiculos()
+    valor_veiculos = canvas.create_text(0, 0, text=str(veiculos_cadastrados), font=("Arial", 36, "bold"), fill=cor_dourado)
+    total_recebido = calcular_total_recebido()
+    valor_total = canvas.create_text(0, 0, text=f"R$ {total_recebido:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."), font=("Arial", 64, "bold"), fill=cor_dourado, anchor="w")
     total_servicos_agendados_label = canvas.create_text(0, 0, text="Serviços agendados", font=("Arial", 13, "bold"), fill=cor_branco, anchor="w")
     total_servicos_realizados_label = canvas.create_text(0, 0, text="Serviços Realizados", font=("Arial", 13, "bold"), fill=cor_branco)
     total_clientes_label = canvas.create_text(0, 0, text="Clientes cadastrados", font=("Arial", 13, "bold"), fill=cor_branco)
     total_veiculos_label = canvas.create_text(0, 0, text="Veiculos cadastrados", font=("Arial", 13, "bold"), fill=cor_branco)
     total_recebido_label = canvas.create_text(0, 0, text="Total recebido", font=("Arial", 13, "bold"), fill=cor_branco, anchor="w")
     bem_vindo_label = canvas.create_text(0, 0, text="SEJA BEM VINDO AO SOFTCAR", font=("Bungee", 16, "bold"), fill=cor_branco, anchor="se")
+
+    btn_sair = ctk.CTkButton(canvas, text="Sair", command=root.destroy, width=80, corner_radius=0, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
+    btn_sair_win = canvas.create_window(30, 0, window=btn_sair, anchor="nw")
 
     def redimensionar_dashboard(w=None, h=None):
         nonlocal bg_image_tk
@@ -201,9 +243,7 @@ def tela_dashboard(cargo='atendente', root_anterior=None):
         canvas.coords(total_clientes_label, w * 0.831, h * 0.11)
         canvas.coords(total_veiculos_label, w * 0.83, h * 0.30)
         canvas.coords(bem_vindo_label, w - 10, h - 20)
-
-    btn_sair = ctk.CTkButton(canvas, text="Sair", command=root.destroy, width=80, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
-    btn_sair_win = canvas.create_window(2, root.winfo_height() - 40, window=btn_sair, anchor="nw")
+        canvas.coords(btn_sair_win, w * 0.02, h - 50)
 
     def _on_configure(event):
         if event.widget != root:
