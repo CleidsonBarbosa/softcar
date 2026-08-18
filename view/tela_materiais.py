@@ -4,6 +4,7 @@ from tkinter import ttk, messagebox
 from PIL import Image, ImageTk
 import os
 import mysql.connector
+from view.img_softcar_utils import carregar_img_softcar, criar_img_softcar, redimensionar_img_softcar
 
 
 def conectar():
@@ -55,30 +56,42 @@ def buscar_materiais(tree, entry_busca):
 
 
 def abrir_formulario_material(tree, dados=None):
-    modal = ctk.CTkToplevel()
+    root_anterior = tree.winfo_toplevel()
+    root_anterior.destroy()
+    modal = ctk.CTk()
     modal.title("Editar Material" if dados else "Novo Material")
-    modal.geometry("1000x600")
+    modal.state("zoomed")
     modal.minsize(800, 500)
-    modal.resizable(False, False)
-    modal.transient(tree.winfo_toplevel())
-    modal.grab_set()
+    modal.resizable(True, True)
+    try:
+        modal.attributes('-zoomed', True)
+    except:
+        pass
 
     cor_dourado = "#b88b4a"
     cor_branco = "#ffffff"
     cor_cinza = "#777777"
 
-    img_fundo = "assets/formulario.png"
+    img_fundo = "assets/img_frame.png"
 
     canvas = ctk.CTkCanvas(modal, highlightthickness=0)
     canvas.pack(fill="both", expand=True)
 
-    bg_img = None
+    img_softcar_original_form_mat = carregar_img_softcar()
+    btn_dashboard_id_form_mat = None
+    if img_softcar_original_form_mat:
+        btn_dashboard_id_form_mat, img_softcar_tk_form_mat = criar_img_softcar(canvas, img_softcar_original_form_mat)
+        canvas.tag_bind("dashboard_img", "<Button-1>", lambda e: ir_dashboard_form_mat())
+        canvas.tag_bind("dashboard_img", "<Enter>", lambda e: canvas.config(cursor="hand2"))
+        canvas.tag_bind("dashboard_img", "<Leave>", lambda e: canvas.config(cursor=""))
+
+    def ir_dashboard_form_mat():
+        from view.bemvindo import tela_dashboard
+        modal.after(10, lambda: tela_dashboard(root_anterior=modal))
+
+    bg_img_original_mat = None
     if os.path.exists(img_fundo):
-        img = Image.open(img_fundo)
-        img = img.resize((1000, 600), Image.Resampling.LANCZOS)
-        bg_img = ImageTk.PhotoImage(img)
-        canvas.create_image(0, 0, image=bg_img, anchor="nw")
-        canvas.image = bg_img
+        bg_img_original_mat = Image.open(img_fundo)
 
     icones_info = [
         ("Cliente",     "assets/cliente.png"),
@@ -90,24 +103,22 @@ def abrir_formulario_material(tree, dados=None):
 
     def acao_menu(opcao):
         def _navegar():
-            root_principal = tree.winfo_toplevel()
             modal.destroy()
-            root_principal.destroy()
             if opcao == "Cliente":
                 from view.tela_clientes import tela_clientes
-                tela_clientes(root_anterior=root_principal)
+                tela_clientes()
             elif opcao == "Serviços":
                 from view.tela_servicos import tela_servicos
-                tela_servicos(root_anterior=root_principal)
+                tela_servicos()
             elif opcao == "Funcionários":
                 from view.lista_funcionarios import tela_lista_funcionarios
-                tela_lista_funcionarios(root_anterior=root_principal)
+                tela_lista_funcionarios()
             elif opcao == "Materiais":
                 from view.tela_materiais import tela_materiais
-                tela_materiais(root_anterior=root_principal)
+                tela_materiais()
             elif opcao == "Relatórios":
                 from view.tela_servico import tela_execucao_servico
-                tela_execucao_servico(root_anterior=root_principal)
+                tela_execucao_servico()
         modal.after(100, _navegar)
 
     y_pos = 120
@@ -187,13 +198,13 @@ def abrir_formulario_material(tree, dados=None):
             cursor.close()
             conn.close()
             modal.destroy()
-            carregar_materiais(tree)
+            tela_materiais()
         except mysql.connector.Error as e:
             messagebox.showerror("Erro", f"Erro ao salvar:\n{e}")
 
     def voltar():
         modal.destroy()
-        carregar_materiais(tree)
+        tela_materiais()
 
     btn_salvar = ctk.CTkButton(canvas, text="Salvar", command=salvar,
                             fg_color="#b88b4a", text_color="#ffffff", hover_color="#d4a857",
@@ -203,7 +214,62 @@ def abrir_formulario_material(tree, dados=None):
     btn_cancelar = ctk.CTkButton(canvas, text="Cancelar", command=voltar,
                               fg_color="#375269", text_color="#ffffff", hover_color="#b88b4a",
                               corner_radius=8, font=("Arial", 11, "bold"))
-    canvas.create_window(x_entry + 420, y_inicio + 170, window=btn_cancelar, anchor="center")
+    btn_cancelar_win = canvas.create_window(x_entry + 420, y_inicio + 170, window=btn_cancelar, anchor="center")
+
+    def voltar_login():
+        modal.destroy()
+        from main import tela_login
+        tela_login()
+
+    btn_sair = ctk.CTkButton(canvas, text="Sair", command=voltar_login, width=80, corner_radius=0, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
+    btn_sair_win = canvas.create_window(30, 0, window=btn_sair, anchor="nw")
+
+    def _redimensionar(event=None):
+        if event is not None and event.widget != modal:
+            return
+        w, h = modal.winfo_width(), modal.winfo_height()
+        if w < 10 or h < 10:
+            return
+
+        if bg_img_original_mat:
+            img_resized = bg_img_original_mat.resize((w, h), Image.Resampling.LANCZOS)
+            bg_tk = ImageTk.PhotoImage(img_resized)
+            canvas.delete("bg")
+            canvas.create_image(0, 0, image=bg_tk, anchor="nw", tags="bg")
+            canvas.tag_lower("bg")
+            canvas.image_bg = bg_tk
+
+        cx = w * 0.42
+        cy_inicio = h * 0.25
+        entry_w = int(w * 0.30)
+        espacamento = max(50, min(70, h * 0.10))
+
+        for i, (lbl, entry_win) in enumerate(itens_form):
+            cy = cy_inicio + i * espacamento
+            canvas.coords(lbl, cx - entry_w // 2 - 10, cy)
+            canvas.coords(entry_win, cx + entry_w // 2, cy)
+            canvas.itemconfig(entry_win, width=entry_w)
+
+        y_btns = cy_inicio + len(campos) * espacamento + 20
+        canvas.coords(btn_salvar_win, cx, y_btns)
+        canvas.coords(btn_cancelar_win, cx, y_btns + 50)
+        canvas.coords(btn_sair_win, w * 0.02, h - 50)
+
+        redimensionar_img_softcar(canvas, btn_dashboard_id_form_mat, img_softcar_original_form_mat, w, h)
+
+    modal.bind("<Configure>", _redimensionar)
+    modal.after(100, _redimensionar)
+
+    def maximizar():
+        modal.update_idletasks()
+        modal.state("zoomed")
+        try:
+            modal.attributes('-zoomed', True)
+        except:
+            pass
+    modal.after(100, maximizar)
+
+    modal.mainloop()
 
 
 def excluir_material(tree):
@@ -291,7 +357,20 @@ def tela_materiais(root_anterior=None):
     canvas = ctk.CTkCanvas(root, highlightthickness=0, bg=cor_fundo)
     canvas.pack(fill="both", expand=True)
 
-    img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "tabela.png")
+    def ir_dashboard():
+        from view.bemvindo import tela_dashboard
+        root.after(10, lambda: tela_dashboard(root_anterior=root))
+
+    img_softcar_original = carregar_img_softcar()
+
+    btn_dashboard_id = None
+    if img_softcar_original:
+        btn_dashboard_id, img_softcar_tk_init = criar_img_softcar(canvas, img_softcar_original)
+        canvas.tag_bind("dashboard_img", "<Button-1>", lambda e: ir_dashboard())
+        canvas.tag_bind("dashboard_img", "<Enter>", lambda e: canvas.config(cursor="hand2"))
+        canvas.tag_bind("dashboard_img", "<Leave>", lambda e: canvas.config(cursor=""))
+
+    img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "img_frame.png")
     img_original = None
     if os.path.exists(img_path):
         img_original = Image.open(img_path)
@@ -481,6 +560,8 @@ def tela_materiais(root_anterior=None):
         canvas.coords(frame_tabela_window, cx + 4, cy + 20)
         canvas.itemconfig(frame_tabela_window, width=max(100, cw - 4), height=max(100, ch - 42))
         canvas.coords(btn_sair_win, w * 0.02, h - 50)
+
+        redimensionar_img_softcar(canvas, btn_dashboard_id, img_softcar_original, w, h)
 
     def redimensionar(event):
         if event.widget != root:

@@ -3,6 +3,7 @@ import customtkinter as ctk
 from tkinter import ttk, messagebox
 from PIL import Image, ImageTk
 import os
+from view.img_softcar_utils import carregar_img_softcar, criar_img_softcar, redimensionar_img_softcar
 import mysql.connector
 
 
@@ -61,9 +62,13 @@ def abrir_formulario_servico(tree, dados=None, root_anterior=None):
     ctk.set_default_color_theme("dark-blue")
     modal = ctk.CTk()
     modal.title("Editar Serviço" if dados else "Novo Serviço")
-    modal.geometry("1200x700")
+    modal.state("zoomed")
     modal.minsize(800, 500)
     modal.resizable(True, True)
+    try:
+        modal.attributes('-zoomed', True)
+    except:
+        pass
 
     cor_dourado = "#b88b4a"
     cor_branco = "#ffffff"
@@ -72,9 +77,17 @@ def abrir_formulario_servico(tree, dados=None, root_anterior=None):
     canvas = ctk.CTkCanvas(modal, highlightthickness=0)
     canvas.pack(fill="both", expand=True)
 
+    img_softcar_original_form_serv = carregar_img_softcar()
+    btn_dashboard_id_form_serv = None
+    if img_softcar_original_form_serv:
+        btn_dashboard_id_form_serv, img_softcar_tk_form_serv = criar_img_softcar(canvas, img_softcar_original_form_serv)
+        canvas.tag_bind("dashboard_img", "<Button-1>", lambda e: ir_dashboard_form_serv())
+        canvas.tag_bind("dashboard_img", "<Enter>", lambda e: canvas.config(cursor="hand2"))
+        canvas.tag_bind("dashboard_img", "<Leave>", lambda e: canvas.config(cursor=""))
+
     img_original = None
-    if os.path.exists("assets/formulario.png"):
-        img_original = Image.open("assets/formulario.png")
+    if os.path.exists("assets/img_frame.png"):
+        img_original = Image.open("assets/img_frame.png")
 
     icones_info = [
         ("Cliente",     "assets/cliente.png"),
@@ -188,6 +201,10 @@ def abrir_formulario_servico(tree, dados=None, root_anterior=None):
         from main import tela_login
         tela_login()
 
+    def ir_dashboard_form_serv():
+        from view.bemvindo import tela_dashboard
+        modal.after(10, lambda: tela_dashboard(root_anterior=modal))
+
     btn_sair = ctk.CTkButton(canvas, text="Sair", command=voltar_login_modal, width=80, corner_radius=0, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
     btn_sair_win = canvas.create_window(30, 0, window=btn_sair, anchor="nw")
 
@@ -275,6 +292,8 @@ def abrir_formulario_servico(tree, dados=None, root_anterior=None):
         canvas.coords(btn_cancelar_win, btn_x, btn_y2)
         canvas.coords(btn_sair_win, w * 0.02, h - 50)
 
+        redimensionar_img_softcar(canvas, btn_dashboard_id_form_serv, img_softcar_original_form_serv, w, h)
+
     modal.bind("<Configure>", _redimensionar)
     modal.after(100, lambda: [modal.update_idletasks(), _redimensionar()])
 
@@ -336,9 +355,13 @@ def tela_servicos(root_anterior=None):
         root_anterior.destroy()
     root = ctk.CTk()
     root.title("Soft Car - Lista de Serviços")
-    root.geometry("1200x700")
+    root.state("zoomed")
     root.minsize(800, 500)
     root.resizable(True, True)
+    try:
+        root.attributes('-zoomed', True)
+    except:
+        pass
 
     cor_dourado = "#b88b4a"
     cor_branco = "#ffffff"
@@ -373,7 +396,20 @@ def tela_servicos(root_anterior=None):
     canvas = ctk.CTkCanvas(root, highlightthickness=0, bg=cor_fundo)
     canvas.pack(fill="both", expand=True)
 
-    img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "tabela.png")
+    def ir_dashboard():
+        from view.bemvindo import tela_dashboard
+        root.after(10, lambda: tela_dashboard(root_anterior=root))
+
+    img_softcar_original = carregar_img_softcar()
+
+    btn_dashboard_id = None
+    if img_softcar_original:
+        btn_dashboard_id, img_softcar_tk_init = criar_img_softcar(canvas, img_softcar_original)
+        canvas.tag_bind("dashboard_img", "<Button-1>", lambda e: ir_dashboard())
+        canvas.tag_bind("dashboard_img", "<Enter>", lambda e: canvas.config(cursor="hand2"))
+        canvas.tag_bind("dashboard_img", "<Leave>", lambda e: canvas.config(cursor=""))
+
+    img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "img_frame.png")
     img_original = None
     if os.path.exists(img_path):
         img_original = Image.open(img_path)
@@ -564,6 +600,8 @@ def tela_servicos(root_anterior=None):
         tree.column("nome_servico", width=int(col_w * 0.50))
         tree.column("preco_servico", width=int(col_w * 0.20))
         tree.column("estoque_id_produto", width=int(col_w * 0.30))
+
+        redimensionar_img_softcar(canvas, btn_dashboard_id, img_softcar_original, w, h)
 
     def redimensionar(event):
         if event.widget != root:

@@ -4,6 +4,7 @@ from PIL import Image, ImageTk
 import os
 import mysql.connector
 import customtkinter as ctk
+from view.img_softcar_utils import carregar_img_softcar, criar_img_softcar, redimensionar_img_softcar
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("dark-blue")
@@ -79,6 +80,14 @@ def abrir_formulario(tree, dados=None):
 
     canvas = ctk.CTkCanvas(modal, highlightthickness=0)
     canvas.pack(fill="both", expand=True)
+
+    img_softcar_original_form = carregar_img_softcar()
+    btn_dashboard_id_form = None
+    if img_softcar_original_form:
+        btn_dashboard_id_form, img_softcar_tk_form = criar_img_softcar(canvas, img_softcar_original_form)
+        canvas.tag_bind("dashboard_img", "<Button-1>", lambda e: ir_dashboard_form())
+        canvas.tag_bind("dashboard_img", "<Enter>", lambda e: canvas.config(cursor="hand2"))
+        canvas.tag_bind("dashboard_img", "<Leave>", lambda e: canvas.config(cursor=""))
 
     # ---- MENU VERTICAL ----
     icones_info = [
@@ -199,10 +208,14 @@ def abrir_formulario(tree, dados=None):
         from main import tela_login
         tela_login()
 
+    def ir_dashboard_form():
+        from view.bemvindo import tela_dashboard
+        modal.after(10, lambda: tela_dashboard(root_anterior=modal))
+
     btn_sair = ctk.CTkButton(canvas, text="Sair", command=voltar_login_modal, width=80, corner_radius=0, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
     btn_sair_win = canvas.create_window(30, 0, window=btn_sair, anchor="nw")
 
-    img_fundo = "assets/formulario.png"
+    img_fundo = "assets/img_frame.png"
     img_original_form = None
     if os.path.exists(img_fundo):
         img_original_form = Image.open(img_fundo)
@@ -239,6 +252,8 @@ def abrir_formulario(tree, dados=None):
         canvas.coords(btn_cancelar_win, cx + 55, y_btns)
         canvas.coords(btn_sair_win, w * 0.02, h - 50)
 
+        redimensionar_img_softcar(canvas, btn_dashboard_id_form, img_softcar_original_form, w, h)
+
     modal.bind("<Configure>", _redimensionar_formulario)
     modal.after(100, _redimensionar_formulario)
 
@@ -274,9 +289,17 @@ def abrir_formulario_carro(id_cliente, nome_cliente, dados_carro=None, voltar_pa
     canvas = ctk.CTkCanvas(modal, highlightthickness=0)
     canvas.pack(fill="both", expand=True)
 
+    img_softcar_original_carro = carregar_img_softcar()
+    btn_dashboard_id_carro = None
+    if img_softcar_original_carro:
+        btn_dashboard_id_carro, img_softcar_tk_carro = criar_img_softcar(canvas, img_softcar_original_carro)
+        canvas.tag_bind("dashboard_img", "<Button-1>", lambda e: ir_dashboard_carro())
+        canvas.tag_bind("dashboard_img", "<Enter>", lambda e: canvas.config(cursor="hand2"))
+        canvas.tag_bind("dashboard_img", "<Leave>", lambda e: canvas.config(cursor=""))
+
     img_original = None
-    if os.path.exists("assets/formulario.png"):
-        img_original = Image.open("assets/formulario.png")
+    if os.path.exists("assets/img_frame.png"):
+        img_original = Image.open("assets/img_frame.png")
 
     # ---- MENU VERTICAL ----
     icones_info = [
@@ -403,6 +426,10 @@ def abrir_formulario_carro(id_cliente, nome_cliente, dados_carro=None, voltar_pa
         from main import tela_login
         tela_login()
 
+    def ir_dashboard_carro():
+        from view.bemvindo import tela_dashboard
+        modal.after(10, lambda: tela_dashboard(root_anterior=modal))
+
     btn_sair = ctk.CTkButton(canvas, text="Sair", command=voltar_login_modal, width=80, corner_radius=0, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
     btn_sair_win = canvas.create_window(30, 0, window=btn_sair, anchor="nw")
 
@@ -439,6 +466,8 @@ def abrir_formulario_carro(id_cliente, nome_cliente, dados_carro=None, voltar_pa
         canvas.coords(btn_cancelar_win, cx + 55, y_btns)
         canvas.coords(btn_sair_win, w * 0.02, h - 50)
 
+        redimensionar_img_softcar(canvas, btn_dashboard_id_carro, img_softcar_original_carro, w, h)
+
     modal.bind("<Configure>", _redimensionar_formulario)
     modal.after(100, _redimensionar_formulario)
 
@@ -459,16 +488,28 @@ def listar_carros_cliente(id_cliente, nome_cliente):
     ctk.set_default_color_theme("dark-blue")
     modal = ctk.CTk()
     modal.title("Carros do Cliente")
-    modal.geometry("1200x700")
+    modal.state("zoomed")
     modal.minsize(800, 500)
     modal.resizable(True, True)
+    try:
+        modal.attributes('-zoomed', True)
+    except:
+        pass
 
     canvas = ctk.CTkCanvas(modal, highlightthickness=0)
     canvas.pack(fill="both", expand=True)
 
+    img_softcar_original_carros = carregar_img_softcar()
+    btn_dashboard_id_carros = None
+    if img_softcar_original_carros:
+        btn_dashboard_id_carros, img_softcar_tk_carros = criar_img_softcar(canvas, img_softcar_original_carros)
+        canvas.tag_bind("dashboard_img", "<Button-1>", lambda e: ir_dashboard_carros())
+        canvas.tag_bind("dashboard_img", "<Enter>", lambda e: canvas.config(cursor="hand2"))
+        canvas.tag_bind("dashboard_img", "<Leave>", lambda e: canvas.config(cursor=""))
+
     img_original = None
-    if os.path.exists("assets/tabela.png"):
-        img_original = Image.open("assets/tabela.png")
+    if os.path.exists("assets/img_frame.png"):
+        img_original = Image.open("assets/img_frame.png")
 
     cor_dourado = "#b88b4a"
     cor_branco = "#ffffff"
@@ -593,6 +634,10 @@ def listar_carros_cliente(id_cliente, nome_cliente):
         from main import tela_login
         tela_login()
 
+    def ir_dashboard_carros():
+        from view.bemvindo import tela_dashboard
+        modal.after(10, lambda: tela_dashboard(root_anterior=modal))
+
     btn_sair = ctk.CTkButton(canvas, text="Sair", command=voltar_login_modal, width=80, corner_radius=0, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
     btn_sair_win = canvas.create_window(30, 0, window=btn_sair, anchor="nw")
 
@@ -628,6 +673,8 @@ def listar_carros_cliente(id_cliente, nome_cliente):
         canvas.coords(btn_fechar_win, cx + 4, cy + ch + 10)
         canvas.coords(btn_sair_win, w * 0.02, h - 50)
 
+        redimensionar_img_softcar(canvas, btn_dashboard_id_carros, img_softcar_original_carros, w, h)
+
     modal.bind("<Configure>", _redimensionar)
     modal.after(100, lambda: [modal.update_idletasks(), _redimensionar()])
 
@@ -650,16 +697,28 @@ def listar_servicos(id_cliente, nome_cliente, dados_carro, root_anterior=None):
     ctk.set_default_color_theme("dark-blue")
     modal = ctk.CTk()
     modal.title("Serviços Disponíveis")
-    modal.geometry("1200x700")
+    modal.state("zoomed")
     modal.minsize(800, 500)
     modal.resizable(True, True)
+    try:
+        modal.attributes('-zoomed', True)
+    except:
+        pass
 
     canvas = ctk.CTkCanvas(modal, highlightthickness=0)
     canvas.pack(fill="both", expand=True)
 
+    img_softcar_original_serv = carregar_img_softcar()
+    btn_dashboard_id_serv = None
+    if img_softcar_original_serv:
+        btn_dashboard_id_serv, img_softcar_tk_serv = criar_img_softcar(canvas, img_softcar_original_serv)
+        canvas.tag_bind("dashboard_img", "<Button-1>", lambda e: ir_dashboard_serv())
+        canvas.tag_bind("dashboard_img", "<Enter>", lambda e: canvas.config(cursor="hand2"))
+        canvas.tag_bind("dashboard_img", "<Leave>", lambda e: canvas.config(cursor=""))
+
     img_original = None
-    if os.path.exists("assets/tabela.png"):
-        img_original = Image.open("assets/tabela.png")
+    if os.path.exists("assets/img_frame.png"):
+        img_original = Image.open("assets/img_frame.png")
 
     bg_image_tk = None
 
@@ -829,6 +888,10 @@ def listar_servicos(id_cliente, nome_cliente, dados_carro, root_anterior=None):
         from main import tela_login
         tela_login()
 
+    def ir_dashboard_serv():
+        from view.bemvindo import tela_dashboard
+        modal.after(10, lambda: tela_dashboard(root_anterior=modal))
+
     btn_sair = ctk.CTkButton(canvas, text="Sair", command=voltar_login_modal, width=80, corner_radius=0, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
 
     btn_salvar_win = canvas.create_window(0, 0, window=btn_salvar, anchor="nw")
@@ -873,6 +936,8 @@ def listar_servicos(id_cliente, nome_cliente, dados_carro, root_anterior=None):
         canvas.coords(btn_sair_win, w * 0.02, h - 50)
         tree_servicos.column("nome_servico", width=int(col_w * 0.60))
         tree_servicos.column("preco_servico", width=int(col_w * 0.40))
+
+        redimensionar_img_softcar(canvas, btn_dashboard_id_serv, img_softcar_original_serv, w, h)
 
     modal.bind("<Configure>", _redim)
     modal.after(100, lambda: [modal.update_idletasks(), _redim()])
@@ -978,25 +1043,16 @@ def tela_clientes(root_anterior=None):
         from view.bemvindo import tela_dashboard
         root.after(10, lambda: tela_dashboard(root_anterior=root))
 
-    img_softcar_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "img_softcar.png")
-    img_softcar_original = None
-    if os.path.exists(img_softcar_path):
-        img_softcar_original = Image.open(img_softcar_path)
-
-    img_softcar_tk = None
-    if img_softcar_original:
-        img_resized = img_softcar_original.resize((350, 137), Image.Resampling.LANCZOS)
-        img_softcar_tk = ImageTk.PhotoImage(img_resized)
+    img_softcar_original = carregar_img_softcar()
 
     btn_dashboard_id = None
-    if img_softcar_tk:
-        btn_dashboard_id = canvas.create_image(160, 63, image=img_softcar_tk, anchor="center", tags="dashboard_img")
-        canvas.image_softcar = img_softcar_tk
+    if img_softcar_original:
+        btn_dashboard_id, img_softcar_tk_init = criar_img_softcar(canvas, img_softcar_original)
         canvas.tag_bind("dashboard_img", "<Button-1>", lambda e: ir_dashboard())
         canvas.tag_bind("dashboard_img", "<Enter>", lambda e: canvas.config(cursor="hand2"))
         canvas.tag_bind("dashboard_img", "<Leave>", lambda e: canvas.config(cursor=""))
 
-    img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "tabela.png")
+    img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "img_frame.png")
     img_original = None
     if os.path.exists(img_path):
         img_original = Image.open(img_path)
@@ -1185,16 +1241,7 @@ def tela_clientes(root_anterior=None):
             canvas.coords(txt_item, 50, y + 12)
             y += 50
 
-        if btn_dashboard_id and img_softcar_original:
-            img_w = int(w * 0.20) - 70
-            img_h = int(h * 0.12) + 10
-            img_softcar_resized = img_softcar_original.resize((img_w, img_h), Image.Resampling.LANCZOS)
-            img_softcar_tk_new = ImageTk.PhotoImage(img_softcar_resized)
-            canvas.image_softcar = img_softcar_tk_new
-            canvas.itemconfig(btn_dashboard_id, image=img_softcar_tk_new)
-            img_x = max(img_w // 2, w * 0.10 - 50)
-            img_y = max(img_h // 2, h * 0.05)
-            canvas.coords(btn_dashboard_id, img_x, img_y)
+        redimensionar_img_softcar(canvas, btn_dashboard_id, img_softcar_original, w, h)
 
         cx = w * 0.191
         cy = h * 0.178
@@ -1204,7 +1251,7 @@ def tela_clientes(root_anterior=None):
         canvas.coords(frame_top_window, cx + 30, cy - 55)
         canvas.coords(btn_cadastrar_window, cx + cw - 190, cy - 55)
         canvas.coords(frame_tabela_window, cx + 4, cy + 20)
-        canvas.itemconfig(frame_tabela_window, width=max(100, cw - 4), height=max(100, ch - 42))
+        canvas.itemconfig(frame_tabela_window, width=max(100, cw - 124), height=max(100, ch - 42))
         canvas.coords(btn_sair_win, w * 0.02, h - 50)
 
     def redimensionar(event):

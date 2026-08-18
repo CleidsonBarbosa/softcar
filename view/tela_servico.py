@@ -4,6 +4,7 @@ from PIL import Image, ImageTk
 import os
 import mysql.connector
 import customtkinter as ctk
+from view.img_softcar_utils import carregar_img_softcar, criar_img_softcar, redimensionar_img_softcar
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("dark-blue")
@@ -44,9 +45,13 @@ def tela_execucao_servico(root_anterior=None):
         root_anterior.destroy()
     root = ctk.CTk()
     root.title("Soft Car - Execução de Serviço")
-    root.geometry("1200x700")
+    root.state("zoomed")
     root.minsize(800, 500)
     root.resizable(True, True)
+    try:
+        root.attributes('-zoomed', True)
+    except:
+        pass
 
     cor_dourado = "#b88b4a"
     cor_branco = "#ffffff"
@@ -81,9 +86,22 @@ def tela_execucao_servico(root_anterior=None):
     canvas = ctk.CTkCanvas(root, highlightthickness=0, bg=cor_fundo)
     canvas.pack(fill="both", expand=True)
 
+    def ir_dashboard():
+        from view.bemvindo import tela_dashboard
+        root.after(10, lambda: tela_dashboard(root_anterior=root))
+
+    img_softcar_original = carregar_img_softcar()
+
+    btn_dashboard_id = None
+    if img_softcar_original:
+        btn_dashboard_id, img_softcar_tk_init = criar_img_softcar(canvas, img_softcar_original)
+        canvas.tag_bind("dashboard_img", "<Button-1>", lambda e: ir_dashboard())
+        canvas.tag_bind("dashboard_img", "<Enter>", lambda e: canvas.config(cursor="hand2"))
+        canvas.tag_bind("dashboard_img", "<Leave>", lambda e: canvas.config(cursor=""))
+
     bg_image_tk = None
     img_original = None
-    img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "tabela.png")
+    img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "img_frame.png")
     if os.path.exists(img_path):
         img_original = Image.open(img_path)
 
@@ -233,6 +251,8 @@ def tela_execucao_servico(root_anterior=None):
         tree.column("carro", width=int(col_w * 0.20))
         tree.column("total", width=int(col_w * 0.16))
         tree.column("data", width=int(col_w * 0.16))
+
+        redimensionar_img_softcar(canvas, btn_dashboard_id, img_softcar_original, w, h)
 
     root.bind("<Configure>", _redimensionar)
     root.after(100, lambda: [root.update_idletasks(), _redimensionar()])
