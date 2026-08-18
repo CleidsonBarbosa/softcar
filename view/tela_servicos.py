@@ -183,6 +183,14 @@ def abrir_formulario_servico(tree, dados=None, root_anterior=None):
     btn_salvar_win = canvas.create_window(0, 0, window=btn_salvar, anchor="center")
     btn_cancelar_win = canvas.create_window(0, 0, window=btn_cancelar, anchor="center")
 
+    def voltar_login_modal():
+        modal.destroy()
+        from main import tela_login
+        tela_login()
+
+    btn_sair = ctk.CTkButton(canvas, text="Sair", command=voltar_login_modal, width=80, corner_radius=0, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
+    btn_sair_win = canvas.create_window(30, 0, window=btn_sair, anchor="nw")
+
     def salvar():
         nome = entries["nome_servico"].get().strip()
         if not nome:
@@ -265,6 +273,7 @@ def abrir_formulario_servico(tree, dados=None, root_anterior=None):
         btn_y2 = y_inicio + 190
         canvas.coords(btn_salvar_win, btn_x, btn_y1)
         canvas.coords(btn_cancelar_win, btn_x, btn_y2)
+        canvas.coords(btn_sair_win, w * 0.02, h - 50)
 
     modal.bind("<Configure>", _redimensionar)
     modal.after(100, lambda: [modal.update_idletasks(), _redimensionar()])

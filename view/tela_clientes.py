@@ -200,7 +200,7 @@ def abrir_formulario(tree, dados=None):
         tela_login()
 
     btn_sair = ctk.CTkButton(canvas, text="Sair", command=voltar_login_modal, width=80, corner_radius=0, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
-    btn_sair_win = canvas.create_window(0, 0, window=btn_sair, anchor="center")
+    btn_sair_win = canvas.create_window(30, 0, window=btn_sair, anchor="nw")
 
     img_fundo = "assets/formulario.png"
     img_original_form = None
@@ -404,7 +404,7 @@ def abrir_formulario_carro(id_cliente, nome_cliente, dados_carro=None, voltar_pa
         tela_login()
 
     btn_sair = ctk.CTkButton(canvas, text="Sair", command=voltar_login_modal, width=80, corner_radius=0, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
-    btn_sair_win = canvas.create_window(0, 0, window=btn_sair, anchor="center")
+    btn_sair_win = canvas.create_window(30, 0, window=btn_sair, anchor="nw")
 
     def _redimensionar_formulario(event=None):
         if event is not None and event.widget != modal:
@@ -594,7 +594,7 @@ def listar_carros_cliente(id_cliente, nome_cliente):
         tela_login()
 
     btn_sair = ctk.CTkButton(canvas, text="Sair", command=voltar_login_modal, width=80, corner_radius=0, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
-    btn_sair_win = canvas.create_window(0, 0, window=btn_sair, anchor="nw")
+    btn_sair_win = canvas.create_window(30, 0, window=btn_sair, anchor="nw")
 
     def _redimensionar(event=None):
         w, h = modal.winfo_width(), modal.winfo_height()
@@ -834,7 +834,7 @@ def listar_servicos(id_cliente, nome_cliente, dados_carro, root_anterior=None):
     btn_salvar_win = canvas.create_window(0, 0, window=btn_salvar, anchor="nw")
     btn_voltar_win = canvas.create_window(0, 0, window=btn_voltar, anchor="nw")
     btn_fechar_win = canvas.create_window(0, 0, window=btn_fechar, anchor="nw")
-    btn_sair_win = canvas.create_window(0, 0, window=btn_sair, anchor="nw")
+    btn_sair_win = canvas.create_window(30, 0, window=btn_sair, anchor="nw")
 
     def _redim(event=None):
         w = modal.winfo_width()
