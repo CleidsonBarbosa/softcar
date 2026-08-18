@@ -414,7 +414,12 @@ def tela_materiais(root_anterior=None):
 
     carregar_materiais(tree)
 
-    btn_sair = ctk.CTkButton(canvas, text="Sair", command=root.destroy, width=80, corner_radius=0, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
+    def voltar_login():
+        root.destroy()
+        from main import tela_login
+        tela_login()
+
+    btn_sair = ctk.CTkButton(canvas, text="Sair", command=voltar_login, width=80, corner_radius=0, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
     btn_sair_win = canvas.create_window(30, 0, window=btn_sair, anchor="nw")
 
     def _redimensionar(w, h):

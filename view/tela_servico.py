@@ -189,7 +189,12 @@ def tela_execucao_servico(root_anterior=None):
     btn_finalizar = ctk.CTkButton(canvas, text="Finalizar Ordem", command=finalizar_ordem, width=120, fg_color=cor_dourado, text_color=cor_branco, hover_color="#d4a857")
     btn_finalizar_win = canvas.create_window(550, 70, window=btn_finalizar, anchor="nw")
 
-    btn_sair = ctk.CTkButton(canvas, text="Sair", command=root.destroy, width=80, corner_radius=0, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
+    def voltar_login():
+        root.destroy()
+        from main import tela_login
+        tela_login()
+
+    btn_sair = ctk.CTkButton(canvas, text="Sair", command=voltar_login, width=80, corner_radius=0, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
     btn_sair_win = canvas.create_window(30, 0, window=btn_sair, anchor="nw")
 
     def _redimensionar(event=None):

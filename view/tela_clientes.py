@@ -194,6 +194,14 @@ def abrir_formulario(tree, dados=None):
     btn_cancelar = ctk.CTkButton(canvas, text="Cancelar", command=modal.destroy, width=90, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
     btn_cancelar_win = canvas.create_window(0, 0, window=btn_cancelar, anchor="center")
 
+    def voltar_login_modal():
+        modal.destroy()
+        from main import tela_login
+        tela_login()
+
+    btn_sair = ctk.CTkButton(canvas, text="Sair", command=voltar_login_modal, width=80, corner_radius=0, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
+    btn_sair_win = canvas.create_window(0, 0, window=btn_sair, anchor="center")
+
     img_fundo = "assets/formulario.png"
     img_original_form = None
     if os.path.exists(img_fundo):
@@ -229,6 +237,7 @@ def abrir_formulario(tree, dados=None):
         y_btns = cy_inicio + len(campos) * espacamento + 20
         canvas.coords(btn_salvar_win, cx - 55, y_btns)
         canvas.coords(btn_cancelar_win, cx + 55, y_btns)
+        canvas.coords(btn_sair_win, w * 0.02, h - 50)
 
     modal.bind("<Configure>", _redimensionar_formulario)
     modal.after(100, _redimensionar_formulario)
@@ -306,7 +315,7 @@ def abrir_formulario_carro(id_cliente, nome_cliente, dados_carro=None, voltar_pa
         icone = _carregar_icone(arquivo, 24)
         if icone is None:
             icone = _criar_icone_fallback(24, cor_dourado, "circle")
-        ativo = (nome == "Serviços")
+        ativo = (nome == "Cliente")
         cor_texto = cor_cinza if ativo else cor_branco
 
         img_item = canvas.create_image(20, y_pos, image=icone, anchor="nw")
@@ -389,7 +398,12 @@ def abrir_formulario_carro(id_cliente, nome_cliente, dados_carro=None, voltar_pa
     btn_avancar_win = canvas.create_window(0, 0, window=btn_avancar, anchor="center")
     btn_cancelar = ctk.CTkButton(canvas, text="Cancelar", command=cancelar, width=90, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
     btn_cancelar_win = canvas.create_window(0, 0, window=btn_cancelar, anchor="center")
-    btn_sair = ctk.CTkButton(canvas, text="Sair", command=modal.destroy, width=80, corner_radius=0, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
+    def voltar_login_modal():
+        modal.destroy()
+        from main import tela_login
+        tela_login()
+
+    btn_sair = ctk.CTkButton(canvas, text="Sair", command=voltar_login_modal, width=80, corner_radius=0, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
     btn_sair_win = canvas.create_window(0, 0, window=btn_sair, anchor="center")
 
     def _redimensionar_formulario(event=None):
@@ -574,6 +588,14 @@ def listar_carros_cliente(id_cliente, nome_cliente):
     btn_fechar = ctk.CTkButton(canvas, text="Fechar", command=modal.destroy, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
     btn_fechar_win = canvas.create_window(0, 0, window=btn_fechar, anchor="nw")
 
+    def voltar_login_modal():
+        modal.destroy()
+        from main import tela_login
+        tela_login()
+
+    btn_sair = ctk.CTkButton(canvas, text="Sair", command=voltar_login_modal, width=80, corner_radius=0, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
+    btn_sair_win = canvas.create_window(0, 0, window=btn_sair, anchor="nw")
+
     def _redimensionar(event=None):
         w, h = modal.winfo_width(), modal.winfo_height()
         if w < 10 or h < 10:
@@ -604,6 +626,7 @@ def listar_carros_cliente(id_cliente, nome_cliente):
         canvas.itemconfig(frame_win, width=max(100, cw - 4), height=max(100, ch - 50))
 
         canvas.coords(btn_fechar_win, cx + 4, cy + ch + 10)
+        canvas.coords(btn_sair_win, w * 0.02, h - 50)
 
     modal.bind("<Configure>", _redimensionar)
     modal.after(100, lambda: [modal.update_idletasks(), _redimensionar()])
@@ -801,9 +824,17 @@ def listar_servicos(id_cliente, nome_cliente, dados_carro, root_anterior=None):
     btn_voltar = ctk.CTkButton(canvas, text="Voltar", command=lambda: modal.after(100, lambda: (modal.destroy(), abrir_formulario_carro(id_cliente, nome_cliente, dados_carro, voltar_para_lista=True))), width=80, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
     btn_fechar = ctk.CTkButton(canvas, text="Fechar", command=modal.destroy, width=80, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
 
+    def voltar_login_modal():
+        modal.destroy()
+        from main import tela_login
+        tela_login()
+
+    btn_sair = ctk.CTkButton(canvas, text="Sair", command=voltar_login_modal, width=80, corner_radius=0, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
+
     btn_salvar_win = canvas.create_window(0, 0, window=btn_salvar, anchor="nw")
     btn_voltar_win = canvas.create_window(0, 0, window=btn_voltar, anchor="nw")
     btn_fechar_win = canvas.create_window(0, 0, window=btn_fechar, anchor="nw")
+    btn_sair_win = canvas.create_window(0, 0, window=btn_sair, anchor="nw")
 
     def _redim(event=None):
         w = modal.winfo_width()
@@ -839,8 +870,7 @@ def listar_servicos(id_cliente, nome_cliente, dados_carro, root_anterior=None):
         canvas.coords(btn_salvar_win, cx, btn_y)
         canvas.coords(btn_voltar_win, cx + 110, btn_y)
         canvas.coords(btn_fechar_win, cx + 200, btn_y)
-
-        col_w = max(200, cw - 60)
+        canvas.coords(btn_sair_win, w * 0.02, h - 50)
         tree_servicos.column("nome_servico", width=int(col_w * 0.60))
         tree_servicos.column("preco_servico", width=int(col_w * 0.40))
 
@@ -1074,7 +1104,12 @@ def tela_clientes(root_anterior=None):
 
     carregar_clientes(tree)
 
-    btn_sair = ctk.CTkButton(canvas, text="Sair", command=root.destroy, width=80, corner_radius=0, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
+    def voltar_login():
+        root.destroy()
+        from main import tela_login
+        tela_login()
+
+    btn_sair = ctk.CTkButton(canvas, text="Sair", command=voltar_login, width=80, corner_radius=0, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
     btn_sair_win = canvas.create_window(30, 0, window=btn_sair, anchor="nw")
 
     def _redimensionar(w, h):
