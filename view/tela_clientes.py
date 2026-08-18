@@ -974,6 +974,28 @@ def tela_clientes(root_anterior=None):
     canvas = ctk.CTkCanvas(root, highlightthickness=0, bg=cor_fundo)
     canvas.pack(fill="both", expand=True)
 
+    def ir_dashboard():
+        from view.bemvindo import tela_dashboard
+        root.after(10, lambda: tela_dashboard(root_anterior=root))
+
+    img_softcar_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "img_softcar.png")
+    img_softcar_original = None
+    if os.path.exists(img_softcar_path):
+        img_softcar_original = Image.open(img_softcar_path)
+
+    img_softcar_tk = None
+    if img_softcar_original:
+        img_resized = img_softcar_original.resize((350, 137), Image.Resampling.LANCZOS)
+        img_softcar_tk = ImageTk.PhotoImage(img_resized)
+
+    btn_dashboard_id = None
+    if img_softcar_tk:
+        btn_dashboard_id = canvas.create_image(160, 63, image=img_softcar_tk, anchor="center", tags="dashboard_img")
+        canvas.image_softcar = img_softcar_tk
+        canvas.tag_bind("dashboard_img", "<Button-1>", lambda e: ir_dashboard())
+        canvas.tag_bind("dashboard_img", "<Enter>", lambda e: canvas.config(cursor="hand2"))
+        canvas.tag_bind("dashboard_img", "<Leave>", lambda e: canvas.config(cursor=""))
+
     img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "tabela.png")
     img_original = None
     if os.path.exists(img_path):
@@ -1121,6 +1143,8 @@ def tela_clientes(root_anterior=None):
             canvas.delete("bg")
             canvas.create_image(0, 0, image=bg_image_tk, anchor="nw", tags="bg")
             canvas.tag_lower("bg")
+            if btn_dashboard_id:
+                canvas.tag_raise(btn_dashboard_id)
 
         if not menu_criado:
             y_pos = 220
@@ -1160,6 +1184,17 @@ def tela_clientes(root_anterior=None):
             canvas.coords(img_item, 20, y)
             canvas.coords(txt_item, 50, y + 12)
             y += 50
+
+        if btn_dashboard_id and img_softcar_original:
+            img_w = int(w * 0.20) - 70
+            img_h = int(h * 0.12) + 10
+            img_softcar_resized = img_softcar_original.resize((img_w, img_h), Image.Resampling.LANCZOS)
+            img_softcar_tk_new = ImageTk.PhotoImage(img_softcar_resized)
+            canvas.image_softcar = img_softcar_tk_new
+            canvas.itemconfig(btn_dashboard_id, image=img_softcar_tk_new)
+            img_x = max(img_w // 2, w * 0.10 - 50)
+            img_y = max(img_h // 2, h * 0.05)
+            canvas.coords(btn_dashboard_id, img_x, img_y)
 
         cx = w * 0.191
         cy = h * 0.178

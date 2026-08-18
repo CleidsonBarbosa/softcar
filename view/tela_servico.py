@@ -216,16 +216,16 @@ def tela_execucao_servico(root_anterior=None):
             canvas.coords(txt_item, 50, y + 12)
             y += 50
 
-        canvas.coords(titulo_win, 30, 20)
-
         cx = w * 0.191
         cy = h * 0.178
         cw = w * 0.753
         ch = h * 0.750
+        canvas.coords(titulo_win, cx + 4, cy - 40)
+
         canvas.coords(frame_win, cx + 4, cy + 20)
         canvas.itemconfig(frame_win, width=max(100, cw - 4), height=max(100, ch - 42))
 
-        canvas.coords(btn_finalizar_win, cx + cw - 150, cy - 55)
+        canvas.coords(btn_finalizar_win, cx + cw - 150, cy - 40)
         canvas.coords(btn_sair_win, w * 0.02, h - 50)
 
         col_w = max(200, cw - 90)
