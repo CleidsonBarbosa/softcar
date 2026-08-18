@@ -4,7 +4,8 @@ from tkinter import messagebox
 from PIL import Image, ImageTk
 import os
 import mysql.connector
-from view.bemvindo import tela_dashboard
+
+
 def verificar_login(root, entry_login, entry_senha):
     email = entry_login.get()
     senha = entry_senha.get()
@@ -14,33 +15,27 @@ def verificar_login(root, entry_login, entry_senha):
         return
 
     try:
-        # Configuração da conexão com o banco de dados
         conexao = mysql.connector.connect(
-            host="localhost",       
-            user="root",            
-            password="",    # Substitua pela sua senha do MySQL
-            database="softcar"         # Nome do banco atualizado para 'banco'
+            host="localhost",
+            user="root",
+            password="",
+            database="softcar"
         )
-        
         cursor = conexao.cursor()
-        
-        # Consulta SQL atualizada para a tabela 'funcionarios'
-        comando = "SELECT * FROM funcionarios WHERE email_func = %s AND senha = %s"
-        cursor.execute(comando, (email, senha))
+        cursor.execute("SELECT * FROM funcionarios WHERE email_func = %s AND senha = %s", (email, senha))
         resultado = cursor.fetchone()
-        
-        if resultado:
-            messagebox.showinfo("Sucesso", "Login realizado com sucesso!")
-            cargo = resultado[5]
-            root.after(100, lambda: tela_dashboard(cargo, root_anterior=root))
-        else:
-            messagebox.showerror("Erro", "Usuário ou senha incorretos.")
-            
         cursor.close()
         conexao.close()
-        
+
+        if resultado:
+            cargo = resultado[5]
+            from app import App
+            App(root, cargo=cargo)
+        else:
+            messagebox.showerror("Erro", "Usuario ou senha incorretos.")
+
     except mysql.connector.Error as erro:
-        messagebox.showerror("Erro de Conexão", f"Falha ao conectar ao banco:\n{erro}")
+        messagebox.showerror("Erro de Conexao", f"Falha ao conectar ao banco:\n{erro}")
 
 
 def tela_login():
