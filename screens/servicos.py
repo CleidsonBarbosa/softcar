@@ -1,6 +1,7 @@
 import customtkinter as ctk
 from tkinter import ttk, messagebox
 import mysql.connector
+from screens.base import BaseScreen
 
 COR_FUNDO = "#1e2d3d"
 COR_DOURADO = "#b88b4a"
@@ -12,13 +13,11 @@ def _conectar():
     return mysql.connector.connect(host="localhost", user="root", password="", database="softcar")
 
 
-class ServicosScreen(ctk.CTkFrame):
+class ServicosScreen(BaseScreen):
     def __init__(self, parent, app):
-        super().__init__(parent, fg_color=COR_FUNDO)
-        self.app = app
+        super().__init__(parent, app)
         self._configurar_treeview_style()
         self._criar_widgets()
-        self._carregar_servicos()
 
     def _configurar_treeview_style(self):
         style = ttk.Style()
@@ -31,7 +30,7 @@ class ServicosScreen(ctk.CTkFrame):
             ]})
         ])
         style.configure("Treeview", background=COR_DESTAQUE, foreground=COR_BRANCO,
-                        fieldbackground=COR_DESTAQUE, rowheight=28, borderwidth=0)
+                        fieldbackground=COR_DESTAQUE, rowheight=32, borderwidth=0)
         style.configure("Treeview.Heading", background=COR_HEADER, foreground=COR_BRANCO, borderwidth=0)
         style.layout("Treeview.Heading", [
             ("Treeview.Heading.cell", {"sticky": "nswe", "children": [
@@ -45,47 +44,53 @@ class ServicosScreen(ctk.CTkFrame):
                         borderwidth=0, relief="flat")
 
     def _criar_widgets(self):
-        header = ctk.CTkFrame(self, fg_color=COR_DESTAQUE, corner_radius=0, height=50)
-        header.pack(fill="x")
+        ov = self.center_frame
+
+        header = ctk.CTkFrame(ov, fg_color="transparent", height=42)
+        header.pack(fill="x", padx=20, pady=(10, 5))
         header.pack_propagate(False)
 
-        ctk.CTkLabel(header, text="Pesquisar", font=("Arial", 11, "bold"), text_color=COR_BRANCO).pack(side="left", padx=(15, 5))
-        self.entry_busca = ctk.CTkEntry(header, width=220, fg_color=COR_DESTAQUE, text_color="#ffffff",
-                                        border_width=1, font=("Arial", 10))
-        self.entry_busca.pack(side="left", padx=5, ipady=3)
+        ctk.CTkLabel(header, text="Pesquisar", font=("Arial", 13, "bold"), text_color=COR_BRANCO).pack(side="left", padx=(0, 8))
+        self.entry_busca = ctk.CTkEntry(header, width=280, height=32, fg_color=COR_DESTAQUE, text_color="#ffffff",
+                                        border_width=1, font=("Arial", 12), corner_radius=8)
+        self.entry_busca.pack(side="left", padx=5, ipady=2)
         self.entry_busca.bind("<KeyRelease>", lambda e: self._buscar_servicos())
 
-        ctk.CTkButton(header, text="Novo Servico +", font=("Arial", 11, "bold"),
-                      fg_color=COR_DESTAQUE, text_color=COR_BRANCO, hover_color=COR_HEADER,
-                      command=self._abrir_formulario).pack(side="right", padx=15)
+        ctk.CTkButton(header, text="Novo Servico +", font=("Arial", 12, "bold"),
+                      fg_color=COR_DOURADO, text_color=COR_BRANCO, hover_color="#d4a857",
+                      height=32, corner_radius=8,
+                      command=self._abrir_formulario).pack(side="right", padx=5)
 
-        container = ctk.CTkFrame(self, fg_color=COR_DESTAQUE, corner_radius=0)
-        container.pack(fill="both", expand=True, padx=15, pady=(0, 15))
+        container = ctk.CTkFrame(ov, fg_color="transparent")
+        container.pack(fill="both", expand=True, padx=20, pady=(0, 5))
 
         colunas = ("id_servico", "nome_servico", "preco_servico")
         self.tree = ttk.Treeview(container, columns=colunas, show="headings", selectmode="browse")
-        self.tree.heading("id_servico", text="ID")
-        self.tree.heading("nome_servico", text="Servico")
-        self.tree.heading("preco_servico", text="Preco")
-        self.tree.column("id_servico", width=0, stretch=False)
-        self.tree.column("nome_servico", width=400)
-        self.tree.column("preco_servico", width=150, anchor="center")
+        self.tree.heading("id_servico", text="ID", anchor="center")
+        self.tree.heading("nome_servico", text="Servico", anchor="w")
+        self.tree.heading("preco_servico", text="Preco", anchor="center")
+        self.tree.column("id_servico", width=60, minwidth=60, stretch=False, anchor="center")
+        self.tree.column("nome_servico", width=500, minwidth=200, stretch=True, anchor="w")
+        self.tree.column("preco_servico", width=150, minwidth=100, stretch=False, anchor="center")
 
         scrollbar = ttk.Scrollbar(container, orient="vertical", command=self.tree.yview, style="Vertical.TScrollbar")
         self.tree.configure(yscrollcommand=scrollbar.set)
-        scrollbar.pack(side="right", fill="y")
-        self.tree.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y", padx=(0, 2), pady=2)
+        self.tree.pack(side="left", fill="both", expand=True, padx=(2, 0), pady=2)
 
         self.tree.bind("<Double-1>", lambda e: self._editar_servico())
 
-        btn_frame = ctk.CTkFrame(self, fg_color="transparent")
-        btn_frame.pack(fill="x", padx=15, pady=(0, 10))
-        ctk.CTkButton(btn_frame, text="Editar", fg_color=COR_DESTAQUE, text_color=COR_BRANCO,
-                      hover_color=COR_HEADER, command=self._editar_servico).pack(side="left", padx=5)
-        ctk.CTkButton(btn_frame, text="Excluir", fg_color="#8b0000", text_color=COR_BRANCO,
-                      hover_color="#a52a2a", command=self._excluir_servico).pack(side="left", padx=5)
+        btn_frame = ctk.CTkFrame(ov, fg_color="transparent")
+        btn_frame.pack(fill="x", padx=20, pady=(0, 10))
+        ctk.CTkButton(btn_frame, text="Editar", font=("Arial", 12, "bold"), fg_color=COR_DESTAQUE, text_color=COR_BRANCO,
+                      hover_color=COR_HEADER, height=32, corner_radius=8, width=100,
+                      command=self._editar_servico).pack(side="left", padx=5)
+        ctk.CTkButton(btn_frame, text="Excluir", font=("Arial", 12, "bold"), fg_color="#8b0000", text_color=COR_BRANCO,
+                      hover_color="#a52a2a", height=32, corner_radius=8, width=100,
+                      command=self._excluir_servico).pack(side="left", padx=5)
 
     def on_show(self):
+        super().on_show()
         self._carregar_servicos()
 
     def _carregar_servicos(self):
@@ -167,7 +172,6 @@ class ServicoForm(ctk.CTkToplevel):
         self.dados = dados
         self.on_save = on_save
         self.title("Editar Servico" if dados else "Novo Servico")
-        self.geometry("600x400")
         self.configure(fg_color=COR_FUNDO)
         self.transient(parent)
         self.grab_set()
@@ -175,9 +179,9 @@ class ServicoForm(ctk.CTkToplevel):
         self.after(100, lambda: self.state("zoomed"))
 
         container = ctk.CTkFrame(self, fg_color=COR_FUNDO)
-        container.pack(fill="both", expand=True, padx=40, pady=30)
+        container.pack(fill="both", expand=True, padx=60, pady=40)
 
-        ctk.CTkLabel(container, text="Dados do Servico", font=("Arial", 16, "bold"), text_color=COR_DOURADO).pack(pady=(0, 20))
+        ctk.CTkLabel(container, text="Dados do Servico", font=("Arial", 20, "bold"), text_color=COR_DOURADO).pack(pady=(0, 25))
 
         self.campos = ["nome_servico", "preco_servico"]
         self.labels = ["Nome", "Preco"]
@@ -185,21 +189,23 @@ class ServicoForm(ctk.CTkToplevel):
 
         for campo, label in zip(self.campos, self.labels):
             row = ctk.CTkFrame(container, fg_color="transparent")
-            row.pack(fill="x", pady=5)
-            ctk.CTkLabel(row, text=label, font=("Arial", 11, "bold"), text_color=COR_BRANCO, width=100, anchor="e").pack(side="left")
-            entry = ctk.CTkEntry(row, width=300, corner_radius=8, fg_color="#c2c7cc", text_color="#000000",
-                                 border_color=COR_DESTAQUE, border_width=2)
-            entry.pack(side="left", padx=(10, 0))
+            row.pack(fill="x", pady=6)
+            ctk.CTkLabel(row, text=label, font=("Arial", 13, "bold"), text_color=COR_BRANCO, width=120, anchor="e").pack(side="left")
+            entry = ctk.CTkEntry(row, width=400, height=38, corner_radius=8, fg_color="#c2c7cc", text_color="#000000",
+                                 border_color=COR_DESTAQUE, border_width=2, font=("Arial", 13))
+            entry.pack(side="left", padx=(15, 0))
             if dados and dados.get(campo) is not None:
                 entry.insert(0, str(dados[campo]))
             self.entries[campo] = entry
 
         btn_frame = ctk.CTkFrame(container, fg_color="transparent")
-        btn_frame.pack(pady=20)
-        ctk.CTkButton(btn_frame, text="Salvar", fg_color=COR_DOURADO, text_color=COR_BRANCO,
-                      hover_color="#d4a857", command=self._salvar).pack(side="left", padx=10)
-        ctk.CTkButton(btn_frame, text="Cancelar", fg_color=COR_DESTAQUE, text_color=COR_BRANCO,
-                      hover_color="#2c4a5c", command=self.destroy).pack(side="left", padx=10)
+        btn_frame.pack(pady=25)
+        ctk.CTkButton(btn_frame, text="Salvar", font=("Arial", 13, "bold"), width=150, height=40,
+                      fg_color=COR_DOURADO, text_color=COR_BRANCO,
+                      hover_color="#d4a857", command=self._salvar).pack(side="left", padx=12)
+        ctk.CTkButton(btn_frame, text="Cancelar", font=("Arial", 13, "bold"), width=150, height=40,
+                      fg_color=COR_DESTAQUE, text_color=COR_BRANCO,
+                      hover_color="#2c4a5c", command=self.destroy).pack(side="left", padx=12)
 
     def _salvar(self):
         nome = self.entries["nome_servico"].get().strip()

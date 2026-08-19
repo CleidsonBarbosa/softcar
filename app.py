@@ -11,7 +11,6 @@ COR_CINZA = "#777777"
 COR_DESTAQUE = "#375269"
 
 ICONES_INFO = [
-    ("Dashboard",       "assets/dashboard.png"),
     ("Clientes",        "assets/cliente.png"),
     ("Servicos",        "assets/servicos.png"),
     ("Funcionarios",    "assets/funcionarios.png"),
@@ -21,9 +20,10 @@ ICONES_INFO = [
 
 
 class App:
-    def __init__(self, root, cargo="atendente"):
+    def __init__(self, root, cargo="atendente", nome=""):
         self.root = root
         self.cargo = cargo
+        self.nome = nome
         self.current_screen = None
         self.screen_refs = {}
         self.sidebar_btns = []
@@ -76,8 +76,25 @@ class App:
         self.sidebar.pack(side="left", fill="y")
         self.sidebar.pack_propagate(False)
 
-        ctk.CTkLabel(self.sidebar, text="SOFTCAR", font=("Bungee", 16, "bold"),
-                      text_color=COR_DOURADO).pack(pady=(25, 30), padx=10)
+        logo_pil = Image.open("assets/img_softcar.png").copy()
+        self._pil_refs.append(logo_pil)
+        logo_icon = ctk.CTkImage(light_image=logo_pil, dark_image=logo_pil, size=(140, 90))
+
+        btn_dashboard = ctk.CTkButton(
+            self.sidebar,
+            text="",
+            image=logo_icon,
+            fg_color="transparent",
+            hover_color=COR_HOVER,
+            height=90,
+            corner_radius=6,
+            command=lambda: self.show_screen("Dashboard"),
+        )
+        btn_dashboard.pack(fill="x", padx=8, pady=(10, 2))
+        self.sidebar_btns.append(("Dashboard", btn_dashboard))
+
+        ctk.CTkLabel(self.sidebar, text="SOFTCAR", font=("Bungee", 14, "bold"),
+                      text_color=COR_DOURADO).pack(pady=(0, 12), padx=10)
 
         for nome, arquivo in ICONES_INFO:
             icone = self._make_ctk_icon(arquivo, 22)
