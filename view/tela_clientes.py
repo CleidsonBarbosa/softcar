@@ -153,15 +153,20 @@ def abrir_formulario(tree, dados=None):
     entries = {}
     itens_form = []
 
+    img_entrada_original = None
+    if os.path.exists("assets/entrada.png"):
+        img_entrada_original = Image.open("assets/entrada.png")
+    img_entrada_refs = []
+
     for i, (campo, label) in enumerate(zip(campos, labels)):
-        lbl = ctk.CTkLabel(canvas, text=label, font=("Arial", 11, "bold"), text_color="#ffffff", anchor="w")
-        entry = ctk.CTkEntry(canvas, width=400, corner_radius=8, fg_color="#c2c7cc", text_color="#000000", border_color="#304C62", border_width=2)
-        lbl_win = canvas.create_window(0, 0, window=lbl, anchor="nw")
+        lbl_win = canvas.create_text(0, 0, text=label, font=("Arial", 11, "bold"), fill="#ffffff", anchor="e", tags="label_form")
+        entry = ctk.CTkEntry(canvas, font=("Inclusive Sans", 13, "bold"), width=400, corner_radius=10, fg_color="#c2c7cc", text_color="#333333", border_color="#375269", border_width=2)
         entry_win = canvas.create_window(0, 0, window=entry, anchor="w")
+        img_entrada_id = None
         if dados:
             entry.insert(0, dados[campo] if dados[campo] is not None else "")
         entries[campo] = entry
-        itens_form.append((lbl_win, entry_win))
+        itens_form.append((lbl_win, entry_win, img_entrada_id))
 
     def _abrir_lista_carros(id_cliente, nome_cliente):
         modal.destroy()
@@ -242,16 +247,32 @@ def abrir_formulario(tree, dados=None):
         entry_w = int(form_w * 0.65)
         espacamento = max(45, min(60, h * 0.08))
 
-        for i, (lbl_win, entry_win) in enumerate(itens_form):
+        for i, (lbl_win, entry_win, _) in enumerate(itens_form):
             cy = cy_inicio + i * espacamento
-            canvas.coords(lbl_win, cx, cy - 14)
-            canvas.coords(entry_win, cx, cy + 4)
+            canvas.coords(lbl_win, cx - entry_w // 2 - 10, cy)
+            canvas.coords(entry_win, cx + entry_w // 2, cy)
             canvas.itemconfig(entry_win, width=entry_w)
 
+            if img_entrada_original:
+                entry_h = 35
+                img_resized = img_entrada_original.resize((entry_w, entry_h), Image.Resampling.LANCZOS)
+                img_tk = ImageTk.PhotoImage(img_resized)
+                img_entrada_refs.append(img_tk)
+                _, _, img_entrada_id_old = itens_form[i]
+                if img_entrada_id_old:
+                    canvas.delete(img_entrada_id_old)
+                img_entrada_id = canvas.create_image(cx + entry_w // 2, cy, image=img_tk, anchor="w")
+                itens_form[i] = (lbl_win, entry_win, img_entrada_id)
+                canvas.tag_raise(entry_win)
+                canvas.tag_raise(lbl_win)
+
         canvas.tag_lower("bg")
-        for i, (lbl_win, entry_win) in enumerate(itens_form):
-            canvas.tag_raise(lbl_win)
+        canvas.tag_raise("label_form")
+        for i, (lbl_win, entry_win, img_entrada_id) in enumerate(itens_form):
+            if img_entrada_id:
+                canvas.tag_raise(img_entrada_id)
             canvas.tag_raise(entry_win)
+            canvas.tag_raise(lbl_win)
 
         y_btns = cy_inicio + len(campos) * espacamento + 20
         canvas.coords(btn_salvar_win, cx - 55, y_btns)
