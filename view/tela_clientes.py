@@ -154,13 +154,14 @@ def abrir_formulario(tree, dados=None):
     itens_form = []
 
     for i, (campo, label) in enumerate(zip(campos, labels)):
-        lbl = canvas.create_text(0, 0, text=label, font=("Arial", 11, "bold"), fill="#ffffff", anchor="e")
+        lbl = ctk.CTkLabel(canvas, text=label, font=("Arial", 11, "bold"), text_color="#ffffff", anchor="w")
         entry = ctk.CTkEntry(canvas, width=400, corner_radius=8, fg_color="#c2c7cc", text_color="#000000", border_color="#304C62", border_width=2)
+        lbl_win = canvas.create_window(0, 0, window=lbl, anchor="nw")
         entry_win = canvas.create_window(0, 0, window=entry, anchor="w")
         if dados:
             entry.insert(0, dados[campo] if dados[campo] is not None else "")
         entries[campo] = entry
-        itens_form.append((lbl, entry_win))
+        itens_form.append((lbl_win, entry_win))
 
     def _abrir_lista_carros(id_cliente, nome_cliente):
         modal.destroy()
@@ -241,11 +242,16 @@ def abrir_formulario(tree, dados=None):
         entry_w = int(form_w * 0.65)
         espacamento = max(45, min(60, h * 0.08))
 
-        for i, (lbl, entry_win) in enumerate(itens_form):
+        for i, (lbl_win, entry_win) in enumerate(itens_form):
             cy = cy_inicio + i * espacamento
-            canvas.coords(lbl, cx - entry_w // 2 - 10, cy)
-            canvas.coords(entry_win, cx + entry_w // 2, cy)
+            canvas.coords(lbl_win, cx, cy - 14)
+            canvas.coords(entry_win, cx, cy + 4)
             canvas.itemconfig(entry_win, width=entry_w)
+
+        canvas.tag_lower("bg")
+        for i, (lbl_win, entry_win) in enumerate(itens_form):
+            canvas.tag_raise(lbl_win)
+            canvas.tag_raise(entry_win)
 
         y_btns = cy_inicio + len(campos) * espacamento + 20
         canvas.coords(btn_salvar_win, cx - 55, y_btns)
@@ -312,28 +318,28 @@ def abrir_formulario_carro(id_cliente, nome_cliente, dados_carro=None, voltar_pa
 
     def acao_menu_modal(opcao):
         def _navegar():
-            modal.destroy()
             if opcao == "Cliente":
                 from view.tela_clientes import tela_clientes
-                tela_clientes()
+                tela_clientes(root_anterior=modal)
             elif opcao == "Serviços":
                 from view.tela_servicos import tela_servicos
-                tela_servicos()
+                tela_servicos(root_anterior=modal)
             elif opcao == "Funcionários":
                 from view.lista_funcionarios import tela_lista_funcionarios
-                tela_lista_funcionarios()
+                tela_lista_funcionarios(root_anterior=modal)
             elif opcao == "Materiais":
                 from view.tela_materiais import tela_materiais
-                tela_materiais()
+                tela_materiais(root_anterior=modal)
             elif opcao == "Relatórios":
                 from view.tela_servico import tela_execucao_servico
-                tela_execucao_servico()
+                tela_execucao_servico(root_anterior=modal)
         modal.after(100, _navegar)
 
     def make_handler(opcao):
         return lambda e: acao_menu_modal(opcao)
 
-    y_pos = 120
+    menu_items = []
+    y_pos = 220
     for nome, arquivo in icones_info:
         icone = _carregar_icone(arquivo, 24)
         if icone is None:
@@ -358,6 +364,7 @@ def abrir_formulario_carro(id_cliente, nome_cliente, dados_carro=None, voltar_pa
 
         canvas.image_refs = getattr(canvas, "image_refs", [])
         canvas.image_refs.append(icone)
+        menu_items.append((img_item, txt_item))
         y_pos += 50
 
     # ---- FORMULÁRIO ----
@@ -447,6 +454,12 @@ def abrir_formulario_carro(id_cliente, nome_cliente, dados_carro=None, voltar_pa
             canvas.create_image(0, 0, image=bg_form, anchor="nw", tags="bg")
             canvas.tag_lower("bg")
             canvas.image_bg_form = bg_form
+
+        y = 220
+        for img_item, txt_item in menu_items:
+            canvas.coords(img_item, 20, y)
+            canvas.coords(txt_item, 50, y + 12)
+            y += 50
 
         form_w = min(500, w * 0.45)
         cx = w * 0.5
@@ -661,16 +674,16 @@ def listar_carros_cliente(id_cliente, nome_cliente):
             y += 50
 
         cx = w * 0.191
-        cy = h * 0.05
+        cy = h * 0.178
         cw = w * 0.753
-        ch = h * 0.80
+        ch = h * 0.750
 
-        canvas.coords(lbl_cliente, cx + 4, cy)
-        canvas.coords(btn_novo_win, cx + cw - 120, cy)
-        canvas.coords(frame_win, cx + 4, cy + 40)
-        canvas.itemconfig(frame_win, width=max(100, cw - 4), height=max(100, ch - 50))
+        canvas.coords(lbl_cliente, cx + 176, cy - 42)
+        canvas.coords(btn_novo_win, cx + cw - 120, cy - 42)
+        canvas.coords(frame_win, cx + 176, cy - 42)
+        canvas.itemconfig(frame_win, width=max(100, cw - 254), height=max(100, ch - 22))
 
-        canvas.coords(btn_fechar_win, cx + 4, cy + ch + 10)
+        canvas.coords(btn_fechar_win, cx + 176, cy + ch + 10)
         canvas.coords(btn_sair_win, w * 0.02, h - 50)
 
         redimensionar_img_softcar(canvas, btn_dashboard_id_carros, img_softcar_original_carros, w, h)
@@ -758,11 +771,12 @@ def listar_servicos(id_cliente, nome_cliente, dados_carro, root_anterior=None):
         canvas.tag_bind(txt_item, "<Leave>", on_leave)
 
         def make_handler(opcao):
-            def _navegar():
+            def _navegar(e=None):
                 if opcao == "Cliente":
                     tela_clientes(root_anterior=modal)
                 elif opcao == "Serviços":
-                    pass
+                    from view.tela_servicos import tela_servicos
+                    tela_servicos(root_anterior=modal)
                 elif opcao == "Funcionários":
                     from view.lista_funcionarios import tela_lista_funcionarios
                     tela_lista_funcionarios(root_anterior=modal)
@@ -924,10 +938,10 @@ def listar_servicos(id_cliente, nome_cliente, dados_carro, root_anterior=None):
         cw = w * 0.753
         ch = h * 0.750
 
-        canvas.coords(titulo_win, cx + 30, cy - 55)
-        canvas.coords(total_win, cx + cw - 150, cy - 55)
-        canvas.coords(frame_win, cx + 4, cy + 20)
-        canvas.itemconfig(frame_win, width=max(100, cw - 4), height=max(100, ch - 42))
+        canvas.coords(titulo_win, cx + 176, cy - 42)
+        canvas.coords(total_win, cx + cw - 150, cy - 42)
+        canvas.coords(frame_win, cx + 176, cy - 42)
+        canvas.itemconfig(frame_win, width=max(100, cw - 254), height=max(100, ch - 22))
 
         btn_y = cy + ch + 10
         canvas.coords(btn_salvar_win, cx, btn_y)

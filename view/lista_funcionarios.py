@@ -556,10 +556,10 @@ def tela_lista_funcionarios(root_anterior=None):
         cw = w * 0.753
         ch = h * 0.750
 
-        canvas.coords(frame_top_window, cx + 30, cy - 55)
-        canvas.coords(btn_cadastrar_window, cx + cw - 200, cy - 55)
-        canvas.coords(frame_tabela_window, cx + 4, cy + 20)
-        canvas.itemconfig(frame_tabela_window, width=max(100, cw - 4), height=max(100, ch - 42))
+        canvas.coords(frame_top_window, cx + 176, cy - 42)
+        canvas.coords(btn_cadastrar_window, cx + cw - 200, cy - 42)
+        canvas.coords(frame_tabela_window, cx + 176, cy - 42)
+        canvas.itemconfig(frame_tabela_window, width=max(100, cw - 254), height=max(100, ch - 22))
         canvas.coords(btn_sair_win, w * 0.02, h - 50)
 
         redimensionar_img_softcar(canvas, btn_dashboard_id, img_softcar_original, w, h)

@@ -5,6 +5,8 @@ from PIL import Image, ImageTk
 import os
 import mysql.connector
 from view.bemvindo import tela_dashboard
+
+
 def verificar_login(root, entry_login, entry_senha):
     email = entry_login.get()
     senha = entry_senha.get()
@@ -57,6 +59,8 @@ def tela_login():
     except:
         pass
 
+    root.tk.eval('proc bgerror {msg} {}')
+
     img_path = "assets/Login.png"
 
     if not os.path.exists(img_path):
@@ -78,6 +82,17 @@ def tela_login():
 
     canvas_login_window = canvas.create_window(0, 0, window=entry_login, width=250, height=35)
     canvas_senha_window = canvas.create_window(0, 0, window=entry_senha, width=250, height=35)
+
+    senha_visivel = False
+
+    def toggle_senha():
+        nonlocal senha_visivel
+        senha_visivel = not senha_visivel
+        entry_senha.configure(show="" if senha_visivel else "*")
+        btn_olho.configure(text="🔓" if senha_visivel else "🔒")
+
+    btn_olho = ctk.CTkButton(root, text="🔒", width=40, corner_radius=0, fg_color="#c2c7cc", hover_color="#b0b5b9", text_color="#333333", font=("Arial", 20), command=toggle_senha, border_width=0)
+    canvas_olho_window = canvas.create_window(0, 0, window=btn_olho, width=40, height=35, anchor="e")
 
     img_email_pil = Image.open("assets/txt_email.png") if os.path.exists("assets/txt_email.png") else None
     img_senha_pil = Image.open("assets/txt_senha.png") if os.path.exists("assets/txt_senha.png") else None
@@ -125,8 +140,10 @@ def tela_login():
 
         canvas.itemconfig(canvas_login_window, width=entry_w, height=entry_h)
         canvas.itemconfig(canvas_senha_window, width=entry_w, height=entry_h)
+        canvas.itemconfig(canvas_olho_window, width=40, height=entry_h)
         canvas.coords(canvas_login_window, entry_x, cy_login)
         canvas.coords(canvas_senha_window, entry_x, cy_senha)
+        canvas.coords(canvas_olho_window, entry_x + entry_w // 2 - 2, cy_senha)
 
         # Position label images at top-left of each entry
         entry_left = entry_x - entry_w // 2

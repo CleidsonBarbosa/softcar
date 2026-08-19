@@ -140,7 +140,7 @@ def tela_execucao_servico(root_anterior=None):
     titulo_lbl = ctk.CTkLabel(canvas, text="EXECUÇÃO DE SERVIÇO", font=("Arial", 18, "bold"), text_color=cor_dourado)
     titulo_win = canvas.create_window(30, 20, window=titulo_lbl, anchor="nw")
 
-    frame = ctk.CTkFrame(canvas, fg_color="#2b3e50", corner_radius=8)
+    frame = ctk.CTkFrame(canvas, fg_color="transparent", corner_radius=8, border_width=0)
     frame_win = canvas.create_window(0, 0, window=frame, anchor="nw")
 
     colunas = ("id_ordem", "cliente", "carro", "total", "data")
@@ -156,15 +156,59 @@ def tela_execucao_servico(root_anterior=None):
     tree.column("total", width=100, stretch=True, anchor="center")
     tree.column("data", width=150, stretch=True, anchor="center")
 
-    scrollbar = ttk.Scrollbar(frame, orient="vertical", command=tree.yview)
+    scrollbar = ttk.Scrollbar(frame, orient="vertical", command=tree.yview, style="Vertical.TScrollbar")
     tree.configure(yscrollcommand=scrollbar.set)
     tree.pack(side="left", fill="both", expand=True)
 
     style = ttk.Style()
     style.theme_use("clam")
-    style.configure("Treeview", background="#375269", foreground="#ffffff", fieldbackground="#375269", rowheight=28, borderwidth=0, bordercolor="#375269")
-    style.configure("Treeview.Heading", background="#2c4a5c", foreground="#ffffff", borderwidth=0, bordercolor="#2c4a5c")
-    style.layout("Treeview", [("Treeview.field", {"sticky": "nswe", "children": [("Treeview.padding", {"sticky": "nswe", "children": [("Treeview.treearea", {"sticky": "nswe"})]})]})])
+    style.layout("Treeview", [
+        ("Treeview.field", {"sticky": "nswe", "children": [
+            ("Treeview.padding", {"sticky": "nswe", "children": [
+                ("Treeview.treearea", {"sticky": "nswe"})
+            ]})
+        ]})
+    ])
+    style.configure("Treeview",
+                    background="#375269",
+                    foreground="#ffffff",
+                    fieldbackground="#375269",
+                    rowheight=28,
+                    borderwidth=0,
+                    bordercolor="#375269",
+                    lightcolor="#375269",
+                    darkcolor="#375269",
+                    troughcolor="#375269")
+    style.configure("Treeview.Heading",
+                    background="#2c4a5c",
+                    foreground="#ffffff",
+                    relief="flat",
+                    borderwidth=0,
+                    bordercolor="#2c4a5c",
+                    lightcolor="#2c4a5c",
+                    darkcolor="#2c4a5c",
+                    troughcolor="#2c4a5c")
+    style.layout("Treeview.Heading", [
+        ("Treeview.Heading.cell", {"sticky": "nswe", "children": [
+            ("Treeview.Heading.padding", {"sticky": "nswe", "children": [
+                ("Treeview.Heading.label", {"sticky": "nswe"})
+            ]})
+        ]})
+    ])
+    style.map("Treeview",
+              background=[("selected", "#b88b4a")])
+    style.map("Treeview.Heading",
+              background=[("active", "#2c4a5c")],
+              relief=[("active", "flat")])
+
+    style.configure("Vertical.TScrollbar",
+                    background="#375269",
+                    troughcolor="#375269",
+                    borderwidth=0,
+                    relief="flat",
+                    lightcolor="#375269",
+                    darkcolor="#375269",
+                    arrowcolor="#375269")
     scrollbar.pack(side="right", fill="y")
 
     try:
@@ -238,12 +282,12 @@ def tela_execucao_servico(root_anterior=None):
         cy = h * 0.178
         cw = w * 0.753
         ch = h * 0.750
-        canvas.coords(titulo_win, cx + 4, cy - 40)
+        canvas.coords(titulo_win, cx + 176, cy - 42)
 
-        canvas.coords(frame_win, cx + 4, cy + 20)
-        canvas.itemconfig(frame_win, width=max(100, cw - 4), height=max(100, ch - 42))
+        canvas.coords(frame_win, cx + 176, cy - 42)
+        canvas.itemconfig(frame_win, width=max(100, cw - 254), height=max(100, ch - 22))
 
-        canvas.coords(btn_finalizar_win, cx + cw - 150, cy - 40)
+        canvas.coords(btn_finalizar_win, cx + cw - 150, cy - 42)
         canvas.coords(btn_sair_win, w * 0.02, h - 50)
 
         col_w = max(200, cw - 90)

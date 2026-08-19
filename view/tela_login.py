@@ -40,7 +40,19 @@ def tela_login():
 
     # 4. Campo de texto para a SENHA
     entry_senha = ctk.CTkEntry(root, font=("Inclusive Sans", 13, "bold"), border_width=2, corner_radius=10, placeholder_text="Senha", show="*", fg_color="#c2c7cc", text_color="#333333", border_color="#304C62")
-    canvas.create_window(645, 368, window=entry_senha)
+    canvas.create_window(645, 368, window=entry_senha, width=250, height=35)
+
+    # Botão olho para mostrar/esconder senha
+    senha_visivel = False
+
+    def toggle_senha():
+        nonlocal senha_visivel
+        senha_visivel = not senha_visivel
+        entry_senha.configure(show="" if senha_visivel else "*")
+        btn_olho.configure(text="🔓" if senha_visivel else "🔒")
+
+    btn_olho = ctk.CTkButton(root, text="🔒", width=40, corner_radius=0, fg_color="#c2c7cc", hover_color="#b0b5b9", text_color="#333333", font=("Arial", 20), command=toggle_senha, border_width=0)
+    canvas.create_window(750, 368, window=btn_olho, width=40, height=35)
     
     # 5. Botão ENTRAR
     btn_entrar = ctk.CTkButton(

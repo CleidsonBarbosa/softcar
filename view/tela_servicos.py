@@ -592,10 +592,10 @@ def tela_servicos(root_anterior=None):
         cw = w * 0.753
         ch = h * 0.750
 
-        canvas.coords(frame_top_window, cx + 30, cy - 55)
-        canvas.coords(btn_cadastrar_window, cx + cw - 190, cy - 55)
-        canvas.coords(frame_tabela_window, cx + 4, cy + 20)
-        canvas.itemconfig(frame_tabela_window, width=max(100, cw - 4), height=max(100, ch - 42))
+        canvas.coords(frame_top_window, cx + 176, cy - 42)
+        canvas.coords(btn_cadastrar_window, cx + cw - 190, cy - 42)
+        canvas.coords(frame_tabela_window, cx + 176, cy - 42)
+        canvas.itemconfig(frame_tabela_window, width=max(100, cw - 254), height=max(100, ch - 22))
         canvas.coords(btn_sair_win, w * 0.02, h - 50)
 
         col_w = max(200, cw - 90)
