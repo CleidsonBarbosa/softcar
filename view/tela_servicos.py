@@ -422,7 +422,7 @@ def tela_servicos(root_anterior=None):
                     darkcolor="#375269",
                     arrowcolor="#375269")
 
-    frame_top = ctk.CTkFrame(canvas, fg_color="#375269")
+    frame_top = ctk.CTkFrame(canvas, fg_color="#375269", corner_radius=12)
     frame_top_window = canvas.create_window(0, 0, window=frame_top, anchor="nw")
 
     ctk.CTkLabel(frame_top, text="Pesquisar", font=("Arial", 11, "bold"), fg_color="transparent", text_color=cor_branco).pack(side="left", padx=5)
@@ -458,7 +458,7 @@ def tela_servicos(root_anterior=None):
     def cmd_excluir():
         excluir_servico(tree)
 
-    frame_tabela = ctk.CTkFrame(canvas, fg_color="#375269")
+    frame_tabela = ctk.CTkFrame(canvas, fg_color="#375269", corner_radius=12)
     frame_tabela_window = canvas.create_window(0, 0, window=frame_tabela, anchor="nw")
 
     colunas = ("id_servico", "nome_servico", "preco_servico", "estoque_id_produto")
@@ -486,8 +486,8 @@ def tela_servicos(root_anterior=None):
 
     tree.configure(yscrollcommand=_atualizar_scrollbar)
 
-    scrollbar.pack(side="right", fill="y")
-    tree.pack(side="left", fill="both", expand=True)
+    scrollbar.pack(side="right", fill="y", padx=(0, 4), pady=4)
+    tree.pack(side="left", fill="both", expand=True, padx=(4, 0), pady=4)
 
     carregar_servicos(tree)
 

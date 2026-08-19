@@ -43,10 +43,18 @@ def _make_eye_icon(size, open_eye=True):
     return img
 
 
-def tela_login():
+def tela_login(root=None):
     ctk.set_appearance_mode("dark")
     ctk.set_default_color_theme("dark-blue")
-    root = ctk.CTk()
+    iniciou_loop = root is None
+    if root is None:
+        root = ctk.CTk()
+    else:
+        for widget in root.winfo_children():
+            widget.destroy()
+        root.unbind("<Configure>")
+        root.unbind("<Return>")
+
     root.title("Soft Car - Login")
     root.geometry("1200x800")
     root.minsize(900, 600)
@@ -65,17 +73,17 @@ def tela_login():
     bg_image_tk = None
 
     COR_TEXTO = "#000000"
-    COR_INPUT_FG = "#2a2a2a"
-    COR_INPUT_BORDER = "#000000"
+    COR_INPUT_FG = "#ffffff"
+    COR_INPUT_TEXT = "#222222"
 
     entry_font = ctk.CTkFont(family="Arial", size=14, weight="bold")
 
-    entry_login = ctk.CTkEntry(root, font=entry_font, border_width=2, corner_radius=25,
-                               placeholder_text="", fg_color=COR_INPUT_FG, text_color="#ffffff",
-                               border_color=COR_INPUT_BORDER, width=350, height=45)
-    entry_senha = ctk.CTkEntry(root, font=entry_font, border_width=2, corner_radius=25,
-                               placeholder_text="", show="*", fg_color=COR_INPUT_FG, text_color="#ffffff",
-                               border_color=COR_INPUT_BORDER, width=350, height=45)
+    entry_login = ctk.CTkEntry(root, font=entry_font, border_width=0, corner_radius=25,
+                               placeholder_text="", fg_color=COR_INPUT_FG, text_color=COR_INPUT_TEXT,
+                               width=350, height=45)
+    entry_senha = ctk.CTkEntry(root, font=entry_font, border_width=0, corner_radius=25,
+                               placeholder_text="", show="*", fg_color=COR_INPUT_FG, text_color=COR_INPUT_TEXT,
+                               width=350, height=45)
 
     canvas_login_id = canvas.create_window(0, 0, window=entry_login, anchor="center")
     canvas_senha_id = canvas.create_window(0, 0, window=entry_senha, anchor="center")
@@ -114,9 +122,9 @@ def tela_login():
                                        font=("Arial", 10), fill=COR_TEXTO, anchor="center")
 
     btn_entrar = ctk.CTkButton(root, text="Entrar", font=("Arial", 15, "bold"),
-                               fg_color="transparent", text_color=COR_TEXTO,
-                               border_width=2, border_color=COR_TEXTO,
-                               hover_color="#e0e0e0", width=350, height=45, corner_radius=25,
+                               fg_color="#ffffff", text_color=COR_TEXTO,
+                               border_width=0,
+                               hover_color="#e5e5e5", width=350, height=45, corner_radius=25,
                                command=lambda: verificar_login(root, entry_login, entry_senha))
     canvas_btn_entrar_id = canvas.create_window(0, 0, window=btn_entrar, anchor="center")
 
@@ -226,7 +234,8 @@ def tela_login():
         redimensionar(ev)
 
     root.after(100, iniciar)
-    root.mainloop()
+    if iniciou_loop:
+        root.mainloop()
 
 
 if __name__ == "__main__":

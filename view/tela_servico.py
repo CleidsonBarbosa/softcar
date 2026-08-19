@@ -140,7 +140,7 @@ def tela_execucao_servico(root_anterior=None):
 
     scrollbar = ttk.Scrollbar(frame, orient="vertical", command=tree.yview)
     tree.configure(yscrollcommand=scrollbar.set)
-    tree.pack(side="left", fill="both", expand=True)
+    tree.pack(side="left", fill="both", expand=True, padx=(4, 0), pady=4)
 
     style = ttk.Style()
     style.theme_use("clam")

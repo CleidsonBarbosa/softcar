@@ -1002,7 +1002,7 @@ def tela_clientes(root_anterior=None):
                     darkcolor="#375269",
                     arrowcolor="#375269")
 
-    frame_top = ctk.CTkFrame(canvas, fg_color="#375269", corner_radius=0)
+    frame_top = ctk.CTkFrame(canvas, fg_color="#375269", corner_radius=12)
     frame_top_window = canvas.create_window(0, 0, window=frame_top, anchor="nw")
 
     ctk.CTkLabel(frame_top, text="Pesquisar", font=("Arial", 11, "bold"), text_color=cor_branco).pack(side="left", padx=5)
@@ -1037,7 +1037,7 @@ def tela_clientes(root_anterior=None):
     def cmd_excluir():
         excluir_cliente(tree)
 
-    frame_tabela = ctk.CTkFrame(canvas, fg_color="#375269", corner_radius=0)
+    frame_tabela = ctk.CTkFrame(canvas, fg_color="#375269", corner_radius=12)
     frame_tabela_window = canvas.create_window(0, 0, window=frame_tabela, anchor="nw")
 
     colunas = ("id_cliente", "nome_cliente", "email_cliente", "telefone_cliente", "cpf", "endereco")
@@ -1069,8 +1069,8 @@ def tela_clientes(root_anterior=None):
 
     tree.configure(yscrollcommand=_atualizar_scrollbar)
 
-    scrollbar.pack(side="right", fill="y")
-    tree.pack(side="left", fill="both", expand=True)
+    scrollbar.pack(side="right", fill="y", padx=(0, 4), pady=4)
+    tree.pack(side="left", fill="both", expand=True, padx=(4, 0), pady=4)
 
     carregar_clientes(tree)
 

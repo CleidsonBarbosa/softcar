@@ -125,8 +125,12 @@ class App:
             hover_color="#2c4a5c",
             height=36,
             corner_radius=6,
-            command=self.root.destroy,
+            command=self._voltar_para_login,
         ).pack(fill="x", padx=8, pady=(10, 15))
+
+    def _voltar_para_login(self):
+        from main import tela_login
+        self.root.after(200, lambda: tela_login(self.root))
 
     def _criar_content_area(self):
         self.content = ctk.CTkFrame(self.root, fg_color=COR_FUNDO, corner_radius=0)
