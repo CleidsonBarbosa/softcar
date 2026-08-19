@@ -99,29 +99,27 @@ def abrir_formulario(tree, dados=None):
     ]
 
     def acao_menu(opcao):
+        if opcao == "Cliente":
+            return
         def _navegar():
-            modal.destroy()
-            if opcao == "Cliente":
-                from view.tela_clientes import tela_clientes
-                tela_clientes()
-            elif opcao == "Serviços":
+            if opcao == "Serviços":
                 from view.tela_servicos import tela_servicos
-                tela_servicos()
+                tela_servicos(root_anterior=modal)
             elif opcao == "Funcionários":
                 from view.lista_funcionarios import tela_lista_funcionarios
-                tela_lista_funcionarios()
+                tela_lista_funcionarios(root_anterior=modal)
             elif opcao == "Materiais":
                 from view.tela_materiais import tela_materiais
-                tela_materiais()
+                tela_materiais(root_anterior=modal)
             elif opcao == "Relatórios":
                 from view.tela_servico import tela_execucao_servico
-                tela_execucao_servico()
+                tela_execucao_servico(root_anterior=modal)
         modal.after(100, _navegar)
 
     def make_handler(opcao):
         return lambda e: acao_menu(opcao)
 
-    y_pos = 120
+    y_pos = 220
     for nome, arquivo in icones_info:
         icone = _carregar_icone(arquivo, 24)
         ativo = (nome == "Cliente")
@@ -142,6 +140,8 @@ def abrir_formulario(tree, dados=None):
         canvas.tag_bind(img_item, "<Leave>", on_leave)
         canvas.tag_bind(txt_item, "<Enter>", on_enter)
         canvas.tag_bind(txt_item, "<Leave>", on_leave)
+        canvas.tag_bind(img_item, "<Button-1>", make_handler(nome))
+        canvas.tag_bind(txt_item, "<Button-1>", make_handler(nome))
 
         canvas.image_refs = getattr(canvas, "image_refs", [])
         canvas.image_refs.append(icone)
@@ -236,7 +236,7 @@ def abrir_formulario(tree, dados=None):
             canvas.image_bg_form = bg_form
 
         form_w = min(500, w * 0.45)
-        cx = w * 0.5
+        cx = w * 0.5 + 50
         cy_inicio = h * 0.15
         entry_w = int(form_w * 0.65)
         espacamento = max(45, min(60, h * 0.08))
@@ -596,8 +596,8 @@ def listar_carros_cliente(id_cliente, nome_cliente):
 
     style = ttk.Style()
     style.theme_use("clam")
-    style.configure("Treeview", background="#375269", foreground="#ffffff", fieldbackground="#375269", rowheight=28, borderwidth=0)
-    style.configure("Treeview.Heading", background="#2c4a5c", foreground="#ffffff", borderwidth=0)
+    style.configure("Treeview", background="#375269", foreground="#ffffff", fieldbackground="#375269", rowheight=28, borderwidth=0, bordercolor="#375269")
+    style.configure("Treeview.Heading", background="#2c4a5c", foreground="#ffffff", borderwidth=0, bordercolor="#2c4a5c")
     style.layout("Treeview", [("Treeview.field", {"sticky": "nswe", "children": [("Treeview.padding", {"sticky": "nswe", "children": [("Treeview.treearea", {"sticky": "nswe"})]})]})])
 
     def editar_carro_tree():
@@ -810,8 +810,8 @@ def listar_servicos(id_cliente, nome_cliente, dados_carro, root_anterior=None):
 
     style = ttk.Style()
     style.theme_use("clam")
-    style.configure("Treeview", background="#375269", foreground="#ffffff", fieldbackground="#375269", rowheight=28, borderwidth=0)
-    style.configure("Treeview.Heading", background="#2c4a5c", foreground="#ffffff", borderwidth=0)
+    style.configure("Treeview", background="#375269", foreground="#ffffff", fieldbackground="#375269", rowheight=28, borderwidth=0, bordercolor="#375269")
+    style.configure("Treeview.Heading", background="#2c4a5c", foreground="#ffffff", borderwidth=0, bordercolor="#2c4a5c")
     style.layout("Treeview", [("Treeview.field", {"sticky": "nswe", "children": [("Treeview.padding", {"sticky": "nswe", "children": [("Treeview.treearea", {"sticky": "nswe"})]})]})])
 
     servicos_checks = {}
@@ -1077,6 +1077,7 @@ def tela_clientes(root_anterior=None):
                     fieldbackground="#375269",
                     rowheight=28,
                     borderwidth=0,
+                    bordercolor="#375269",
                     lightcolor="#375269",
                     darkcolor="#375269",
                     troughcolor="#375269")
@@ -1085,6 +1086,7 @@ def tela_clientes(root_anterior=None):
                     foreground=cor_branco,
                     relief="flat",
                     borderwidth=0,
+                    bordercolor="#2c4a5c",
                     lightcolor="#2c4a5c",
                     darkcolor="#2c4a5c",
                     troughcolor="#2c4a5c")
@@ -1105,6 +1107,7 @@ def tela_clientes(root_anterior=None):
                     background="#375269",
                     troughcolor="#375269",
                     borderwidth=0,
+                    bordercolor="#375269",
                     relief="flat",
                     lightcolor="#375269",
                     darkcolor="#375269",
@@ -1119,10 +1122,19 @@ def tela_clientes(root_anterior=None):
     entry_busca.pack(side="left", padx=5, ipady=3)
     search_var.trace_add("write", lambda *args: buscar_clientes(tree, entry_busca))
 
-    btn_cadastrar = ctk.CTkButton(canvas, text="Cadastrar Cliente +", font=("Arial", 11, "bold"),
-                               fg_color="#375269", text_color=cor_branco,
-                               command=lambda: abrir_formulario(tree))
-    btn_cadastrar_window = canvas.create_window(0, 0, window=btn_cadastrar, anchor="nw")
+    btn_cadastrar_img_original = Image.open("assets/btn_cliente.png") if os.path.exists("assets/btn_cliente.png") else None
+    btn_cadastrar_img = None
+    if btn_cadastrar_img_original:
+        btn_w = int(65 * root.winfo_width() / 800) if root.winfo_width() > 0 else 65
+        btn_h = int(25 * root.winfo_height() / 600) if root.winfo_height() > 0 else 25
+        btn_cadastrar_img_resized = btn_cadastrar_img_original.resize((btn_w, btn_h), Image.Resampling.LANCZOS)
+        btn_cadastrar_img = ImageTk.PhotoImage(btn_cadastrar_img_resized)
+    btn_cadastrar_window = canvas.create_image(0, 0, image=btn_cadastrar_img, anchor="nw")
+    canvas.img_refs = getattr(canvas, "img_refs", [])
+    canvas.img_refs.append(btn_cadastrar_img)
+    canvas.tag_bind(btn_cadastrar_window, "<Button-1>", lambda e: abrir_formulario(tree))
+    canvas.tag_bind(btn_cadastrar_window, "<Enter>", lambda e: canvas.config(cursor="hand2"))
+    canvas.tag_bind(btn_cadastrar_window, "<Leave>", lambda e: canvas.config(cursor=""))
 
     def cmd_editar():
         selecionado = tree.selection()
@@ -1145,7 +1157,7 @@ def tela_clientes(root_anterior=None):
     def cmd_excluir():
         excluir_cliente(tree)
 
-    frame_tabela = ctk.CTkFrame(canvas, fg_color="#375269", corner_radius=0)
+    frame_tabela = ctk.CTkFrame(canvas, fg_color="transparent", corner_radius=8, border_width=0)
     frame_tabela_window = canvas.create_window(0, 0, window=frame_tabela, anchor="nw")
 
     colunas = ("id_cliente", "nome_cliente", "email_cliente", "telefone_cliente", "cpf", "endereco")
@@ -1229,6 +1241,8 @@ def tela_clientes(root_anterior=None):
                 canvas.tag_bind(img_item, "<Leave>", on_leave)
                 canvas.tag_bind(txt_item, "<Enter>", on_enter)
                 canvas.tag_bind(txt_item, "<Leave>", on_leave)
+                canvas.tag_bind(img_item, "<Button-1>", make_handler(nome))
+                canvas.tag_bind(txt_item, "<Button-1>", make_handler(nome))
 
                 canvas.image_refs.append(icone)
                 botoes_menu.append((img_item, txt_item))
@@ -1248,10 +1262,18 @@ def tela_clientes(root_anterior=None):
         cw = w * 0.753
         ch = h * 0.750
 
-        canvas.coords(frame_top_window, cx + 30, cy - 55)
-        canvas.coords(btn_cadastrar_window, cx + cw - 190, cy - 55)
-        canvas.coords(frame_tabela_window, cx + 4, cy + 20)
-        canvas.itemconfig(frame_tabela_window, width=max(100, cw - 124), height=max(100, ch - 42))
+        canvas.coords(frame_top_window, cx + 30, cy - 145)
+        canvas.coords(btn_cadastrar_window, cx + cw - 260, cy - 145)
+        if btn_cadastrar_img_original:
+            btn_w = int(65 * w / 800)
+            btn_h = int(25 * h / 600)
+            btn_img_resized = btn_cadastrar_img_original.resize((btn_w, btn_h), Image.Resampling.LANCZOS)
+            btn_cadastrar_img = ImageTk.PhotoImage(btn_img_resized)
+            canvas.itemconfig(btn_cadastrar_window, image=btn_cadastrar_img)
+            canvas.img_refs = getattr(canvas, "img_refs", [])
+            canvas.img_refs.append(btn_cadastrar_img)
+        canvas.coords(frame_tabela_window, cx + 176, cy - 42)
+        canvas.itemconfig(frame_tabela_window, width=max(100, cw - 254), height=max(100, ch - 22))
         canvas.coords(btn_sair_win, w * 0.02, h - 50)
 
     def redimensionar(event):

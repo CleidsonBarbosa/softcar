@@ -162,8 +162,8 @@ def tela_execucao_servico(root_anterior=None):
 
     style = ttk.Style()
     style.theme_use("clam")
-    style.configure("Treeview", background="#375269", foreground="#ffffff", fieldbackground="#375269", rowheight=28, borderwidth=0)
-    style.configure("Treeview.Heading", background="#2c4a5c", foreground="#ffffff", borderwidth=0)
+    style.configure("Treeview", background="#375269", foreground="#ffffff", fieldbackground="#375269", rowheight=28, borderwidth=0, bordercolor="#375269")
+    style.configure("Treeview.Heading", background="#2c4a5c", foreground="#ffffff", borderwidth=0, bordercolor="#2c4a5c")
     style.layout("Treeview", [("Treeview.field", {"sticky": "nswe", "children": [("Treeview.padding", {"sticky": "nswe", "children": [("Treeview.treearea", {"sticky": "nswe"})]})]})])
     scrollbar.pack(side="right", fill="y")
 
