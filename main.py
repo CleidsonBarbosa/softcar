@@ -4,6 +4,7 @@ from tkinter import messagebox
 from PIL import Image, ImageTk, ImageDraw
 import os
 import mysql.connector
+from service.login_service import realizar_login
 
 
 COR_FUNDO = "#1e2d3d"
@@ -13,31 +14,18 @@ COR_DESTAQUE = "#375269"
 
 
 def verificar_login(root, entry_login, entry_senha):
-    email = entry_login.get().strip()
-    senha = entry_senha.get().strip()
-
-    if email == "" or senha == "":
-        messagebox.showwarning("Campos vazios", "Por favor, preencha todos os campos.")
-        return
-
     try:
-        conexao = mysql.connector.connect(
-            host="localhost", user="root", password="", database="softcar"
-        )
-        cursor = conexao.cursor()
-        cursor.execute("SELECT * FROM funcionarios WHERE email_func = %s AND senha = %s", (email, senha))
-        resultado = cursor.fetchone()
-        cursor.close()
-        conexao.close()
-
+        resultado = realizar_login(entry_login.get(), entry_senha.get())
         if resultado:
-            cargo = resultado[5]
-            nome = resultado[1]
+            cargo = resultado["cargo"]
+            nome = resultado["nome_func"]
             from app import App
             App(root, cargo=cargo, nome=nome)
         else:
             messagebox.showerror("Erro", "Usuario ou senha incorretos.")
 
+    except ValueError as erro:
+        messagebox.showwarning("Campos vazios", str(erro))
     except mysql.connector.Error as erro:
         messagebox.showerror("Erro de Conexao", f"Falha ao conectar ao banco:\n{erro}")
 
