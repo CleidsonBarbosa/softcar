@@ -1,72 +1,13 @@
 import customtkinter as ctk
 from screens.base import BaseScreen
 from PIL import Image, ImageDraw
-import mysql.connector
+from service.dashboard_service import obter_indicadores_dashboard
 import math
 
 COR_FUNDO = "#1e2d3d"
 COR_DOURADO = "#b88b4a"
 COR_BRANCO = "#ffffff"
 COR_DESTAQUE = "#375269"
-
-def _conectar():
-    return mysql.connector.connect(host="localhost", user="root", password="", database="softcar")
-
-def _contar_servicos_agendados():
-    try:
-        conn = _conectar()
-        cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM ordem_servico WHERE status = 'aberto'")
-        r = cursor.fetchone()
-        cursor.close(); conn.close()
-        return r[0] if r else 0
-    except Exception:
-        return 0
-
-def _contar_servicos_realizados():
-    try:
-        conn = _conectar()
-        cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM ordem_servico WHERE status = 'finalizado'")
-        r = cursor.fetchone()
-        cursor.close(); conn.close()
-        return r[0] if r else 0
-    except Exception:
-        return 0
-
-def _contar_clientes():
-    try:
-        conn = _conectar()
-        cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM clientes")
-        r = cursor.fetchone()
-        cursor.close(); conn.close()
-        return r[0] if r else 0
-    except Exception:
-        return 0
-
-def _contar_veiculos():
-    try:
-        conn = _conectar()
-        cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM carros")
-        r = cursor.fetchone()
-        cursor.close(); conn.close()
-        return r[0] if r else 0
-    except Exception:
-        return 0
-
-def _calcular_total_recebido():
-    try:
-        conn = _conectar()
-        cursor = conn.cursor()
-        cursor.execute("SELECT COALESCE(SUM(total), 0) FROM ordem_servico WHERE status = 'finalizado'")
-        r = cursor.fetchone()
-        cursor.close(); conn.close()
-        return float(r[0]) if r else 0.0
-    except Exception:
-        return 0.0
-
 
 def _rounded_rect_polygon(x1, y1, x2, y2, r):
     points = []
@@ -92,7 +33,7 @@ def _rounded_rect_polygon(x1, y1, x2, y2, r):
 
 class DashboardScreen(BaseScreen):
     def __init__(self, parent, app):
-        super().__init__(parent, app, bg_image="Dashboard.png")
+        super().__init__(parent, app, bg_image="tela_fundo.png")
         self.center_frame.place_forget()
         self.nome_usuario = getattr(app, "nome", "")
 
@@ -111,11 +52,12 @@ class DashboardScreen(BaseScreen):
             return
         c = self.canvas
 
-        sa = _contar_servicos_agendados()
-        sr = _contar_servicos_realizados()
-        cl = _contar_clientes()
-        ve = _contar_veiculos()
-        tr = _calcular_total_recebido()
+        indicadores = obter_indicadores_dashboard()
+        sa = indicadores["servicos_agendados"]
+        sr = indicadores["servicos_realizados"]
+        cl = indicadores["clientes"]
+        ve = indicadores["veiculos"]
+        tr = indicadores["total_recebido"]
 
         c.delete("cards")
 
@@ -156,8 +98,8 @@ class DashboardScreen(BaseScreen):
         draw_rounded_rect(pad_l, mid_y, w - pad_r, mid_y + card_h2, radius, COR_DESTAQUE, COR_BRANCO, "cards")
 
         nome_exib = self.nome_usuario.split()[0] if self.nome_usuario else ""
-        c.create_text(w // 2, int(h * 0.05), text=f"Seja Bem Vindo, {nome_exib}",
-                       font=("Arial", 22, "bold"), fill=COR_BRANCO, tags="cards")
+        c.create_text(w // 2, int(h * 0.06), text=f"Seja Bem Vindo, {nome_exib}",
+                       font=("Arial", 30, "bold"), fill=COR_DOURADO, tags="cards")
 
         f_label = ("Arial", 15, "bold")
         f_num_big = ("Arial", 58, "bold")

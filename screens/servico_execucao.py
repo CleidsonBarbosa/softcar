@@ -2,16 +2,19 @@ import customtkinter as ctk
 from tkinter import ttk, messagebox
 import mysql.connector
 from screens.base import BaseScreen
+from service.servico_execucao_service import (
+    buscar_ordens,
+    excluir_ordem,
+    finalizar_ordem,
+    listar_itens_ordem,
+    listar_ordens,
+)
 
 COR_FUNDO = "#1e2d3d"
 COR_DOURADO = "#b88b4a"
 COR_BRANCO = "#ffffff"
 COR_DESTAQUE = "#375269"
 COR_HEADER = "#2c4a5c"
-
-def _conectar():
-    return mysql.connector.connect(host="localhost", user="root", password="", database="softcar")
-
 
 class ServicoExecucaoScreen(BaseScreen):
     def __init__(self, parent, app):
@@ -30,8 +33,10 @@ class ServicoExecucaoScreen(BaseScreen):
             ]})
         ])
         style.configure("Treeview", background=COR_DESTAQUE, foreground=COR_BRANCO,
-                        fieldbackground=COR_DESTAQUE, rowheight=32, borderwidth=0)
-        style.configure("Treeview.Heading", background=COR_HEADER, foreground=COR_BRANCO, borderwidth=0)
+                        fieldbackground=COR_DESTAQUE, rowheight=36, borderwidth=0,
+                        font=("Arial", 12))
+        style.configure("Treeview.Heading", background=COR_HEADER, foreground=COR_BRANCO, borderwidth=0,
+                        font=("Arial", 12, "bold"))
         style.layout("Treeview.Heading", [
             ("Treeview.Heading.cell", {"sticky": "nswe", "children": [
                 ("Treeview.Heading.padding", {"sticky": "nswe", "children": [
@@ -46,21 +51,21 @@ class ServicoExecucaoScreen(BaseScreen):
     def _criar_widgets(self):
         ov = self.center_frame
 
-        header = ctk.CTkFrame(ov, fg_color="transparent", height=42)
-        header.pack(fill="x", padx=20, pady=(10, 5))
+        header = ctk.CTkFrame(ov, fg_color="transparent", height=48)
+        header.pack(fill="x", padx=30, pady=(15, 8))
         header.pack_propagate(False)
 
-        ctk.CTkLabel(header, text="Pesquisar", font=("Arial", 13, "bold"), text_color=COR_BRANCO).pack(side="left", padx=(0, 8))
-        self.entry_busca = ctk.CTkEntry(header, width=280, height=32, fg_color=COR_DESTAQUE, text_color="#ffffff",
-                                        border_width=1, font=("Arial", 12), corner_radius=8)
+        ctk.CTkLabel(header, text="Pesquisar", font=("Arial", 14, "bold"), text_color=COR_BRANCO).pack(side="left", padx=(0, 10))
+        self.entry_busca = ctk.CTkEntry(header, width=320, height=38, fg_color=COR_DESTAQUE, text_color="#ffffff",
+                                        border_width=1, font=("Arial", 13), corner_radius=10)
         self.entry_busca.pack(side="left", padx=5, ipady=2)
         self.entry_busca.bind("<KeyRelease>", lambda e: self._buscar_ordens())
 
-        container = ctk.CTkFrame(ov, fg_color="transparent")
-        container.pack(fill="both", expand=True, padx=20, pady=(0, 5))
+        container = ctk.CTkFrame(ov, fg_color=COR_DESTAQUE, corner_radius=12)
+        container.pack(fill="both", expand=True, padx=30, pady=(0, 10))
 
         colunas = ("id_ordem", "id_cliente", "total", "status", "data_hora")
-        self.tree = ttk.Treeview(container, columns=colunas, show="headings", selectmode="browse")
+        self.tree = ttk.Treeview(container, columns=colunas, show="headings", selectmode="browse", height=18)
         self.tree.heading("id_ordem", text="Ordem", anchor="center")
         self.tree.heading("id_cliente", text="Cliente", anchor="center")
         self.tree.heading("total", text="Total", anchor="center")
@@ -68,27 +73,27 @@ class ServicoExecucaoScreen(BaseScreen):
         self.tree.heading("data_hora", text="Data", anchor="center")
         self.tree.column("id_ordem", width=80, minwidth=70, stretch=False, anchor="center")
         self.tree.column("id_cliente", width=80, minwidth=70, stretch=False, anchor="center")
-        self.tree.column("total", width=150, minwidth=120, stretch=False, anchor="center")
-        self.tree.column("status", width=120, minwidth=100, stretch=False, anchor="center")
-        self.tree.column("data_hora", width=140, minwidth=110, stretch=False, anchor="center")
+        self.tree.column("total", width=160, minwidth=130, stretch=False, anchor="center")
+        self.tree.column("status", width=130, minwidth=110, stretch=False, anchor="center")
+        self.tree.column("data_hora", width=150, minwidth=120, stretch=False, anchor="center")
 
         scrollbar = ttk.Scrollbar(container, orient="vertical", command=self.tree.yview, style="Vertical.TScrollbar")
         self.tree.configure(yscrollcommand=scrollbar.set)
-        scrollbar.pack(side="right", fill="y", padx=(0, 2), pady=2)
-        self.tree.pack(side="left", fill="both", expand=True, padx=(2, 0), pady=2)
+        scrollbar.pack(side="right", fill="y", padx=(0, 4), pady=4)
+        self.tree.pack(side="left", fill="both", expand=True, padx=(4, 0), pady=4)
 
         self.tree.bind("<Double-1>", lambda e: self._finalizar_ordem())
 
         btn_frame = ctk.CTkFrame(ov, fg_color="transparent")
-        btn_frame.pack(fill="x", padx=20, pady=(0, 10))
-        ctk.CTkButton(btn_frame, text="Finalizar", font=("Arial", 12, "bold"), fg_color="#006400", text_color=COR_BRANCO,
-                      hover_color="#228b22", height=32, corner_radius=8, width=110,
+        btn_frame.pack(fill="x", padx=30, pady=(0, 12))
+        ctk.CTkButton(btn_frame, text="Finalizar", font=("Arial", 13, "bold"), fg_color="#006400", text_color=COR_BRANCO,
+                      hover_color="#228b22", height=38, corner_radius=10, width=120,
                       command=self._finalizar_ordem).pack(side="left", padx=5)
-        ctk.CTkButton(btn_frame, text="Excluir", font=("Arial", 12, "bold"), fg_color="#8b0000", text_color=COR_BRANCO,
-                      hover_color="#a52a2a", height=32, corner_radius=8, width=100,
+        ctk.CTkButton(btn_frame, text="Excluir", font=("Arial", 13, "bold"), fg_color="#8b0000", text_color=COR_BRANCO,
+                      hover_color="#a52a2a", height=38, corner_radius=10, width=120,
                       command=self._excluir_ordem).pack(side="left", padx=5)
-        ctk.CTkButton(btn_frame, text="Ver Itens", font=("Arial", 12, "bold"), fg_color=COR_DESTAQUE, text_color=COR_BRANCO,
-                      hover_color=COR_HEADER, height=32, corner_radius=8, width=110,
+        ctk.CTkButton(btn_frame, text="Ver Itens", font=("Arial", 13, "bold"), fg_color=COR_DESTAQUE, text_color=COR_BRANCO,
+                      hover_color=COR_HEADER, height=38, corner_radius=10, width=120,
                       command=self._ver_itens).pack(side="left", padx=5)
 
     def on_show(self):
@@ -99,15 +104,11 @@ class ServicoExecucaoScreen(BaseScreen):
         for row in self.tree.get_children():
             self.tree.delete(row)
         try:
-            conn = _conectar()
-            cursor = conn.cursor()
-            cursor.execute("SELECT id_ordem, id_cliente, total, status, data_hora FROM ordem_servico ORDER BY id_ordem DESC")
-            for row in cursor.fetchall():
+            for row in listar_ordens():
                 total = f"R$ {row[2]:.2f}" if row[2] else "-"
                 status = row[3] or ""
                 data = str(row[4])[:10] if row[4] else ""
                 self.tree.insert("", "end", values=(row[0], row[1], total, status, data))
-            cursor.close(); conn.close()
         except mysql.connector.Error as e:
             messagebox.showerror("Erro", f"Erro ao carregar ordens:\n{e}")
 
@@ -116,19 +117,11 @@ class ServicoExecucaoScreen(BaseScreen):
         for row in self.tree.get_children():
             self.tree.delete(row)
         try:
-            conn = _conectar()
-            cursor = conn.cursor()
-            if termo:
-                cursor.execute("SELECT id_ordem, id_cliente, total, status, data_hora FROM ordem_servico WHERE status LIKE %s OR id_ordem LIKE %s ORDER BY id_ordem DESC",
-                               (f"%{termo}%", f"%{termo}%"))
-            else:
-                cursor.execute("SELECT id_ordem, id_cliente, total, status, data_hora FROM ordem_servico ORDER BY id_ordem DESC")
-            for row in cursor.fetchall():
+            for row in buscar_ordens(termo):
                 total = f"R$ {row[2]:.2f}" if row[2] else "-"
                 status = row[3] or ""
                 data = str(row[4])[:10] if row[4] else ""
                 self.tree.insert("", "end", values=(row[0], row[1], total, status, data))
-            cursor.close(); conn.close()
         except mysql.connector.Error as e:
             messagebox.showerror("Erro", f"Erro ao buscar:\n{e}")
 
@@ -140,19 +133,14 @@ class ServicoExecucaoScreen(BaseScreen):
         vals = self.tree.item(sel[0])["values"]
         id_ordem = vals[0]
         status = vals[3]
-        if status == "finalizado":
-            messagebox.showinfo("Info", "Esta ordem ja foi finalizada.")
-            return
         if not messagebox.askyesno("Confirmar", f"Finalizar ordem #{id_ordem}?"):
             return
         try:
-            conn = _conectar()
-            cursor = conn.cursor()
-            cursor.execute("UPDATE ordem_servico SET status = 'finalizado' WHERE id_ordem = %s", (id_ordem,))
-            conn.commit()
-            cursor.close(); conn.close()
+            finalizar_ordem(id_ordem, status)
             self._carregar_ordens()
             messagebox.showinfo("Sucesso", f"Ordem #{id_ordem} finalizada!")
+        except ValueError as e:
+            messagebox.showinfo("Info", str(e))
         except mysql.connector.Error as e:
             messagebox.showerror("Erro", f"Erro ao finalizar:\n{e}")
 
@@ -165,12 +153,7 @@ class ServicoExecucaoScreen(BaseScreen):
             return
         id_ordem = self.tree.item(sel[0])["values"][0]
         try:
-            conn = _conectar()
-            cursor = conn.cursor()
-            cursor.execute("DELETE FROM ordem_servico_itens WHERE id_ordem = %s", (id_ordem,))
-            cursor.execute("DELETE FROM ordem_servico WHERE id_ordem = %s", (id_ordem,))
-            conn.commit()
-            cursor.close(); conn.close()
+            excluir_ordem(id_ordem)
             self._carregar_ordens()
         except mysql.connector.Error as e:
             messagebox.showerror("Erro", f"Erro ao excluir:\n{e}")
@@ -189,58 +172,60 @@ class ItensOrdemModal(ctk.CTkToplevel):
         super().__init__(parent)
         self.id_ordem = id_ordem
         self.title(f"Itens da Ordem #{id_ordem}")
-        self.configure(fg_color=COR_FUNDO)
+        self.configure(fg_color="#1a2735")
         self.transient(parent)
         self.grab_set()
         self.resizable(False, False)
-        self.after(100, lambda: self.state("zoomed"))
+        self.geometry("750x480")
+        self.after(100, lambda: self._center(parent))
 
-        container = ctk.CTkFrame(self, fg_color=COR_FUNDO)
-        container.pack(fill="both", expand=True, padx=30, pady=30)
+        main = ctk.CTkFrame(self, fg_color="#1a2735", corner_radius=15)
+        main.pack(fill="both", expand=True, padx=15, pady=15)
 
-        ctk.CTkLabel(container, text=f"Itens da Ordem #{id_ordem}",
-                     font=("Arial", 18, "bold"), text_color=COR_DOURADO).pack(pady=(0, 20))
+        ctk.CTkLabel(main, text=f"Itens da Ordem #{id_ordem}",
+                     font=("Arial", 20, "bold"), text_color=COR_DOURADO).pack(pady=(15, 15))
 
-        frame = ctk.CTkFrame(container, fg_color="transparent")
-        frame.pack(fill="both", expand=True)
+        frame = ctk.CTkFrame(main, fg_color=COR_DESTAQUE, corner_radius=12)
+        frame.pack(fill="both", expand=True, padx=15)
 
         style = ttk.Style()
         style.configure("Modal.Treeview", background=COR_DESTAQUE, foreground=COR_BRANCO,
-                        fieldbackground=COR_DESTAQUE, rowheight=32, borderwidth=0)
-        style.configure("Modal.Treeview.Heading", background=COR_HEADER, foreground=COR_BRANCO, borderwidth=0)
+                        fieldbackground=COR_DESTAQUE, rowheight=36, borderwidth=0,
+                        font=("Arial", 12))
+        style.configure("Modal.Treeview.Heading", background=COR_HEADER, foreground=COR_BRANCO, borderwidth=0,
+                        font=("Arial", 12, "bold"))
 
         colunas = ("id_item", "id_servico", "nome_servico", "preco")
-        tree = ttk.Treeview(frame, columns=colunas, show="headings", selectmode="browse", style="Modal.Treeview")
+        tree = ttk.Treeview(frame, columns=colunas, show="headings", selectmode="browse", style="Modal.Treeview", height=10)
         tree.heading("id_item", text="Item", anchor="center")
         tree.heading("id_servico", text="Servico", anchor="center")
         tree.heading("nome_servico", text="Nome", anchor="w")
         tree.heading("preco", text="Preco", anchor="center")
         tree.column("id_item", width=60, minwidth=50, stretch=False, anchor="center")
         tree.column("id_servico", width=70, minwidth=60, stretch=False, anchor="center")
-        tree.column("nome_servico", width=380, minwidth=180, stretch=True, anchor="w")
-        tree.column("preco", width=120, minwidth=90, stretch=False, anchor="center")
+        tree.column("nome_servico", width=380, minwidth=200, stretch=True, anchor="w")
+        tree.column("preco", width=130, minwidth=100, stretch=False, anchor="center")
 
         scrollbar = ttk.Scrollbar(frame, orient="vertical", command=tree.yview)
         tree.configure(yscrollcommand=scrollbar.set)
-        scrollbar.pack(side="right", fill="y", padx=(0, 2), pady=2)
-        tree.pack(side="left", fill="both", expand=True, padx=(2, 0), pady=2)
+        scrollbar.pack(side="right", fill="y", padx=(0, 4), pady=4)
+        tree.pack(side="left", fill="both", expand=True, padx=(4, 0), pady=4)
 
         try:
-            conn = _conectar()
-            cursor = conn.cursor()
-            cursor.execute("""
-                SELECT osi.id_item, osi.id_servico, s.nome_servico, osi.preco
-                FROM ordem_servico_itens osi
-                LEFT JOIN servicos s ON s.id_servico = osi.id_servico
-                WHERE osi.id_ordem = %s
-            """, (id_ordem,))
-            for row in cursor.fetchall():
+            for row in listar_itens_ordem(id_ordem):
                 preco = f"R$ {row[3]:.2f}" if row[3] else "-"
                 tree.insert("", "end", values=(row[0], row[1], row[2], preco))
-            cursor.close(); conn.close()
         except mysql.connector.Error as e:
             messagebox.showerror("Erro", f"Erro ao carregar itens:\n{e}")
 
-        ctk.CTkButton(container, text="Fechar", font=("Arial", 13, "bold"), width=140, height=38,
+        ctk.CTkButton(main, text="Fechar", font=("Arial", 14, "bold"), width=160, height=42,
                       fg_color=COR_DESTAQUE, text_color=COR_BRANCO,
-                      hover_color=COR_HEADER, command=self.destroy).pack(pady=(15, 0))
+                      hover_color=COR_HEADER, corner_radius=10, command=self.destroy).pack(pady=(15, 5))
+
+    def _center(self, parent):
+        parent.update_idletasks()
+        pw = parent.winfo_width()
+        ph = parent.winfo_height()
+        x = (pw - 750) // 2
+        y = (ph - 480) // 2
+        self.geometry(f"+{x}+{y}")
