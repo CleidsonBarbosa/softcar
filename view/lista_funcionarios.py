@@ -206,15 +206,46 @@ def abrir_formulario(tree, dados=None):
         modal.destroy()
         tela_lista_funcionarios()
 
-    btn_salvar = ctk.CTkButton(canvas, text="Salvar", command=salvar, width=12*10,
-                               fg_color="#b88b4a", text_color="#ffffff", hover_color="#d4a857",
-                               font=("Arial", 11, "bold"), corner_radius=8)
-    canvas.create_window(x_entry + 420, y_inicio + 440, window=btn_salvar, anchor="center")
+    btn_salvar_img_original = Image.open("assets/btn_salvar.png") if os.path.exists("assets/btn_salvar.png") else None
+    btn_salvar_img = None
+    if btn_salvar_img_original:
+        btn_salvar_img_resized = btn_salvar_img_original.resize((60, 25), Image.Resampling.LANCZOS)
+        btn_salvar_img = ImageTk.PhotoImage(btn_salvar_img_resized)
+    btn_salvar_win = canvas.create_image(0, 0, image=btn_salvar_img, anchor="nw")
+    canvas.image_refs = getattr(canvas, "image_refs", [])
+    canvas.image_refs.append(btn_salvar_img)
+    canvas.tag_bind(btn_salvar_win, "<Button-1>", lambda e: salvar())
+    canvas.tag_bind(btn_salvar_win, "<Enter>", lambda e: canvas.config(cursor="hand2"))
+    canvas.tag_bind(btn_salvar_win, "<Leave>", lambda e: canvas.config(cursor=""))
 
-    btn_cancelar = ctk.CTkButton(canvas, text="Cancelar", command=voltar, width=12*10,
-                                  fg_color="#375269", text_color="#ffffff", hover_color="#b88b4a",
-                                  font=("Arial", 11, "bold"), corner_radius=8)
-    btn_cancelar_win = canvas.create_window(x_entry + 420, y_inicio + 490, window=btn_cancelar, anchor="center")
+    btn_excluir_img_original = Image.open("assets/btn_excluir.png") if os.path.exists("assets/btn_excluir.png") else None
+    btn_excluir_img = None
+    if btn_excluir_img_original:
+        btn_excluir_img_resized = btn_excluir_img_original.resize((60, 25), Image.Resampling.LANCZOS)
+        btn_excluir_img = ImageTk.PhotoImage(btn_excluir_img_resized)
+    btn_excluir_win = canvas.create_image(0, 0, image=btn_excluir_img, anchor="nw")
+    canvas.image_refs.append(btn_excluir_img)
+
+    def excluir_func_form():
+        if not dados:
+            return
+        if not messagebox.askyesno("Excluir", "Tem certeza que deseja excluir este funcionário?"):
+            return
+        try:
+            conn = conectar()
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM funcionarios WHERE id_func = %s", (dados["id_func"],))
+            conn.commit()
+            cursor.close()
+            conn.close()
+            messagebox.showinfo("Sucesso", "Funcionário excluído com sucesso!")
+            modal.after(100, lambda: (modal.destroy(), tela_lista_funcionarios()))
+        except mysql.connector.Error as e:
+            messagebox.showerror("Erro", f"Erro ao excluir:\n{e}")
+
+    canvas.tag_bind(btn_excluir_win, "<Button-1>", lambda e: excluir_func_form())
+    canvas.tag_bind(btn_excluir_win, "<Enter>", lambda e: canvas.config(cursor="hand2"))
+    canvas.tag_bind(btn_excluir_win, "<Leave>", lambda e: canvas.config(cursor=""))
 
     def voltar_login():
         modal.destroy()
@@ -239,20 +270,40 @@ def abrir_formulario(tree, dados=None):
             canvas.tag_lower("bg")
             canvas.image_bg = bg_tk
 
-        cx = w * 0.42
-        cy_inicio = h * 0.12
-        entry_w = int(w * 0.30)
-        espacamento = max(40, min(55, h * 0.07))
+        form_w = min(500, w * 0.45)
+        cx = w * 0.5 + 50
+        cy_inicio = h * 0.15 + 100
+        entry_w = int(form_w * 0.65)
+        espacamento = max(45, min(60, h * 0.08))
 
         for i, (lbl, entry_win) in enumerate(itens_form):
             cy = cy_inicio + i * espacamento
-            canvas.coords(lbl, cx - entry_w // 2 - 10, cy)
-            canvas.coords(entry_win, cx + entry_w // 2, cy)
+            canvas.coords(lbl, cx - entry_w // 2 + 90, cy)
+            canvas.coords(entry_win, cx + entry_w // 2 - 100, cy)
             canvas.itemconfig(entry_win, width=entry_w)
 
         y_btns = cy_inicio + len(campos) * espacamento + 20
-        canvas.coords(canvas.find_all()[-3], cx, y_btns)
-        canvas.coords(canvas.find_all()[-2], cx, y_btns + 50)
+        if btn_salvar_img_original:
+            btn_w = int(60 * w / 800)
+            btn_h = int(25 * h / 600)
+            btn_salvar_resized = btn_salvar_img_original.resize((btn_w, btn_h), Image.Resampling.LANCZOS)
+            btn_salvar_img_tk = ImageTk.PhotoImage(btn_salvar_resized)
+            canvas.itemconfig(btn_salvar_win, image=btn_salvar_img_tk)
+            canvas.image_refs = getattr(canvas, "image_refs", [])
+            canvas.image_refs.append(btn_salvar_img_tk)
+        canvas.coords(btn_salvar_win, cx - 55, y_btns)
+        canvas.tag_raise(btn_salvar_win)
+
+        if btn_excluir_img_original and dados:
+            btn_w = int(60 * w / 800)
+            btn_h = int(25 * h / 600)
+            btn_excluir_resized = btn_excluir_img_original.resize((btn_w, btn_h), Image.Resampling.LANCZOS)
+            btn_excluir_img_tk = ImageTk.PhotoImage(btn_excluir_resized)
+            canvas.itemconfig(btn_excluir_win, image=btn_excluir_img_tk)
+            canvas.image_refs.append(btn_excluir_img_tk)
+            canvas.coords(btn_excluir_win, cx + 155, y_btns)
+        elif not dados:
+            canvas.coords(btn_excluir_win, -200, -200)
         canvas.coords(btn_sair_win, w * 0.02, h - 50)
 
         redimensionar_img_softcar(canvas, btn_dashboard_id_form_func, img_softcar_original_form_func, w, h)
@@ -440,11 +491,17 @@ def tela_lista_funcionarios(root_anterior=None):
     
     entry_busca.bind("<KeyRelease>", _buscar)
 
-    btn_cadastrar = ctk.CTkButton(canvas, text="Cadastrar Funcionário +", font=("Arial", 11, "bold"),
-                                  fg_color="#375269", text_color=cor_branco, hover_color=cor_dourado,
-                                  corner_radius=8,
-                                  command=lambda: abrir_formulario(tree))
-    btn_cadastrar_window = canvas.create_window(0, 0, window=btn_cadastrar, anchor="nw")
+    btn_cadastrar_img_original = Image.open("assets/btn_funcionario.png") if os.path.exists("assets/btn_funcionario.png") else None
+    btn_cadastrar_img = None
+    if btn_cadastrar_img_original:
+        btn_cadastrar_img_resized = btn_cadastrar_img_original.resize((65, 25), Image.Resampling.LANCZOS)
+        btn_cadastrar_img = ImageTk.PhotoImage(btn_cadastrar_img_resized)
+    btn_cadastrar_window = canvas.create_image(0, 0, image=btn_cadastrar_img, anchor="nw")
+    canvas.image_refs = getattr(canvas, "image_refs", [])
+    canvas.image_refs.append(btn_cadastrar_img)
+    canvas.tag_bind(btn_cadastrar_window, "<Button-1>", lambda e: abrir_formulario(tree))
+    canvas.tag_bind(btn_cadastrar_window, "<Enter>", lambda e: canvas.config(cursor="hand2"))
+    canvas.tag_bind(btn_cadastrar_window, "<Leave>", lambda e: canvas.config(cursor=""))
 
     def cmd_editar():
         selecionado = tree.selection()
@@ -489,6 +546,17 @@ def tela_lista_funcionarios(root_anterior=None):
     tree.tag_configure("even", background="#375269")
 
     tree.bind("<Double-1>", lambda e: cmd_editar())
+
+    btn_editar_img_original = Image.open("assets/btn_editar.png") if os.path.exists("assets/btn_editar.png") else None
+    btn_editar_img = None
+    if btn_editar_img_original:
+        btn_editar_img_resized = btn_editar_img_original.resize((60, 25), Image.Resampling.LANCZOS)
+        btn_editar_img = ImageTk.PhotoImage(btn_editar_img_resized)
+    btn_editar_window = canvas.create_image(0, 0, image=btn_editar_img, anchor="nw")
+    canvas.image_refs.append(btn_editar_img)
+    canvas.tag_bind(btn_editar_window, "<Button-1>", lambda e: cmd_editar())
+    canvas.tag_bind(btn_editar_window, "<Enter>", lambda e: canvas.config(cursor="hand2"))
+    canvas.tag_bind(btn_editar_window, "<Leave>", lambda e: canvas.config(cursor=""))
 
     scrollbar = ttk.Scrollbar(frame_tabela, orient="vertical", command=tree.yview, style="Vertical.TScrollbar")
 
@@ -556,11 +624,29 @@ def tela_lista_funcionarios(root_anterior=None):
         cw = w * 0.753
         ch = h * 0.750
 
-        canvas.coords(frame_top_window, cx + 176, cy - 42)
-        canvas.coords(btn_cadastrar_window, cx + cw - 200, cy - 42)
+        canvas.coords(frame_top_window, cx + 130, cy - 145)
+        if btn_cadastrar_img_original:
+            btn_w = int(65 * w / 800)
+            btn_h = int(25 * h / 600)
+            btn_cadastrar_img_resized = btn_cadastrar_img_original.resize((btn_w, btn_h), Image.Resampling.LANCZOS)
+            btn_cadastrar_img_tk = ImageTk.PhotoImage(btn_cadastrar_img_resized)
+            canvas.itemconfig(btn_cadastrar_window, image=btn_cadastrar_img_tk)
+            canvas.image_refs.append(btn_cadastrar_img_tk)
+        canvas.coords(btn_cadastrar_window, cx + cw - 260, cy - 145)
         canvas.coords(frame_tabela_window, cx + 176, cy - 42)
-        canvas.itemconfig(frame_tabela_window, width=max(100, cw - 254), height=max(100, ch - 22))
+        canvas.itemconfig(frame_tabela_window, width=max(100, cw - 254), height=max(100, ch - 122))
         canvas.coords(btn_sair_win, w * 0.02, h - 50)
+
+        cx_table = cx + 176
+        cw_table = max(100, cw - 254)
+        if btn_editar_img_original:
+            btn_w = int(60 * w / 800)
+            btn_h = int(25 * h / 600)
+            btn_editar_resized = btn_editar_img_original.resize((btn_w, btn_h), Image.Resampling.LANCZOS)
+            btn_editar_img_tk = ImageTk.PhotoImage(btn_editar_resized)
+            canvas.itemconfig(btn_editar_window, image=btn_editar_img_tk)
+            canvas.image_refs.append(btn_editar_img_tk)
+        canvas.coords(btn_editar_window, cx_table + cw_table / 2, h - 180)
 
         redimensionar_img_softcar(canvas, btn_dashboard_id, img_softcar_original, w, h)
 

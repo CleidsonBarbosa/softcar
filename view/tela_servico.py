@@ -285,9 +285,9 @@ def tela_execucao_servico(root_anterior=None):
         canvas.coords(titulo_win, cx + 176, cy - 42)
 
         canvas.coords(frame_win, cx + 176, cy - 42)
-        canvas.itemconfig(frame_win, width=max(100, cw - 254), height=max(100, ch - 22))
+        canvas.itemconfig(frame_win, width=max(100, cw - 254), height=max(100, ch - 122))
 
-        canvas.coords(btn_finalizar_win, cx + 176 + (cw - 254) / 2 - 60, cy - 42 + max(100, ch - 22) + 55)
+        canvas.coords(btn_finalizar_win, cx + 176 + (cw - 254) / 2 - 60, cy - 42 + max(100, ch - 122) - 40)
         canvas.coords(btn_sair_win, w * 0.02, h - 50)
 
         col_w = max(200, cw - 90)

@@ -283,14 +283,14 @@ def abrir_formulario(tree, dados=None):
 
         form_w = min(500, w * 0.45)
         cx = w * 0.5 + 50
-        cy_inicio = h * 0.15
+        cy_inicio = h * 0.15 + 100
         entry_w = int(form_w * 0.65)
         espacamento = max(45, min(60, h * 0.08))
 
         for i, (lbl_win, entry_win, _) in enumerate(itens_form):
             cy = cy_inicio + i * espacamento
-            canvas.coords(lbl_win, cx - entry_w // 2 - 10, cy)
-            canvas.coords(entry_win, cx + entry_w // 2, cy)
+            canvas.coords(lbl_win, cx - entry_w // 2 + 90, cy)
+            canvas.coords(entry_win, cx + entry_w // 2 - 100, cy)
             canvas.itemconfig(entry_win, width=entry_w)
 
             if img_entrada_original:
@@ -323,7 +323,8 @@ def abrir_formulario(tree, dados=None):
             canvas.itemconfig(btn_salvar_win, image=btn_avancar_img_form_tk)
             canvas.image_refs = getattr(canvas, "image_refs", [])
             canvas.image_refs.append(btn_avancar_img_form_tk)
-        canvas.coords(btn_salvar_win, cx - 55, y_btns + 400)
+        canvas.coords(btn_salvar_win, cx - 55, y_btns + 200)
+        canvas.tag_raise(btn_salvar_win)
 
         if btn_excluir_img_original_form and dados:
             btn_w = int(60 * w / 800)
@@ -332,7 +333,7 @@ def abrir_formulario(tree, dados=None):
             btn_excluir_img_form_tk = ImageTk.PhotoImage(btn_excluir_img_resized)
             canvas.itemconfig(btn_excluir_win, image=btn_excluir_img_form_tk)
             canvas.image_refs.append(btn_excluir_img_form_tk)
-            canvas.coords(btn_excluir_win, cx + 155, y_btns + 400)
+            canvas.coords(btn_excluir_win, cx + 155, y_btns + 200)
         elif not dados:
             canvas.coords(btn_excluir_win, -200, -200)
         canvas.coords(btn_sair_win, w * 0.02, h - 50)
@@ -501,12 +502,48 @@ def abrir_formulario_carro(id_cliente, nome_cliente, dados_carro=None, voltar_pa
     def cancelar():
         modal.after(100, lambda: (modal.destroy(), voltar_para_lista and listar_carros_cliente(id_cliente, nome_cliente)))
 
-    btn_salvar = ctk.CTkButton(canvas, text="Salvar", command=salvar_carro, width=90, fg_color=cor_dourado, text_color=cor_branco, hover_color="#d4a857")
-    btn_salvar_win = canvas.create_window(0, 0, window=btn_salvar, anchor="center")
-    btn_avancar = ctk.CTkButton(canvas, text="Avançar", command=avancar, width=90, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
-    btn_avancar_win = canvas.create_window(0, 0, window=btn_avancar, anchor="center")
-    btn_cancelar = ctk.CTkButton(canvas, text="Cancelar", command=cancelar, width=90, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
-    btn_cancelar_win = canvas.create_window(0, 0, window=btn_cancelar, anchor="center")
+    btn_excluir_img_original_carro = Image.open("assets/btn_excluir.png") if os.path.exists("assets/btn_excluir.png") else None
+    btn_excluir_img_carro = None
+    if btn_excluir_img_original_carro:
+        btn_excluir_img_resized = btn_excluir_img_original_carro.resize((60, 25), Image.Resampling.LANCZOS)
+        btn_excluir_img_carro = ImageTk.PhotoImage(btn_excluir_img_resized)
+    btn_salvar_win = canvas.create_image(0, 0, image=btn_excluir_img_carro, anchor="nw")
+    canvas.image_refs = getattr(canvas, "image_refs", [])
+    canvas.image_refs.append(btn_excluir_img_carro)
+
+    def excluir_carro():
+        if not dados_carro:
+            return
+        if not messagebox.askyesno("Excluir", "Tem certeza que deseja excluir este carro?"):
+            return
+        try:
+            conn = conectar()
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM clientes_has_carros WHERE carros_id_carro = %s", (dados_carro["id_carro"],))
+            cursor.execute("DELETE FROM carros WHERE id_carro = %s", (dados_carro["id_carro"],))
+            conn.commit()
+            cursor.close()
+            conn.close()
+            messagebox.showinfo("Sucesso", "Carro excluído com sucesso!")
+            modal.after(100, lambda: (modal.destroy(), listar_carros_cliente(id_cliente, nome_cliente)))
+        except mysql.connector.Error as e:
+            messagebox.showerror("Erro", f"Erro ao excluir:\n{e}")
+
+    canvas.tag_bind(btn_salvar_win, "<Button-1>", lambda e: excluir_carro())
+    canvas.tag_bind(btn_salvar_win, "<Enter>", lambda e: canvas.config(cursor="hand2"))
+    canvas.tag_bind(btn_salvar_win, "<Leave>", lambda e: canvas.config(cursor=""))
+
+    btn_avancar_img_original_carro = Image.open("assets/btn_avancar.png") if os.path.exists("assets/btn_avancar.png") else None
+    btn_avancar_img_carro = None
+    if btn_avancar_img_original_carro:
+        btn_avancar_img_resized = btn_avancar_img_original_carro.resize((60, 25), Image.Resampling.LANCZOS)
+        btn_avancar_img_carro = ImageTk.PhotoImage(btn_avancar_img_resized)
+    btn_avancar_win = canvas.create_image(0, 0, image=btn_avancar_img_carro, anchor="nw")
+    canvas.image_refs = getattr(canvas, "image_refs", [])
+    canvas.image_refs.append(btn_avancar_img_carro)
+    canvas.tag_bind(btn_avancar_win, "<Button-1>", lambda e: avancar())
+    canvas.tag_bind(btn_avancar_win, "<Enter>", lambda e: canvas.config(cursor="hand2"))
+    canvas.tag_bind(btn_avancar_win, "<Leave>", lambda e: canvas.config(cursor=""))
     def voltar_login_modal():
         modal.destroy()
         from main import tela_login
@@ -541,21 +578,38 @@ def abrir_formulario_carro(id_cliente, nome_cliente, dados_carro=None, voltar_pa
             y += 50
 
         form_w = min(500, w * 0.45)
-        cx = w * 0.5
-        cy_inicio = h * 0.15
+        cx = w * 0.5 + 50
+        cy_inicio = h * 0.15 + 100
         entry_w = int(form_w * 0.65)
         espacamento = max(45, min(60, h * 0.08))
 
         for i, (lbl, entry_win) in enumerate(itens_form):
             cy = cy_inicio + i * espacamento
-            canvas.coords(lbl, cx - entry_w // 2 - 10, cy)
-            canvas.coords(entry_win, cx + entry_w // 2, cy)
+            canvas.coords(lbl, cx - entry_w // 2 + 90, cy)
+            canvas.coords(entry_win, cx + entry_w // 2 - 100, cy)
             canvas.itemconfig(entry_win, width=entry_w)
 
-        y_btns = cy_inicio + len(campos) * espacamento + 30
-        canvas.coords(btn_salvar_win, cx - 165, y_btns)
-        canvas.coords(btn_avancar_win, cx - 55, y_btns)
-        canvas.coords(btn_cancelar_win, cx + 55, y_btns)
+        y_btns = cy_inicio + len(campos) * espacamento + 20
+        if btn_excluir_img_original_carro and dados_carro:
+            btn_w = int(60 * w / 800)
+            btn_h = int(25 * h / 600)
+            btn_excluir_img_resized = btn_excluir_img_original_carro.resize((btn_w, btn_h), Image.Resampling.LANCZOS)
+            btn_excluir_img_tk = ImageTk.PhotoImage(btn_excluir_img_resized)
+            canvas.itemconfig(btn_salvar_win, image=btn_excluir_img_tk)
+            canvas.image_refs = getattr(canvas, "image_refs", [])
+            canvas.image_refs.append(btn_excluir_img_tk)
+            canvas.coords(btn_salvar_win, cx - 55, y_btns + 200)
+        elif not dados_carro:
+            canvas.coords(btn_salvar_win, -200, -200)
+        if btn_avancar_img_original_carro:
+            btn_w = int(60 * w / 800)
+            btn_h = int(25 * h / 600)
+            btn_avancar_img_resized = btn_avancar_img_original_carro.resize((btn_w, btn_h), Image.Resampling.LANCZOS)
+            btn_avancar_img_tk = ImageTk.PhotoImage(btn_avancar_img_resized)
+            canvas.itemconfig(btn_avancar_win, image=btn_avancar_img_tk)
+            canvas.image_refs = getattr(canvas, "image_refs", [])
+            canvas.image_refs.append(btn_avancar_img_tk)
+            canvas.coords(btn_avancar_win, cx + 155, y_btns + 200)
         canvas.coords(btn_sair_win, w * 0.02, h - 50)
 
         redimensionar_img_softcar(canvas, btn_dashboard_id_carro, img_softcar_original_carro, w, h)
@@ -814,7 +868,7 @@ def listar_carros_cliente(id_cliente, nome_cliente):
             canvas.image_refs.append(btn_novo_img_tk)
         canvas.coords(btn_novo_win, cx + cw - 260, cy - 145)
         canvas.coords(frame_win, cx + 176, cy - 42)
-        canvas.itemconfig(frame_win, width=max(100, cw - 254), height=max(100, ch - 22))
+        canvas.itemconfig(frame_win, width=max(100, cw - 254), height=max(100, ch - 122))
 
         cx_table = cx + 176
         cw_table = max(100, cw - 254)
@@ -826,7 +880,7 @@ def listar_carros_cliente(id_cliente, nome_cliente):
             canvas.itemconfig(btn_avancar_window_carros, image=btn_avancar_img_carros)
             canvas.image_refs = getattr(canvas, "image_refs", [])
             canvas.image_refs.append(btn_avancar_img_carros)
-        canvas.coords(btn_avancar_window_carros, cx_table + cw_table / 2 - 120, h - 80)
+        canvas.coords(btn_avancar_window_carros, cx_table + cw_table / 2 - 120, h - 180)
 
         if btn_editar_img_original_carros:
             btn_w = int(60 * w / 800)
@@ -835,7 +889,7 @@ def listar_carros_cliente(id_cliente, nome_cliente):
             btn_editar_img_tk = ImageTk.PhotoImage(btn_editar_resized)
             canvas.itemconfig(btn_editar_window_carros, image=btn_editar_img_tk)
             canvas.image_refs.append(btn_editar_img_tk)
-        canvas.coords(btn_editar_window_carros, cx_table + cw_table / 2 + 40, h - 80)
+        canvas.coords(btn_editar_window_carros, cx_table + cw_table / 2 + 40, h - 180)
         canvas.coords(btn_sair_win, w * 0.02, h - 50)
 
         redimensionar_img_softcar(canvas, btn_dashboard_id_carros, img_softcar_original_carros, w, h)
@@ -1088,12 +1142,12 @@ def listar_servicos(id_cliente, nome_cliente, dados_carro, root_anterior=None):
 
         canvas.coords(titulo_win, cx + 176, cy - 42)
         canvas.coords(frame_win, cx + 176, cy - 42)
-        canvas.itemconfig(frame_win, width=max(100, cw - 254), height=max(100, ch - 22))
+        canvas.itemconfig(frame_win, width=max(100, cw - 254), height=max(100, ch - 122))
 
-        btn_y = cy + ch + 10
+        btn_y = cy + ch - 90
         btn_center = cx + 176 + (cw - 254) / 2
-        canvas.coords(btn_salvar_win, btn_center, btn_y)
-        canvas.coords(total_win, cx + cw - 150, btn_y)
+        canvas.coords(btn_salvar_win, btn_center - 400, btn_y)
+        canvas.coords(total_win, cx + cw - 550, btn_y)
         canvas.coords(btn_sair_win, w * 0.02, h - 50)
         tree_servicos.column("nome_servico", width=int(col_w * 0.60))
         tree_servicos.column("preco_servico", width=int(col_w * 0.40))
@@ -1467,7 +1521,7 @@ def tela_clientes(root_anterior=None):
             canvas.img_refs = getattr(canvas, "img_refs", [])
             canvas.img_refs.append(btn_cadastrar_img)
         canvas.coords(frame_tabela_window, cx + 176, cy - 42)
-        canvas.itemconfig(frame_tabela_window, width=max(100, cw - 254), height=max(100, ch - 22))
+        canvas.itemconfig(frame_tabela_window, width=max(100, cw - 254), height=max(100, ch - 122))
         canvas.coords(btn_sair_win, w * 0.02, h - 50)
 
         cx_table = cx + 176
@@ -1480,7 +1534,7 @@ def tela_clientes(root_anterior=None):
             canvas.itemconfig(btn_avancar_window, image=btn_avancar_img)
             canvas.image_refs = getattr(canvas, "image_refs", [])
             canvas.image_refs.append(btn_avancar_img)
-        canvas.coords(btn_avancar_window, cx_table + cw_table / 2 - 120, h - 80)
+        canvas.coords(btn_avancar_window, cx_table + cw_table / 2 - 120, h - 180)
 
         if btn_editar_img_original:
             btn_w = int(60 * w / 800)
@@ -1489,7 +1543,7 @@ def tela_clientes(root_anterior=None):
             btn_editar_img_tk = ImageTk.PhotoImage(btn_editar_resized)
             canvas.itemconfig(btn_editar_window, image=btn_editar_img_tk)
             canvas.image_refs.append(btn_editar_img_tk)
-        canvas.coords(btn_editar_window, cx_table + cw_table / 2 + 40, h - 80)
+        canvas.coords(btn_editar_window, cx_table + cw_table / 2 + 40, h - 180)
 
     def redimensionar(event):
         if event.widget != root:
