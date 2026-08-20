@@ -953,8 +953,6 @@ def listar_servicos(id_cliente, nome_cliente, dados_carro, root_anterior=None):
             messagebox.showerror("Erro", f"Erro ao salvar ordem:\n{e}")
 
     btn_salvar = ctk.CTkButton(canvas, text="Salvar Ordem", command=salvar_ordem, width=100, fg_color=cor_dourado, text_color=cor_branco, hover_color="#d4a857")
-    btn_voltar = ctk.CTkButton(canvas, text="Voltar", command=lambda: modal.after(100, lambda: (modal.destroy(), abrir_formulario_carro(id_cliente, nome_cliente, dados_carro, voltar_para_lista=True))), width=80, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
-    btn_fechar = ctk.CTkButton(canvas, text="Fechar", command=modal.destroy, width=80, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
 
     def voltar_login_modal():
         modal.destroy()
@@ -968,8 +966,6 @@ def listar_servicos(id_cliente, nome_cliente, dados_carro, root_anterior=None):
     btn_sair = ctk.CTkButton(canvas, text="Sair", command=voltar_login_modal, width=80, corner_radius=0, fg_color="#375269", text_color=cor_branco, hover_color="#2c4a5c")
 
     btn_salvar_win = canvas.create_window(0, 0, window=btn_salvar, anchor="nw")
-    btn_voltar_win = canvas.create_window(0, 0, window=btn_voltar, anchor="nw")
-    btn_fechar_win = canvas.create_window(0, 0, window=btn_fechar, anchor="nw")
     btn_sair_win = canvas.create_window(30, 0, window=btn_sair, anchor="nw")
 
     def _redim(event=None):
@@ -998,14 +994,13 @@ def listar_servicos(id_cliente, nome_cliente, dados_carro, root_anterior=None):
         ch = h * 0.750
 
         canvas.coords(titulo_win, cx + 176, cy - 42)
-        canvas.coords(total_win, cx + cw - 150, cy - 42)
         canvas.coords(frame_win, cx + 176, cy - 42)
         canvas.itemconfig(frame_win, width=max(100, cw - 254), height=max(100, ch - 22))
 
         btn_y = cy + ch + 10
-        canvas.coords(btn_salvar_win, cx, btn_y)
-        canvas.coords(btn_voltar_win, cx + 110, btn_y)
-        canvas.coords(btn_fechar_win, cx + 200, btn_y)
+        btn_center = cx + 176 + (cw - 254) / 2
+        canvas.coords(btn_salvar_win, btn_center, btn_y)
+        canvas.coords(total_win, cx + cw - 150, btn_y)
         canvas.coords(btn_sair_win, w * 0.02, h - 50)
         tree_servicos.column("nome_servico", width=int(col_w * 0.60))
         tree_servicos.column("preco_servico", width=int(col_w * 0.40))
