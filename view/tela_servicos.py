@@ -478,11 +478,17 @@ def tela_servicos(root_anterior=None):
     entry_busca.pack(side="left", padx=5, ipady=3)
     search_var.trace_add("write", lambda *args: buscar_servicos(tree, entry_busca))
 
-    btn_cadastrar = ctk.CTkButton(canvas, text="Cadastrar Serviço +", font=("Arial", 11, "bold"),
-                                  fg_color="#375269", text_color=cor_branco, hover_color=cor_dourado,
-                                  corner_radius=8,
-                                  command=lambda: abrir_formulario_servico(tree, root_anterior=root))
-    btn_cadastrar_window = canvas.create_window(0, 0, window=btn_cadastrar, anchor="nw")
+    btn_cadastrar_img_original = Image.open("assets/btn_servicos.png") if os.path.exists("assets/btn_servicos.png") else None
+    btn_cadastrar_img = None
+    if btn_cadastrar_img_original:
+        btn_cadastrar_img_resized = btn_cadastrar_img_original.resize((65, 25), Image.Resampling.LANCZOS)
+        btn_cadastrar_img = ImageTk.PhotoImage(btn_cadastrar_img_resized)
+    btn_cadastrar_window = canvas.create_image(0, 0, image=btn_cadastrar_img, anchor="nw")
+    canvas.image_refs = getattr(canvas, "image_refs", [])
+    canvas.image_refs.append(btn_cadastrar_img)
+    canvas.tag_bind(btn_cadastrar_window, "<Button-1>", lambda e: abrir_formulario_servico(tree, root_anterior=root))
+    canvas.tag_bind(btn_cadastrar_window, "<Enter>", lambda e: canvas.config(cursor="hand2"))
+    canvas.tag_bind(btn_cadastrar_window, "<Leave>", lambda e: canvas.config(cursor=""))
 
     def cmd_editar():
         selecionado = tree.selection()
@@ -523,6 +529,17 @@ def tela_servicos(root_anterior=None):
     tree.tag_configure("even", background="#375269")
 
     tree.bind("<Double-1>", lambda e: cmd_editar())
+
+    btn_editar_img_original = Image.open("assets/btn_editar.png") if os.path.exists("assets/btn_editar.png") else None
+    btn_editar_img = None
+    if btn_editar_img_original:
+        btn_editar_img_resized = btn_editar_img_original.resize((60, 25), Image.Resampling.LANCZOS)
+        btn_editar_img = ImageTk.PhotoImage(btn_editar_img_resized)
+    btn_editar_window = canvas.create_image(0, 0, image=btn_editar_img, anchor="nw")
+    canvas.image_refs.append(btn_editar_img)
+    canvas.tag_bind(btn_editar_window, "<Button-1>", lambda e: cmd_editar())
+    canvas.tag_bind(btn_editar_window, "<Enter>", lambda e: canvas.config(cursor="hand2"))
+    canvas.tag_bind(btn_editar_window, "<Leave>", lambda e: canvas.config(cursor=""))
 
     style.configure("Vertical.TScrollbar", gripcount=0, background="white", troughcolor="#2c4a5c", bordercolor="#2c4a5c", arrowcolor="#000000")
 
@@ -592,11 +609,29 @@ def tela_servicos(root_anterior=None):
         cw = w * 0.753
         ch = h * 0.750
 
-        canvas.coords(frame_top_window, cx + 176, cy - 42)
-        canvas.coords(btn_cadastrar_window, cx + cw - 190, cy - 42)
+        canvas.coords(frame_top_window, cx + 130, cy - 145)
+        if btn_cadastrar_img_original:
+            btn_w = int(65 * w / 800)
+            btn_h = int(25 * h / 600)
+            btn_cadastrar_img_resized = btn_cadastrar_img_original.resize((btn_w, btn_h), Image.Resampling.LANCZOS)
+            btn_cadastrar_img_tk = ImageTk.PhotoImage(btn_cadastrar_img_resized)
+            canvas.itemconfig(btn_cadastrar_window, image=btn_cadastrar_img_tk)
+            canvas.image_refs.append(btn_cadastrar_img_tk)
+        canvas.coords(btn_cadastrar_window, cx + cw - 260, cy - 145)
         canvas.coords(frame_tabela_window, cx + 176, cy - 42)
         canvas.itemconfig(frame_tabela_window, width=max(100, cw - 254), height=max(100, ch - 22))
         canvas.coords(btn_sair_win, w * 0.02, h - 50)
+
+        cx_table = cx + 176
+        cw_table = max(100, cw - 254)
+        if btn_editar_img_original:
+            btn_w = int(60 * w / 800)
+            btn_h = int(25 * h / 600)
+            btn_editar_resized = btn_editar_img_original.resize((btn_w, btn_h), Image.Resampling.LANCZOS)
+            btn_editar_img_tk = ImageTk.PhotoImage(btn_editar_resized)
+            canvas.itemconfig(btn_editar_window, image=btn_editar_img_tk)
+            canvas.image_refs.append(btn_editar_img_tk)
+        canvas.coords(btn_editar_window, cx_table + cw_table / 2, h - 80)
 
         col_w = max(200, cw - 90)
         tree.column("nome_servico", width=int(col_w * 0.50))
