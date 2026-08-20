@@ -1074,7 +1074,7 @@ def listar_servicos(id_cliente, nome_cliente, dados_carro, root_anterior=None):
             messagebox.showwarning("Seleção", "Selecione pelo menos um serviço.")
             return
         total = sum(servicos_precos[i] for i in selecionados)
-        id_carro = dados_carro["id_carro"] if dados_carro else None
+        id_carro = dados_carro.get("id") or dados_carro.get("id_carro") if dados_carro else None
         try:
             conn = conectar()
             cursor = conn.cursor()
@@ -1147,7 +1147,9 @@ def listar_servicos(id_cliente, nome_cliente, dados_carro, root_anterior=None):
         btn_y = cy + ch - 90
         btn_center = cx + 176 + (cw - 254) / 2
         canvas.coords(btn_salvar_win, btn_center - 400, btn_y)
+        canvas.tag_raise(btn_salvar_win)
         canvas.coords(total_win, cx + cw - 550, btn_y)
+        canvas.tag_raise(total_win)
         canvas.coords(btn_sair_win, w * 0.02, h - 50)
         tree_servicos.column("nome_servico", width=int(col_w * 0.60))
         tree_servicos.column("preco_servico", width=int(col_w * 0.40))
